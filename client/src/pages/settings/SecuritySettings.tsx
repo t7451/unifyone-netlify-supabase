@@ -134,23 +134,23 @@ export default function SecuritySettings() {
         {/* Password */}
         <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-white text-base flex items-center gap-2">
-              <Key className="w-4 h-4 text-[#D4A843]" />
+            <CardTitle className="text-foreground text-base flex items-center gap-2">
+              <Key className="w-4 h-4 text-primary" />
               Password
             </CardTitle>
-            <CardDescription className="text-gray-400">
+            <CardDescription className="text-muted-foreground">
               Manage your password and sign-in credentials
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-4 rounded-lg bg-white/5 border border-white/10">
+            <div className="flex items-center justify-between p-4 rounded-lg bg-muted/40 border border-border">
               <div className="flex items-center gap-3">
-                <Lock className="w-5 h-5 text-gray-400" />
+                <Lock className="w-5 h-5 text-muted-foreground" />
                 <div>
-                  <p className="text-white text-sm font-medium">
+                  <p className="text-foreground text-sm font-medium">
                     {hasPassword ? "Password set" : "No password set"}
                   </p>
-                  <p className="text-gray-500 text-xs mt-0.5">
+                  <p className="text-muted-foreground text-xs mt-0.5">
                     {passwordChangedAt
                       ? `Last changed ${new Date(passwordChangedAt).toLocaleDateString()}`
                       : hasPassword
@@ -172,15 +172,18 @@ export default function SecuritySettings() {
             </div>
 
             {hasPassword ? (
-              <div className="space-y-3 p-4 rounded-lg bg-white/5 border border-white/10">
+              <div className="space-y-3 p-4 rounded-lg bg-muted/40 border border-border">
                 <div className="flex items-center gap-2 mb-2">
-                  <Lock className="w-4 h-4 text-[#D4A843]" />
-                  <p className="text-white text-sm font-medium">
+                  <Lock className="w-4 h-4 text-primary" />
+                  <p className="text-foreground text-sm font-medium">
                     Change Password
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="current-pw" className="text-xs text-gray-400">
+                  <Label
+                    htmlFor="current-pw"
+                    className="text-xs text-muted-foreground"
+                  >
                     Current password
                   </Label>
                   <Input
@@ -192,7 +195,10 @@ export default function SecuritySettings() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="new-pw" className="text-xs text-gray-400">
+                  <Label
+                    htmlFor="new-pw"
+                    className="text-xs text-muted-foreground"
+                  >
                     New password (min 8 characters)
                   </Label>
                   <Input
@@ -204,7 +210,10 @@ export default function SecuritySettings() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="confirm-pw" className="text-xs text-gray-400">
+                  <Label
+                    htmlFor="confirm-pw"
+                    className="text-xs text-muted-foreground"
+                  >
                     Confirm new password
                   </Label>
                   <Input
@@ -223,7 +232,7 @@ export default function SecuritySettings() {
                     !newPw ||
                     !confirmPw
                   }
-                  className="bg-[#D4A843]/10 border border-[#D4A843]/30 text-[#D4A843] hover:bg-[#D4A843]/20"
+                  className="bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20"
                 >
                   {changePassword.isPending ? (
                     <>
@@ -237,7 +246,7 @@ export default function SecuritySettings() {
                     </>
                   )}
                 </Button>
-                <p className="text-xs text-gray-600">
+                <p className="text-xs text-muted-foreground">
                   All active sessions including this one will be revoked.
                 </p>
               </div>
@@ -245,7 +254,7 @@ export default function SecuritySettings() {
               <Button
                 onClick={handlePasswordReset}
                 variant="outline"
-                className="border-white/10 text-gray-300 hover:text-white hover:border-white/20"
+                className="border-border text-muted-foreground hover:text-foreground hover:border-border"
               >
                 <Key className="w-4 h-4 mr-2" />
                 Set Password
@@ -257,26 +266,29 @@ export default function SecuritySettings() {
         {/* Email */}
         <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-white text-base flex items-center gap-2">
-              <Mail className="w-4 h-4 text-[#D4A843]" />
+            <CardTitle className="text-foreground text-base flex items-center gap-2">
+              <Mail className="w-4 h-4 text-primary" />
               Email Address
             </CardTitle>
-            <CardDescription className="text-gray-400">
+            <CardDescription className="text-muted-foreground">
               Change the email address you use to sign in
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="p-3 rounded-lg bg-white/5">
-              <p className="text-xs text-gray-500">Current</p>
-              <p className="text-white text-sm font-medium">
+            <div className="p-3 rounded-lg bg-muted/40">
+              <p className="text-xs text-muted-foreground">Current</p>
+              <p className="text-foreground text-sm font-medium">
                 {user?.email ?? "—"}
               </p>
             </div>
 
             {hasPassword ? (
-              <div className="space-y-3 p-4 rounded-lg bg-white/5 border border-white/10">
+              <div className="space-y-3 p-4 rounded-lg bg-muted/40 border border-border">
                 <div className="space-y-2">
-                  <Label htmlFor="new-email" className="text-xs text-gray-400">
+                  <Label
+                    htmlFor="new-email"
+                    className="text-xs text-muted-foreground"
+                  >
                     New email
                   </Label>
                   <Input
@@ -288,7 +300,10 @@ export default function SecuritySettings() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email-pw" className="text-xs text-gray-400">
+                  <Label
+                    htmlFor="email-pw"
+                    className="text-xs text-muted-foreground"
+                  >
                     Current password
                   </Label>
                   <Input
@@ -302,7 +317,7 @@ export default function SecuritySettings() {
                 <Button
                   onClick={handleChangeEmail}
                   disabled={changeEmail.isPending || !newEmail || !emailPw}
-                  className="bg-[#D4A843]/10 border border-[#D4A843]/30 text-[#D4A843] hover:bg-[#D4A843]/20"
+                  className="bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20"
                 >
                   {changeEmail.isPending ? (
                     <>
@@ -316,13 +331,13 @@ export default function SecuritySettings() {
                     </>
                   )}
                 </Button>
-                <p className="text-xs text-gray-600">
+                <p className="text-xs text-muted-foreground">
                   Your new email will need to be re-verified. Sessions will be
                   revoked for security.
                 </p>
               </div>
             ) : (
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 Set a password before changing your email address.
               </p>
             )}
@@ -332,25 +347,25 @@ export default function SecuritySettings() {
         {/* Authentication */}
         <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-white text-base flex items-center gap-2">
+            <CardTitle className="text-foreground text-base flex items-center gap-2">
               <Shield className="w-4 h-4 text-emerald-400" />
               Authentication
             </CardTitle>
-            <CardDescription className="text-gray-400">
+            <CardDescription className="text-muted-foreground">
               Your sign-in methods and security status
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#D4A843]/10 flex items-center justify-center">
-                  <Monitor className="w-4 h-4 text-[#D4A843]" />
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Monitor className="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <p className="text-white text-sm font-medium capitalize">
+                  <p className="text-foreground text-sm font-medium capitalize">
                     {(userRecord?.loginMethod as string) ?? "OAuth"} Login
                   </p>
-                  <p className="text-gray-500 text-xs">
+                  <p className="text-muted-foreground text-xs">
                     Primary sign-in method
                   </p>
                 </div>
@@ -358,7 +373,7 @@ export default function SecuritySettings() {
               <CheckCircle className="w-4 h-4 text-emerald-400" />
             </div>
 
-            <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40">
               <div className="flex items-center gap-3">
                 <div
                   className={`w-8 h-8 rounded-lg flex items-center justify-center ${
@@ -374,10 +389,10 @@ export default function SecuritySettings() {
                   )}
                 </div>
                 <div>
-                  <p className="text-white text-sm font-medium">
+                  <p className="text-foreground text-sm font-medium">
                     Email Verification
                   </p>
-                  <p className="text-gray-500 text-xs">
+                  <p className="text-muted-foreground text-xs">
                     {user?.emailVerified
                       ? "Your email address is verified"
                       : "Verify your email for enhanced security"}
@@ -397,16 +412,16 @@ export default function SecuritySettings() {
             </div>
 
             {hasPassword && (
-              <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-[#6A1B9A]/10 flex items-center justify-center">
-                    <Lock className="w-4 h-4 text-[#6A1B9A]" />
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Lock className="w-4 h-4 text-primary" />
                   </div>
                   <div>
-                    <p className="text-white text-sm font-medium">
+                    <p className="text-foreground text-sm font-medium">
                       Password Authentication
                     </p>
-                    <p className="text-gray-500 text-xs">
+                    <p className="text-muted-foreground text-xs">
                       Email + password sign-in enabled
                     </p>
                   </div>
@@ -420,23 +435,23 @@ export default function SecuritySettings() {
         {/* Sessions */}
         <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-white text-base flex items-center gap-2">
+            <CardTitle className="text-foreground text-base flex items-center gap-2">
               <Monitor className="w-4 h-4 text-amber-400" />
               Sessions
             </CardTitle>
-            <CardDescription className="text-gray-400">
+            <CardDescription className="text-muted-foreground">
               Manage your active sessions and sign-out options
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40 border border-border">
               <div className="flex items-center gap-3">
                 <div className="w-2 h-2 rounded-full bg-emerald-400" />
                 <div>
-                  <p className="text-white text-sm font-medium">
+                  <p className="text-foreground text-sm font-medium">
                     Current Session
                   </p>
-                  <p className="text-gray-500 text-xs">
+                  <p className="text-muted-foreground text-xs">
                     This browser - Active now
                   </p>
                 </div>
@@ -449,14 +464,14 @@ export default function SecuritySettings() {
               </Badge>
             </div>
 
-            <Separator className="bg-white/10" />
+            <Separator className="bg-muted/40" />
 
             <div className="flex flex-col sm:flex-row gap-2">
               <Button
                 onClick={handleSignOutAll}
                 disabled={revokeAll.isPending}
                 variant="outline"
-                className="border-white/10 text-gray-300 hover:text-white hover:border-white/20"
+                className="border-border text-muted-foreground hover:text-foreground hover:border-border"
               >
                 {revokeAll.isPending ? (
                   <>
@@ -479,7 +494,7 @@ export default function SecuritySettings() {
                 Sign Out
               </Button>
             </div>
-            <p className="text-xs text-gray-600">
+            <p className="text-xs text-muted-foreground">
               Revoking all sessions invalidates every active login token,
               including this one. You will be signed out.
             </p>
@@ -493,13 +508,13 @@ export default function SecuritySettings() {
               <Trash2 className="w-4 h-4" />
               Delete Account
             </CardTitle>
-            <CardDescription className="text-gray-400">
+            <CardDescription className="text-muted-foreground">
               Permanently remove your account from UnifyOne. This is
               irreversible.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="p-3 rounded-lg bg-red-500/5 border border-red-500/20 text-xs text-gray-400 space-y-1">
+            <div className="p-3 rounded-lg bg-red-500/5 border border-red-500/20 text-xs text-muted-foreground space-y-1">
               <p className="text-red-300">
                 What happens when you delete your account:
               </p>
@@ -536,7 +551,7 @@ export default function SecuritySettings() {
                 <div className="space-y-2">
                   <Label
                     htmlFor="confirm-email"
-                    className="text-xs text-gray-400"
+                    className="text-xs text-muted-foreground"
                   >
                     Type your email ({user?.email ?? "—"}) to confirm
                   </Label>
@@ -549,7 +564,10 @@ export default function SecuritySettings() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="delete-pw" className="text-xs text-gray-400">
+                  <Label
+                    htmlFor="delete-pw"
+                    className="text-xs text-muted-foreground"
+                  >
                     Current password
                   </Label>
                   <Input
@@ -587,7 +605,7 @@ export default function SecuritySettings() {
                       setDeletePw("");
                     }}
                     variant="outline"
-                    className="border-white/10 text-gray-300"
+                    className="border-border text-muted-foreground"
                   >
                     Cancel
                   </Button>

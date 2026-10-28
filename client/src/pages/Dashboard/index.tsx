@@ -64,7 +64,7 @@ export default function Dashboard() {
           <Button
             variant="outline"
             onClick={() => openOnboarding()}
-            className="border-white/10 bg-white/5 text-white hover:bg-white/10"
+            className="border-border bg-muted/40 text-foreground hover:bg-muted"
           >
             Open feature guide
           </Button>
@@ -76,13 +76,13 @@ export default function Dashboard() {
               void topProductsSummary.refetch();
               void recentOrders.refetch();
             }}
-            className="border-white/10 bg-white/5 text-white hover:bg-white/10"
+            className="border-border bg-muted/40 text-foreground hover:bg-muted"
           >
             Refresh command data
           </Button>
           <Button
             onClick={() => navigate("/orders")}
-            className="bg-[#D4A843] font-semibold text-[#020202] hover:bg-[#D4A843]/90"
+            className="bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
           >
             Work order queue <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
@@ -93,14 +93,14 @@ export default function Dashboard() {
           <Badge
             variant="outline"
             className={cn(
-              "border-white/10 bg-white/5",
+              "border-border bg-muted/40",
               operationsHealthy ? "text-emerald-300" : "text-amber-300"
             )}
           >
             <Activity className="mr-1.5 h-3.5 w-3.5" />
             {operationsHealthy ? "All modules responsive" : "Needs attention"}
           </Badge>
-          <Badge variant="outline" className="border-white/10 bg-white/5">
+          <Badge variant="outline" className="border-border bg-muted/40">
             <Clock className="mr-1.5 h-3.5 w-3.5" />
             Latest order{" "}
             {latestOrder ? formatRelative(latestOrder.createdAt) : "pending"}

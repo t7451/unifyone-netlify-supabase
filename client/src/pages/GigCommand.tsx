@@ -74,7 +74,7 @@ function DemandBadge({ level }: { level: "high" | "medium" | "low" }) {
   const map = {
     high: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
     medium: "bg-amber-500/20 text-amber-400 border-amber-500/30",
-    low: "bg-gray-500/20 text-gray-400 border-gray-500/30",
+    low: "bg-muted/50 text-muted-foreground border-border",
   };
   return (
     <span
@@ -445,8 +445,8 @@ export default function GigCommand() {
     ({
       high: "text-emerald-400",
       medium: "text-amber-400",
-      low: "text-gray-400",
-    })[impact] ?? "text-gray-400";
+      low: "text-muted-foreground",
+    })[impact] ?? "text-muted-foreground";
 
   return (
     <>
@@ -467,7 +467,7 @@ export default function GigCommand() {
             {timerActive && (
               <Badge
                 variant="outline"
-                className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30 text-sm px-3 py-1 font-mono"
+                className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30 text-sm px-3 py-1 font-sans"
               >
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse mr-2 inline-block" />
                 {formatDuration(elapsed)}
@@ -485,7 +485,7 @@ export default function GigCommand() {
           {/* Left column: Shift Control + Stats */}
           <div className="xl:col-span-1 space-y-4">
             {/* Shift Control Card */}
-            <Card className="border-border/50 bg-card/80 backdrop-blur">
+            <Card className="border-border bg-card">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Car className="h-4 w-4 text-primary" />
@@ -541,6 +541,7 @@ export default function GigCommand() {
                           Client, project or platform name
                         </Label>
                         <Input
+                          className="min-h-11"
                           id="shift-work-name"
                           value={customPlatform}
                           maxLength={100}
@@ -551,7 +552,7 @@ export default function GigCommand() {
                         />
                       </div>
                     )}
-                    <div className="rounded-xl border p-3 text-sm">
+                    <div className="rounded-lg border p-3 text-sm">
                       <label className="flex items-start gap-3">
                         <input
                           type="checkbox"
@@ -581,7 +582,7 @@ export default function GigCommand() {
                   <>
                     {/* Timer display */}
                     <div className="text-center py-3">
-                      <div className="font-mono text-4xl font-bold text-foreground tabular-nums">
+                      <div className="font-sans text-4xl font-bold text-foreground tabular-nums">
                         {formatDuration(elapsed)}
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
@@ -642,7 +643,7 @@ export default function GigCommand() {
                       </Button>
                     ) : (
                       <form
-                        className="space-y-4 border border-border/50 rounded-xl p-4"
+                        className="space-y-4 border border-border rounded-lg p-4"
                         onSubmit={event => {
                           event.preventDefault();
                           void handleEndShift();
@@ -785,7 +786,7 @@ export default function GigCommand() {
 
             {/* KPI Cards */}
             <div className="grid grid-cols-2 gap-3">
-              <Card className="border-border/50 bg-card/80">
+              <Card className="border-border bg-card">
                 <CardContent className="pt-4 pb-3 px-4">
                   <div className="flex items-center gap-2 mb-1">
                     <DollarSign className="h-3.5 w-3.5 text-emerald-400" />
@@ -809,10 +810,10 @@ export default function GigCommand() {
                   </p>
                 </CardContent>
               </Card>
-              <Card className="border-border/50 bg-card/80">
+              <Card className="border-border bg-card">
                 <CardContent className="pt-4 pb-3 px-4">
                   <div className="flex items-center gap-2 mb-1">
-                    <Route className="h-3.5 w-3.5 text-blue-400" />
+                    <Route className="h-3.5 w-3.5 text-muted-foreground" />
                     <span className="text-xs text-muted-foreground">
                       YTD Miles
                     </span>
@@ -829,10 +830,10 @@ export default function GigCommand() {
                   <p className="text-xs text-muted-foreground">miles logged</p>
                 </CardContent>
               </Card>
-              <Card className="border-border/50 bg-card/80">
+              <Card className="border-border bg-card">
                 <CardContent className="pt-4 pb-3 px-4">
                   <div className="flex items-center gap-2 mb-1">
-                    <TrendingUp className="h-3.5 w-3.5 text-amber-400" />
+                    <TrendingUp className="h-3.5 w-3.5 text-muted-foreground" />
                     <span className="text-xs text-muted-foreground">
                       Tax Deduction
                     </span>
@@ -849,10 +850,10 @@ export default function GigCommand() {
                   </p>
                 </CardContent>
               </Card>
-              <Card className="border-border/50 bg-card/80">
+              <Card className="border-border bg-card">
                 <CardContent className="pt-4 pb-3 px-4">
                   <div className="flex items-center gap-2 mb-1">
-                    <Clock className="h-3.5 w-3.5 text-purple-400" />
+                    <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                     <span className="text-xs text-muted-foreground">
                       Completed shifts
                     </span>
@@ -876,17 +877,17 @@ export default function GigCommand() {
             />
 
             {/* AI Shortcuts */}
-            <Card className="border-border/50 bg-card/80">
+            <Card className="border-border bg-card">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-amber-400" />
+                    <Sparkles className="h-4 w-4 text-primary" />
                     AI Shortcuts
                   </CardTitle>
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="h-7 text-xs"
+                    className="min-h-11 text-xs"
                     onClick={handleGenerateShortcuts}
                     disabled={generateShortcuts.isPending}
                   >
@@ -939,7 +940,7 @@ export default function GigCommand() {
           {/* Right column: Map + Intelligence + Mileage */}
           <div className="xl:col-span-2 space-y-4">
             {/* Map */}
-            <Card className="border-border/50 bg-card/80 overflow-hidden">
+            <Card className="border-border bg-card overflow-hidden">
               <CardHeader className="pb-2 flex-row items-center justify-between">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Navigation className="h-4 w-4 text-primary" />
@@ -954,7 +955,7 @@ export default function GigCommand() {
                   )}
                 </CardTitle>
                 {currentPos && (
-                  <span className="text-xs text-muted-foreground font-mono">
+                  <span className="text-xs text-muted-foreground font-sans">
                     {currentPos.lat.toFixed(4)}, {currentPos.lng.toFixed(4)}
                   </span>
                 )}
@@ -974,7 +975,7 @@ export default function GigCommand() {
                         polylineRef.current = new google.maps.Polyline({
                           map,
                           path: routePath,
-                          strokeColor: "#6366f1",
+                          strokeColor: "#f39450",
                           strokeOpacity: 0.9,
                           strokeWeight: 4,
                         });
@@ -1006,7 +1007,7 @@ export default function GigCommand() {
             </Card>
 
             {/* Route Intelligence */}
-            <Card className="border-border/50 bg-card/80">
+            <Card className="border-border bg-card">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <CardTitle className="text-base flex items-center gap-2">
@@ -1019,7 +1020,7 @@ export default function GigCommand() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="h-7 text-xs"
+                    className="min-h-11 text-xs"
                     onClick={() => void refetchIntelligence()}
                     disabled={
                       fetchingIntel ||
@@ -1038,7 +1039,7 @@ export default function GigCommand() {
               <CardContent>
                 {routeLocked ? (
                   <div className="flex flex-col items-center gap-3 py-6 text-center">
-                    <Sparkles className="h-8 w-8 text-violet-400" />
+                    <Sparkles className="h-8 w-8 text-primary" />
                     <p className="text-sm text-muted-foreground">
                       Route intelligence — hot zones, timing &amp; earnings tips
                       — is a Pro feature.
@@ -1046,7 +1047,7 @@ export default function GigCommand() {
                     <Button
                       asChild
                       size="sm"
-                      className="bg-violet-600 hover:bg-violet-700 text-white"
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground"
                     >
                       <Link href="/gig-worker-plans">Upgrade to Pro</Link>
                     </Button>
@@ -1151,15 +1152,15 @@ export default function GigCommand() {
             </Card>
 
             {/* Mileage Log + Tax Calculator */}
-            <Card className="border-border/50 bg-card/80">
+            <Card className="border-border bg-card">
               <CardHeader className="pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Route className="h-4 w-4 text-blue-400" />
+                  <Route className="h-4 w-4 text-muted-foreground" />
                   Recent work &amp; mileage
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="mb-4 rounded-xl bg-muted/30 p-4 text-sm">
+                <div className="mb-4 rounded-lg bg-muted/30 p-4 text-sm">
                   <p className="font-medium">Your mileage record</p>
                   <p className="mt-1 text-muted-foreground">
                     {loadingMileage
@@ -1191,7 +1192,7 @@ export default function GigCommand() {
                   <div className="overflow-x-auto">
                     <Table className="text-xs">
                       <TableHeader>
-                        <TableRow className="border-border/50">
+                        <TableRow className="border-border">
                           <TableHead>Date</TableHead>
                           <TableHead>Platform</TableHead>
                           <TableHead className="text-right">Miles</TableHead>

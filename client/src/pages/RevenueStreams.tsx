@@ -457,7 +457,7 @@ export default function RevenueStreams() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <TrendingUp className="w-6 h-6 text-teal-400" />
+            <TrendingUp className="w-6 h-6 text-primary" />
             Income Streams
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
@@ -470,7 +470,7 @@ export default function RevenueStreams() {
             setEditingStream(null);
             setDialogOpen(true);
           }}
-          className="bg-teal-500 hover:bg-teal-600 text-white"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground"
         >
           <Plus className="w-4 h-4 mr-2" />
           Add Stream
@@ -479,10 +479,10 @@ export default function RevenueStreams() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="border-teal-500/30 bg-teal-500/5">
+        <Card className="border-primary/30 bg-primary/5">
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground">Monthly Income</p>
-            <p className="text-2xl font-bold text-teal-400 mt-1">
+            <p className="text-2xl font-bold text-primary mt-1">
               $
               {(summary?.totalMonthly ?? 0).toLocaleString("en-US", {
                 minimumFractionDigits: 0,
@@ -524,7 +524,7 @@ export default function RevenueStreams() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
-              <BarChart3 className="w-4 h-4 text-teal-400" />
+              <BarChart3 className="w-4 h-4 text-primary" />
               Income by Type
             </CardTitle>
           </CardHeader>
@@ -574,7 +574,7 @@ export default function RevenueStreams() {
                 setDialogOpen(true);
               }}
               variant="outline"
-              className="border-teal-500/40 text-teal-400"
+              className="border-primary/40 text-primary"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add First Stream
@@ -593,7 +593,7 @@ export default function RevenueStreams() {
             return (
               <Card
                 key={stream.id}
-                className="hover:border-teal-500/30 transition-colors"
+                className="hover:border-primary/30 transition-colors"
               >
                 <CardContent className="p-4 flex items-center gap-4">
                   <div className={`rounded-xl p-3 ${typeCfg.bg} flex-shrink-0`}>
@@ -625,7 +625,7 @@ export default function RevenueStreams() {
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <div className="text-right">
-                          <p className="font-bold text-teal-400">
+                          <p className="font-bold text-primary">
                             $
                             {parseFloat(
                               String(stream.monthlyValue)
@@ -665,7 +665,7 @@ export default function RevenueStreams() {
                         href={stream.affiliateLink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-teal-400 hover:underline flex items-center gap-1 mt-1 truncate max-w-sm"
+                        className="text-xs text-primary hover:underline flex items-center gap-1 mt-1 truncate max-w-sm"
                       >
                         <Link2 className="w-3 h-3 flex-shrink-0" />
                         {stream.affiliateLink}

@@ -75,31 +75,31 @@ export default function AccountSettings() {
         {/* Profile Card */}
         <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-white text-base flex items-center gap-2">
-              <User className="w-4 h-4 text-[#D4A843]" />
+            <CardTitle className="text-foreground text-base flex items-center gap-2">
+              <User className="w-4 h-4 text-primary" />
               Profile
             </CardTitle>
-            <CardDescription className="text-gray-400">
+            <CardDescription className="text-muted-foreground">
               Your personal information and display name
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
             {/* Avatar + basic info */}
-            <div className="flex items-center gap-4 p-4 rounded-lg bg-white/5 border border-white/10">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#D4A843] to-[#B8863B] flex items-center justify-center text-[#020202] font-bold text-xl shrink-0">
+            <div className="flex items-center gap-4 p-4 rounded-lg bg-muted/40 border border-border">
+              <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl shrink-0">
                 {user?.name?.[0]?.toUpperCase() ?? "U"}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-white font-semibold text-lg truncate">
+                <p className="text-foreground font-semibold text-lg truncate">
                   {user?.name ?? "Unnamed User"}
                 </p>
-                <p className="text-gray-400 text-sm truncate">
+                <p className="text-muted-foreground text-sm truncate">
                   {user?.email ?? "No email"}
                 </p>
                 <div className="flex items-center gap-2 mt-1">
                   <Badge
                     variant="outline"
-                    className="border-[#D4A843]/30 text-[#D4A843] text-xs capitalize"
+                    className="border-primary/30 text-primary text-xs capitalize"
                   >
                     {user?.role ?? "user"}
                   </Badge>
@@ -115,21 +115,23 @@ export default function AccountSettings() {
               </div>
             </div>
 
-            <Separator className="bg-white/10" />
+            <Separator className="bg-muted/40" />
 
             {/* Edit name */}
             <div className="space-y-1.5">
-              <Label className="text-gray-300 text-sm">Display Name</Label>
+              <Label className="text-muted-foreground text-sm">
+                Display Name
+              </Label>
               <Input
                 value={name || user?.name || ""}
                 onChange={e => setName(e.target.value)}
                 placeholder="Your display name"
-                className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50"
+                className="bg-muted/40 border-border text-foreground focus:border-primary/50"
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-gray-300 text-sm">Username</Label>
+              <Label className="text-muted-foreground text-sm">Username</Label>
               <Input
                 value={
                   username ||
@@ -138,25 +140,25 @@ export default function AccountSettings() {
                 }
                 onChange={e => setUsername(e.target.value)}
                 placeholder="yourname"
-                className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50"
+                className="bg-muted/40 border-border text-foreground focus:border-primary/50"
               />
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 You can sign in with this username or your email address.
               </p>
             </div>
 
             {/* Email (read-only) */}
             <div className="space-y-1.5">
-              <Label className="text-gray-300 text-sm flex items-center gap-2">
+              <Label className="text-muted-foreground text-sm flex items-center gap-2">
                 <Mail className="w-3.5 h-3.5" />
                 Email Address
               </Label>
               <Input
                 value={user?.email ?? ""}
                 disabled
-                className="bg-white/5 border-white/10 text-gray-500"
+                className="bg-muted/40 border-border text-muted-foreground"
               />
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 Email is managed through your authentication provider.
               </p>
             </div>
@@ -167,7 +169,7 @@ export default function AccountSettings() {
                 disabled={
                   updateProfile.isPending || (!name.trim() && !username.trim())
                 }
-                className="bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-semibold"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
               >
                 {updateProfile.isPending ? (
                   <>
@@ -185,22 +187,22 @@ export default function AccountSettings() {
         {/* Account Information */}
         <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-white text-base flex items-center gap-2">
-              <Fingerprint className="w-4 h-4 text-[#6A1B9A]" />
+            <CardTitle className="text-foreground text-base flex items-center gap-2">
+              <Fingerprint className="w-4 h-4 text-primary" />
               Account Information
             </CardTitle>
-            <CardDescription className="text-gray-400">
+            <CardDescription className="text-muted-foreground">
               Unique identifiers and account metadata
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {/* Account ID */}
-            <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40">
               <div>
-                <p className="text-gray-400 text-xs font-medium uppercase tracking-wider">
+                <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
                   Account ID
                 </p>
-                <p className="text-white text-sm font-mono mt-0.5">
+                <p className="text-foreground text-sm font-mono mt-0.5">
                   {user?.openId
                     ? `${user.openId.slice(0, 8)}...${user.openId.slice(-4)}`
                     : "N/A"}
@@ -209,37 +211,37 @@ export default function AccountSettings() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="shrink-0 hover:bg-white/10"
+                className="shrink-0 hover:bg-muted/40"
                 onClick={copyId}
               >
                 {copiedId ? (
                   <Check className="w-4 h-4 text-emerald-400" />
                 ) : (
-                  <Copy className="w-4 h-4 text-gray-400" />
+                  <Copy className="w-4 h-4 text-muted-foreground" />
                 )}
               </Button>
             </div>
 
             {/* User ID */}
-            <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40">
               <div>
-                <p className="text-gray-400 text-xs font-medium uppercase tracking-wider">
+                <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
                   User ID
                 </p>
-                <p className="text-white text-sm font-mono mt-0.5">
+                <p className="text-foreground text-sm font-mono mt-0.5">
                   {user?.id ?? "N/A"}
                 </p>
               </div>
-              <Shield className="w-4 h-4 text-gray-600" />
+              <Shield className="w-4 h-4 text-muted-foreground" />
             </div>
 
             {/* Role */}
-            <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40">
               <div>
-                <p className="text-gray-400 text-xs font-medium uppercase tracking-wider">
+                <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
                   Role
                 </p>
-                <p className="text-white text-sm mt-0.5 capitalize">
+                <p className="text-foreground text-sm mt-0.5 capitalize">
                   {user?.role ?? "user"}
                 </p>
               </div>
@@ -248,7 +250,7 @@ export default function AccountSettings() {
                 className={
                   user?.role === "admin"
                     ? "border-amber-500/30 text-amber-400 text-xs"
-                    : "border-[#D4A843]/30 text-[#D4A843] text-xs"
+                    : "border-primary/30 text-primary text-xs"
                 }
               >
                 {user?.role ?? "user"}
@@ -256,24 +258,24 @@ export default function AccountSettings() {
             </div>
 
             {/* Login Method */}
-            <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40">
               <div>
-                <p className="text-gray-400 text-xs font-medium uppercase tracking-wider">
+                <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
                   Login Method
                 </p>
-                <p className="text-white text-sm mt-0.5 capitalize">
+                <p className="text-foreground text-sm mt-0.5 capitalize">
                   {(user as { loginMethod?: string | null })?.loginMethod ??
                     "OAuth"}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40">
               <div>
-                <p className="text-gray-400 text-xs font-medium uppercase tracking-wider">
+                <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
                   Username
                 </p>
-                <p className="text-white text-sm mt-0.5">
+                <p className="text-foreground text-sm mt-0.5">
                   {(user as { username?: string | null })?.username ??
                     "Not set"}
                 </p>
@@ -282,14 +284,14 @@ export default function AccountSettings() {
 
             {/* Dates */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-              <div className="p-3 rounded-lg bg-white/5">
+              <div className="p-3 rounded-lg bg-muted/40">
                 <div className="flex items-center gap-2 mb-1">
-                  <Calendar className="w-3.5 h-3.5 text-gray-500" />
-                  <p className="text-gray-400 text-xs font-medium uppercase tracking-wider">
+                  <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
+                  <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
                     Member Since
                   </p>
                 </div>
-                <p className="text-white text-sm">
+                <p className="text-foreground text-sm">
                   {formatDate(
                     (user as Record<string, unknown>)?.createdAt as
                       | string
@@ -297,14 +299,14 @@ export default function AccountSettings() {
                   )}
                 </p>
               </div>
-              <div className="p-3 rounded-lg bg-white/5">
+              <div className="p-3 rounded-lg bg-muted/40">
                 <div className="flex items-center gap-2 mb-1">
-                  <Calendar className="w-3.5 h-3.5 text-gray-500" />
-                  <p className="text-gray-400 text-xs font-medium uppercase tracking-wider">
+                  <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
+                  <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
                     Last Sign-In
                   </p>
                 </div>
-                <p className="text-white text-sm">
+                <p className="text-foreground text-sm">
                   {formatDate(
                     (user as Record<string, unknown>)?.lastSignedIn as
                       | string

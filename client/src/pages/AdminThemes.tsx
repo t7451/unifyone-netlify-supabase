@@ -39,7 +39,7 @@ import { toast } from "sonner";
 
 // ── Status badge ──────────────────────────────────────────────────────────────
 const STATUS_STYLES: Record<string, string> = {
-  draft: "bg-slate-500/15 text-slate-400 border-slate-500/20",
+  draft: "bg-slate-500/15 text-muted-foreground border-slate-500/20",
   pending_review: "bg-amber-500/15 text-amber-400 border-amber-500/20",
   published: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
   archived: "bg-red-500/15 text-red-400 border-red-500/20",
@@ -198,9 +198,9 @@ function ThemeFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="bg-[#020202] border-white/10 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-card border-border text-foreground max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-white">
+          <DialogTitle className="text-foreground">
             {editTheme
               ? "Edit Storefront Theme"
               : "Upload New Storefront Theme"}
@@ -211,7 +211,7 @@ function ThemeFormDialog({
           {/* Basic info */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-slate-300 text-sm">
+              <Label className="text-muted-foreground text-sm">
                 Storefront Theme Name *
               </Label>
               <Input
@@ -221,53 +221,59 @@ function ThemeFormDialog({
                   if (!editTheme) set("slug", slugify(e.target.value));
                 }}
                 placeholder="e.g. Horizon Commerce"
-                className="bg-white/5 border-white/10 text-white placeholder:text-slate-600"
+                className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-slate-300 text-sm">Slug *</Label>
+              <Label className="text-muted-foreground text-sm">Slug *</Label>
               <Input
                 value={form.slug}
                 onChange={e => set("slug", e.target.value)}
                 placeholder="horizon-commerce"
-                className="bg-white/5 border-white/10 text-white placeholder:text-slate-600"
+                className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-slate-300 text-sm">Short Description</Label>
+            <Label className="text-muted-foreground text-sm">
+              Short Description
+            </Label>
             <Input
               value={form.description}
               onChange={e => set("description", e.target.value)}
               placeholder="One-line summary shown on cards"
-              className="bg-white/5 border-white/10 text-white placeholder:text-slate-600"
+              className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground"
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-slate-300 text-sm">Long Description</Label>
+            <Label className="text-muted-foreground text-sm">
+              Long Description
+            </Label>
             <Textarea
               value={form.longDescription}
               onChange={e => set("longDescription", e.target.value)}
               placeholder="Detailed description shown on the theme detail page"
               rows={4}
-              className="bg-white/5 border-white/10 text-white placeholder:text-slate-600 resize-none"
+              className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground resize-none"
             />
           </div>
 
           {/* Pricing */}
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-slate-300 text-sm">Price Type</Label>
+              <Label className="text-muted-foreground text-sm">
+                Price Type
+              </Label>
               <Select
                 value={form.priceType}
                 onValueChange={v => set("priceType", v)}
               >
-                <SelectTrigger className="bg-white/5 border-white/10 text-slate-300">
+                <SelectTrigger className="bg-muted/40 border-border text-muted-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#020202] border-white/10">
+                <SelectContent className="bg-card border-border">
                   <SelectItem value="free">Free</SelectItem>
                   <SelectItem value="paid">Paid (one-time)</SelectItem>
                   <SelectItem value="subscription">Subscription</SelectItem>
@@ -277,23 +283,25 @@ function ThemeFormDialog({
             {form.priceType !== "free" && (
               <>
                 <div className="space-y-1.5">
-                  <Label className="text-slate-300 text-sm">Price (USD)</Label>
+                  <Label className="text-muted-foreground text-sm">
+                    Price (USD)
+                  </Label>
                   <Input
                     value={form.price}
                     onChange={e => set("price", e.target.value)}
                     placeholder="29.00"
-                    className="bg-white/5 border-white/10 text-white placeholder:text-slate-600"
+                    className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-slate-300 text-sm">
+                  <Label className="text-muted-foreground text-sm">
                     Stripe Price ID
                   </Label>
                   <Input
                     value={form.stripePriceId}
                     onChange={e => set("stripePriceId", e.target.value)}
                     placeholder="price_..."
-                    className="bg-white/5 border-white/10 text-white placeholder:text-slate-600"
+                    className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground"
                   />
                 </div>
               </>
@@ -303,34 +311,36 @@ function ThemeFormDialog({
           {/* URLs */}
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label className="text-slate-300 text-sm">
+              <Label className="text-muted-foreground text-sm">
                 Thumbnail URL (CDN)
               </Label>
               <Input
                 value={form.thumbnailUrl}
                 onChange={e => set("thumbnailUrl", e.target.value)}
                 placeholder="https://cdn.example.com/theme-thumbnail.png"
-                className="bg-white/5 border-white/10 text-white placeholder:text-slate-600"
+                className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-slate-300 text-sm">Live Preview URL</Label>
+              <Label className="text-muted-foreground text-sm">
+                Live Preview URL
+              </Label>
               <Input
                 value={form.previewUrl}
                 onChange={e => set("previewUrl", e.target.value)}
                 placeholder="https://preview.example.com/theme"
-                className="bg-white/5 border-white/10 text-white placeholder:text-slate-600"
+                className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-slate-300 text-sm">
+              <Label className="text-muted-foreground text-sm">
                 Download URL (S3/CDN)
               </Label>
               <Input
                 value={form.downloadUrl}
                 onChange={e => set("downloadUrl", e.target.value)}
                 placeholder="https://cdn.example.com/theme.zip"
-                className="bg-white/5 border-white/10 text-white placeholder:text-slate-600"
+                className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
           </div>
@@ -338,15 +348,17 @@ function ThemeFormDialog({
           {/* Metadata */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-slate-300 text-sm">Complexity</Label>
+              <Label className="text-muted-foreground text-sm">
+                Complexity
+              </Label>
               <Select
                 value={form.complexity}
                 onValueChange={v => set("complexity", v)}
               >
-                <SelectTrigger className="bg-white/5 border-white/10 text-slate-300">
+                <SelectTrigger className="bg-muted/40 border-border text-muted-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#020202] border-white/10">
+                <SelectContent className="bg-card border-border">
                   <SelectItem value="starter">Starter</SelectItem>
                   <SelectItem value="standard">Standard</SelectItem>
                   <SelectItem value="advanced">Advanced</SelectItem>
@@ -354,30 +366,30 @@ function ThemeFormDialog({
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-slate-300 text-sm">Industry</Label>
+              <Label className="text-muted-foreground text-sm">Industry</Label>
               <Input
                 value={form.industry}
                 onChange={e => set("industry", e.target.value)}
                 placeholder="e.g. E-commerce, SaaS, Portfolio"
-                className="bg-white/5 border-white/10 text-white placeholder:text-slate-600"
+                className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-slate-300 text-sm">
+            <Label className="text-muted-foreground text-sm">
               Tags (comma-separated)
             </Label>
             <Input
               value={form.tags}
               onChange={e => set("tags", e.target.value)}
               placeholder="dark, minimal, responsive, tailwind"
-              className="bg-white/5 border-white/10 text-white placeholder:text-slate-600"
+              className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground"
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-slate-300 text-sm">
+            <Label className="text-muted-foreground text-sm">
               Features (one per line)
             </Label>
             <Textarea
@@ -387,31 +399,31 @@ function ThemeFormDialog({
                 "Responsive design\nDark mode support\nStripe integration\nSEO optimized"
               }
               rows={4}
-              className="bg-white/5 border-white/10 text-white placeholder:text-slate-600 resize-none"
+              className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground resize-none"
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-slate-300 text-sm">
+            <Label className="text-muted-foreground text-sm">
               Tech Stack (comma-separated)
             </Label>
             <Input
               value={form.techStack}
               onChange={e => set("techStack", e.target.value)}
               placeholder="React, Tailwind CSS, TypeScript, Vite"
-              className="bg-white/5 border-white/10 text-white placeholder:text-slate-600"
+              className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground"
             />
           </div>
 
           {/* Status + featured */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-slate-300 text-sm">Status</Label>
+              <Label className="text-muted-foreground text-sm">Status</Label>
               <Select value={form.status} onValueChange={v => set("status", v)}>
-                <SelectTrigger className="bg-white/5 border-white/10 text-slate-300">
+                <SelectTrigger className="bg-muted/40 border-border text-muted-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#020202] border-white/10">
+                <SelectContent className="bg-card border-border">
                   <SelectItem value="draft">Draft</SelectItem>
                   <SelectItem value="pending_review">Pending Review</SelectItem>
                   <SelectItem value="published">Published</SelectItem>
@@ -420,15 +432,15 @@ function ThemeFormDialog({
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-slate-300 text-sm">Featured</Label>
+              <Label className="text-muted-foreground text-sm">Featured</Label>
               <Select
                 value={form.featured ? "yes" : "no"}
                 onValueChange={v => set("featured", v === "yes")}
               >
-                <SelectTrigger className="bg-white/5 border-white/10 text-slate-300">
+                <SelectTrigger className="bg-muted/40 border-border text-muted-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#020202] border-white/10">
+                <SelectContent className="bg-card border-border">
                   <SelectItem value="no">Not featured</SelectItem>
                   <SelectItem value="yes">Featured ⭐</SelectItem>
                 </SelectContent>
@@ -441,14 +453,14 @@ function ThemeFormDialog({
           <Button
             variant="outline"
             onClick={onClose}
-            className="border-white/10 text-slate-300"
+            className="border-border text-muted-foreground"
           >
             Cancel
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={isPending || !form.name}
-            className="bg-gradient-to-r from-[#D4A843] to-[#B8863B] text-[#020202] font-semibold"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
           >
             {isPending
               ? "Saving…"
@@ -501,7 +513,7 @@ export default function AdminThemes() {
   if (user?.role !== "admin") {
     return (
       <div className="text-center py-20">
-        <p className="text-slate-400">Admin access required.</p>
+        <p className="text-muted-foreground">Admin access required.</p>
       </div>
     );
   }
@@ -511,10 +523,10 @@ export default function AdminThemes() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">
+          <h1 className="text-2xl font-bold text-foreground">
             Storefront Themes Admin
           </h1>
-          <p className="text-slate-400 text-sm mt-1">
+          <p className="text-muted-foreground text-sm mt-1">
             Manage the optional storefront-theme add-on — themes, pricing, and
             reviews
           </p>
@@ -523,7 +535,7 @@ export default function AdminThemes() {
           <Button
             variant="outline"
             onClick={() => navigate("/themes")}
-            className="border-white/10 bg-white/5 text-slate-300 gap-2"
+            className="border-border bg-muted/40 text-muted-foreground gap-2"
           >
             <Eye className="w-4 h-4" />
             View Storefront Themes
@@ -533,7 +545,7 @@ export default function AdminThemes() {
               setEditTheme(null);
               setShowForm(true);
             }}
-            className="bg-gradient-to-r from-[#D4A843] to-[#B8863B] text-[#020202] font-semibold gap-2"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold gap-2"
           >
             <Plus className="w-4 h-4" />
             Upload Storefront Theme
@@ -548,7 +560,7 @@ export default function AdminThemes() {
             label: "Total Storefront Themes",
             value: themes.length,
             icon: Package,
-            color: "text-[#D4A843]",
+            color: "text-primary",
           },
           {
             label: "Published",
@@ -571,19 +583,21 @@ export default function AdminThemes() {
         ].map(stat => (
           <div
             key={stat.label}
-            className="bg-[#020202] border border-white/8 rounded-xl p-4"
+            className="bg-card border border-border rounded-xl p-4"
           >
             <div className="flex items-center gap-2 mb-1">
               <stat.icon className={cn("w-4 h-4", stat.color)} />
-              <span className="text-xs text-slate-500">{stat.label}</span>
+              <span className="text-xs text-muted-foreground">
+                {stat.label}
+              </span>
             </div>
-            <p className="text-2xl font-bold text-white">{stat.value}</p>
+            <p className="text-2xl font-bold text-foreground">{stat.value}</p>
           </div>
         ))}
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 bg-white/5 border border-white/8 rounded-lg p-1 w-fit">
+      <div className="flex items-center gap-1 bg-muted/40 border border-border rounded-lg p-1 w-fit">
         {(["themes", "reviews"] as const).map(tab => (
           <button
             key={tab}
@@ -591,14 +605,14 @@ export default function AdminThemes() {
             className={cn(
               "px-4 py-1.5 rounded-md text-sm font-medium transition-all capitalize",
               reviewTab === tab
-                ? "bg-white/10 text-white"
-                : "text-slate-500 hover:text-white"
+                ? "bg-muted/40 text-foreground"
+                : "text-muted-foreground hover:text-foreground"
             )}
           >
             {tab === "reviews" && pendingReviews.length > 0 ? (
               <span className="flex items-center gap-1.5">
                 Reviews
-                <span className="bg-amber-500 text-white text-xs px-1.5 py-0.5 rounded-full leading-none">
+                <span className="bg-amber-500 text-foreground text-xs px-1.5 py-0.5 rounded-full leading-none">
                   {pendingReviews.length}
                 </span>
               </span>
@@ -613,35 +627,35 @@ export default function AdminThemes() {
 
       {/* Themes table */}
       {reviewTab === "themes" && (
-        <div className="bg-[#020202] border border-white/8 rounded-xl overflow-hidden">
+        <div className="bg-card border border-border rounded-xl overflow-hidden">
           {isLoading ? (
-            <div className="p-8 text-center text-slate-500 text-sm">
+            <div className="p-8 text-center text-muted-foreground text-sm">
               Loading themes…
             </div>
           ) : themes.length === 0 ? (
             <div className="p-12 text-center">
-              <Package className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-              <p className="text-slate-400 text-sm">
+              <Package className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+              <p className="text-muted-foreground text-sm">
                 No storefront themes yet. Upload your first one.
               </p>
             </div>
           ) : (
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-white/8 text-left">
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <tr className="border-b border-border text-left">
+                  <th className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Storefront Theme
                   </th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Price
                   </th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Installs
                   </th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -650,7 +664,7 @@ export default function AdminThemes() {
                 {themes.map((theme: any) => (
                   <tr
                     key={theme.id}
-                    className="border-b border-white/5 hover:bg-white/3 transition-colors"
+                    className="border-b border-border hover:bg-white/3 transition-colors"
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
@@ -658,23 +672,23 @@ export default function AdminThemes() {
                           <img
                             src={theme.thumbnailUrl}
                             alt={theme.name}
-                            className="w-10 h-7 object-cover rounded border border-white/10"
+                            className="w-10 h-7 object-cover rounded border border-border"
                           />
                         ) : (
-                          <div className="w-10 h-7 bg-white/5 rounded border border-white/10 flex items-center justify-center">
-                            <Package className="w-3 h-3 text-slate-600" />
+                          <div className="w-10 h-7 bg-muted/40 rounded border border-border flex items-center justify-center">
+                            <Package className="w-3 h-3 text-muted-foreground" />
                           </div>
                         )}
                         <div>
                           <div className="flex items-center gap-1.5">
-                            <span className="font-medium text-white">
+                            <span className="font-medium text-foreground">
                               {theme.name}
                             </span>
                             {theme.featured && (
                               <Sparkles className="w-3 h-3 text-amber-400" />
                             )}
                           </div>
-                          <span className="text-xs text-slate-500">
+                          <span className="text-xs text-muted-foreground">
                             {theme.slug}
                           </span>
                         </div>
@@ -686,7 +700,7 @@ export default function AdminThemes() {
                           Free
                         </span>
                       ) : (
-                        <span className="text-[#D4A843] text-xs font-semibold">
+                        <span className="text-primary text-xs font-semibold">
                           ${theme.price}
                         </span>
                       )}
@@ -703,7 +717,7 @@ export default function AdminThemes() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="flex items-center gap-1 text-slate-400 text-xs">
+                      <span className="flex items-center gap-1 text-muted-foreground text-xs">
                         <Download className="w-3 h-3" />
                         {theme.installCount.toLocaleString()}
                       </span>
@@ -717,7 +731,7 @@ export default function AdminThemes() {
                             setEditTheme(theme);
                             setShowForm(true);
                           }}
-                          className="h-7 px-2 border-white/10 bg-white/5 text-slate-300 hover:text-white"
+                          className="h-7 px-2 border-border bg-muted/40 text-muted-foreground hover:text-foreground"
                         >
                           <Edit className="w-3 h-3" />
                         </Button>
@@ -747,9 +761,9 @@ export default function AdminThemes() {
       {reviewTab === "reviews" && (
         <div className="space-y-3">
           {pendingReviews.length === 0 ? (
-            <div className="bg-[#020202] border border-white/8 rounded-xl p-12 text-center">
+            <div className="bg-card border border-border rounded-xl p-12 text-center">
               <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto mb-3" />
-              <p className="text-slate-400 text-sm">
+              <p className="text-muted-foreground text-sm">
                 No pending reviews. All caught up!
               </p>
             </div>
@@ -757,7 +771,7 @@ export default function AdminThemes() {
             pendingReviews.map((review: any) => (
               <div
                 key={review.id}
-                className="bg-[#020202] border border-white/8 rounded-xl p-4"
+                className="bg-card border border-border rounded-xl p-4"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
@@ -770,26 +784,26 @@ export default function AdminThemes() {
                               "w-3.5 h-3.5",
                               i < review.rating
                                 ? "text-amber-400 fill-amber-400"
-                                : "text-slate-600"
+                                : "text-muted-foreground"
                             )}
                           />
                         ))}
                       </div>
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-muted-foreground">
                         Theme #{review.themeId}
                       </span>
                     </div>
                     {review.title && (
-                      <p className="text-sm font-medium text-white mb-1">
+                      <p className="text-sm font-medium text-foreground mb-1">
                         {review.title}
                       </p>
                     )}
                     {review.body && (
-                      <p className="text-sm text-slate-400 line-clamp-3">
+                      <p className="text-sm text-muted-foreground line-clamp-3">
                         {review.body}
                       </p>
                     )}
-                    <p className="text-xs text-slate-600 mt-2">
+                    <p className="text-xs text-muted-foreground mt-2">
                       {new Date(review.createdAt).toLocaleDateString()}
                     </p>
                   </div>
@@ -802,7 +816,7 @@ export default function AdminThemes() {
                           status: "approved",
                         })
                       }
-                      className="h-7 bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
+                      className="h-7 bg-emerald-600 hover:bg-emerald-700 text-foreground text-xs"
                     >
                       Approve
                     </Button>

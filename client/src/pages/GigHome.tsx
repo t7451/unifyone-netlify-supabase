@@ -39,7 +39,7 @@ const QUICK_LINKS: QuickLink[] = [
       "Compare recorded work after estimated business costs. Set an hourly goal and plan a tax reserve.",
     href: "/work-insights",
     icon: TrendingUp,
-    iconClassName: "bg-emerald-500/15 text-emerald-300",
+    iconClassName: "bg-primary/10 text-primary",
     cta: "Review work profitability",
   },
   {
@@ -48,7 +48,7 @@ const QUICK_LINKS: QuickLink[] = [
       "Review logged earnings, import platform statements, and keep your mileage records together.",
     href: "/money-manager",
     icon: Wallet,
-    iconClassName: "bg-emerald-500/15 text-emerald-300",
+    iconClassName: "bg-primary/10 text-primary",
     cta: "Review your records",
   },
   {
@@ -57,7 +57,7 @@ const QUICK_LINKS: QuickLink[] = [
       "Manage read-only bank and gig connections when available. Provider imports stay separate from manually logged earnings.",
     href: "/connected-money",
     icon: Wallet,
-    iconClassName: "bg-violet-500/15 text-violet-300",
+    iconClassName: "bg-primary/10 text-primary",
     cta: "View account connections",
   },
   {
@@ -66,7 +66,7 @@ const QUICK_LINKS: QuickLink[] = [
       "Log work-related spending and review the costs you have recorded for your business.",
     href: "/work-expenses",
     icon: Receipt,
-    iconClassName: "bg-amber-500/15 text-amber-300",
+    iconClassName: "bg-primary/10 text-primary",
     cta: "Record a business expense",
   },
 ];
@@ -126,20 +126,20 @@ export default function GigHome() {
           <Badge
             variant="outline"
             className={cn(
-              "border-white/10 bg-white/5",
-              activeShift.data ? "text-emerald-300" : "text-slate-300"
+              "border-border bg-muted/30",
+              activeShift.data ? "text-emerald-300" : "text-muted-foreground"
             )}
           >
             <span
               className={cn(
                 "mr-1.5 inline-block h-2 w-2 rounded-full",
-                activeShift.data ? "bg-emerald-400" : "bg-slate-500"
+                activeShift.data ? "bg-emerald-400" : "bg-muted-foreground"
               )}
             />
             {shiftStatus}
           </Badge>
           {subscription.data?.plan ? (
-            <Badge variant="outline" className="border-white/10 bg-white/5">
+            <Badge variant="outline" className="border-border bg-muted/30">
               <Sparkles className="mr-1.5 h-3.5 w-3.5" />
               {subscription.data.plan.name}
             </Badge>
@@ -151,7 +151,7 @@ export default function GigHome() {
           <Button
             variant="outline"
             onClick={() => navigate("/money-manager?add=work")}
-            className="border-white/10 bg-white/5 text-white hover:bg-white/10"
+            className="min-h-11 border-border bg-muted/30 text-foreground hover:bg-muted/60"
           >
             Add past work
           </Button>
@@ -162,7 +162,7 @@ export default function GigHome() {
                 ? void activeShift.refetch()
                 : navigate("/gig-command")
             }
-            className="bg-[#D4A843] font-semibold text-[#020202] hover:bg-[#D4A843]/90"
+            className="min-h-11 bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
           >
             {activeShift.isLoading
               ? "Checking session…"
@@ -202,7 +202,7 @@ export default function GigHome() {
           ),
           helper: "Timed and manual work with hours; before costs and tax",
           icon: Clock,
-          tone: "cyan",
+          tone: "slate",
         },
         {
           label: "Last 7 days · recorded hours",
@@ -215,7 +215,7 @@ export default function GigHome() {
           ),
           helper: "Statement imports do not add working time",
           icon: Route,
-          tone: "violet",
+          tone: "slate",
         },
         {
           label: "Year to date · mileage deduction",
@@ -239,50 +239,52 @@ export default function GigHome() {
       !activeShift.isError &&
       !activeShift.data ? (
         <section
-          className="rounded-2xl border border-[#D4A843]/30 bg-[#D4A843]/5 p-5 sm:p-6"
+          className="rounded-lg border border-border bg-card p-5 sm:p-6"
           aria-labelledby="first-steps-heading"
         >
-          <p className="text-xs font-semibold uppercase tracking-widest text-[#E8C25A]">
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary">
             Start with the work you already do
           </p>
           <h2
             id="first-steps-heading"
-            className="mt-2 text-xl font-semibold text-white"
+            className="mt-2 text-xl font-semibold text-foreground"
           >
             Start building this week’s picture
           </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-300">
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
             You can start tracking now while account linking is being prepared.
             Choose one way to add real records—no bank connection required.
           </p>
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             <Link
               href="/gig-command"
-              className="group rounded-xl border border-white/10 bg-background/50 p-4 transition-colors hover:border-[#D4A843]/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4A843]"
+              className="group rounded-lg border border-border bg-background/50 p-4 transition-colors hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <Navigation className="h-5 w-5 text-[#E8C25A]" />
-              <h3 className="mt-3 font-semibold text-white">Working today?</h3>
-              <p className="mt-1 text-sm text-slate-400">
+              <Navigation className="h-5 w-5 text-primary" />
+              <h3 className="mt-3 font-semibold text-foreground">
+                Working today?
+              </h3>
+              <p className="mt-1 text-sm text-muted-foreground">
                 Track one session, then add earnings and any business miles when
                 you finish.
               </p>
-              <span className="mt-3 inline-flex items-center text-sm font-medium text-[#E8C25A]">
+              <span className="mt-3 inline-flex items-center text-sm font-medium text-primary">
                 Track a work session <ArrowRight className="ml-1 h-4 w-4" />
               </span>
             </Link>
             <Link
               href="/money-manager?add=work"
-              className="group rounded-xl border border-white/10 bg-background/50 p-4 transition-colors hover:border-emerald-400/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+              className="group rounded-lg border border-border bg-background/50 p-4 transition-colors hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <Receipt className="h-5 w-5 text-emerald-300" />
-              <h3 className="mt-3 font-semibold text-white">
+              <Receipt className="h-5 w-5 text-primary" />
+              <h3 className="mt-3 font-semibold text-foreground">
                 Already finished work?
               </h3>
-              <p className="mt-1 text-sm text-slate-400">
+              <p className="mt-1 text-sm text-muted-foreground">
                 Add a delivery shift, rideshare session or client project you
                 have not recorded yet. Include the full working time.
               </p>
-              <span className="mt-3 inline-flex items-center text-sm font-medium text-emerald-300">
+              <span className="mt-3 inline-flex items-center text-sm font-medium text-primary">
                 Add a completed work session{" "}
                 <ArrowRight className="ml-1 h-4 w-4" />
               </span>
@@ -290,12 +292,12 @@ export default function GigHome() {
           </div>
           <Link
             href="/money-manager?tab=import"
-            className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-slate-300 underline underline-offset-4 hover:text-white"
+            className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-muted-foreground underline underline-offset-4 hover:text-foreground"
           >
             <FileUp className="h-4 w-4" />
             Have a platform statement? Preview an earnings import
           </Link>
-          <p className="mt-2 text-xs leading-relaxed text-slate-400">
+          <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
             Add each session once. If its earnings are already in an imported
             statement, do not add the same income again as a manual record.
           </p>
@@ -305,25 +307,25 @@ export default function GigHome() {
       {!activeShift.isLoading && !activeShift.isError && activeShift.data ? (
         <section
           aria-labelledby="active-next-heading"
-          className="rounded-2xl border border-emerald-400/25 bg-emerald-400/5 p-5 sm:p-6"
+          className="rounded-lg border border-emerald-400/25 bg-emerald-400/5 p-5 sm:p-6"
         >
-          <p className="text-xs font-semibold uppercase tracking-widest text-emerald-300">
+          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-300">
             Work in progress
           </p>
           <h2
             id="active-next-heading"
-            className="mt-2 text-xl font-semibold text-white"
+            className="mt-2 text-xl font-semibold text-foreground"
           >
             Finish the session you started
           </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-300">
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
             Your {activeShift.data.platform} session is still active. Return to
             it to check the timer, then add earnings and business miles when you
             finish. Completed results appear in your records afterward.
           </p>
           <Button
             asChild
-            className="mt-4 min-h-11 bg-[#D4A843] font-semibold text-black hover:bg-[#D4A843]/90"
+            className="mt-4 min-h-11 bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
           >
             <Link href="/gig-command">
               Return to your active session{" "}
@@ -334,20 +336,20 @@ export default function GigHome() {
       ) : !weekStats.isLoading && !weekStats.isError && hasWeekRecords ? (
         <section
           aria-labelledby="recorded-next-heading"
-          className="rounded-2xl border border-white/10 bg-card p-5 sm:p-6"
+          className="rounded-lg border border-border bg-card p-5 sm:p-6"
         >
-          <p className="text-xs font-semibold uppercase tracking-widest text-[#E8C25A]">
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary">
             Your next useful step
           </p>
           <h2
             id="recorded-next-heading"
-            className="mt-2 text-xl font-semibold text-white"
+            className="mt-2 text-xl font-semibold text-foreground"
           >
             {week!.totalHours > 0
               ? "See what your recorded hours returned"
               : "Your earnings are in. Working time gives them context."}
           </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-300">
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
             {week!.totalHours > 0
               ? "Review profit after your estimated costs and chosen tax reserve. Compare sources using the working time you actually recorded, then check how they measure up to your hourly goal."
               : "Imported statements add earnings, but not reliable working hours. Use your own hours in the calculator for a scenario, or track your next work session. Re-entering imported income would count it twice."}
@@ -372,8 +374,8 @@ export default function GigHome() {
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
         <Card className="border-border bg-card">
           <CardHeader>
-            <CardTitle className="text-white">Your last 7 days</CardTitle>
-            <p className="text-sm text-slate-400">
+            <CardTitle className="text-foreground">Your last 7 days</CardTitle>
+            <p className="text-sm text-muted-foreground">
               A clear view of the records you have added.
             </p>
           </CardHeader>
@@ -390,9 +392,9 @@ export default function GigHome() {
             ) : weekStats.isError ? (
               <div
                 role="alert"
-                className="rounded-xl border border-dashed border-border p-5"
+                className="rounded-lg border border-dashed border-border p-5"
               >
-                <p className="text-sm text-slate-300">
+                <p className="text-sm text-muted-foreground">
                   Your weekly records could not load. Your recorded work has not
                   been reset.
                 </p>
@@ -407,23 +409,25 @@ export default function GigHome() {
               </div>
             ) : hasWeekRecords ? (
               <>
-                <div className="grid grid-cols-2 gap-4 rounded-xl border border-white/10 bg-background/30 p-4">
+                <div className="grid grid-cols-2 gap-4 rounded-lg border border-border bg-background/30 p-4">
                   <div>
-                    <p className="text-xs text-slate-400">Completed sessions</p>
-                    <p className="mt-1 text-2xl font-semibold text-white">
+                    <p className="text-xs text-muted-foreground">
+                      Completed sessions
+                    </p>
+                    <p className="mt-1 text-2xl font-semibold text-foreground">
                       {week!.totalShifts}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-muted-foreground">
                       Recorded business miles
                     </p>
-                    <p className="mt-1 text-2xl font-semibold text-white">
+                    <p className="mt-1 text-2xl font-semibold text-foreground">
                       {formatMiles(week!.totalMiles)}
                     </p>
                   </div>
                 </div>
-                <p className="mt-4 text-sm leading-relaxed text-slate-400">
+                <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
                   Earnings include logged sessions and imported statements. The
                   hourly figure uses recorded work with hours. Bank activity and
                   provider-linked earnings are shown separately in Connected
@@ -444,11 +448,11 @@ export default function GigHome() {
                 </Button>
               </>
             ) : (
-              <div className="rounded-xl border border-dashed border-border p-5">
-                <p className="font-medium text-white">
+              <div className="rounded-lg border border-dashed border-border p-5">
+                <p className="font-medium text-foreground">
                   No completed records in the last 7 days
                 </p>
-                <p className="mt-2 text-sm leading-relaxed text-slate-400">
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                   {activeShift.data
                     ? "Your current session will appear here after you finish it."
                     : "Earlier records are still available in your earnings history. Start a session or import a statement to add this week's work."}
@@ -463,19 +467,22 @@ export default function GigHome() {
 
         <Card className="border-border bg-card">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-white">
+            <CardTitle className="flex items-center gap-2 text-foreground">
               <Calculator className="h-4 w-4 text-amber-300" />
               Tax planning, without the guesswork
             </CardTitle>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-muted-foreground">
               Keep deductions separate from what you may owe.
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
             {ytdDeduction.isLoading ? (
-              <Skeleton className="h-24 w-full rounded-xl" />
+              <Skeleton className="h-24 w-full rounded-lg" />
             ) : ytdDeduction.isError ? (
-              <div role="alert" className="space-y-3 text-sm text-slate-300">
+              <div
+                role="alert"
+                className="space-y-3 text-sm text-muted-foreground"
+              >
                 <p>Your mileage deduction records could not load.</p>
                 <Button
                   variant="outline"
@@ -486,17 +493,17 @@ export default function GigHome() {
                 </Button>
               </div>
             ) : (
-              <div className="rounded-xl border border-white/10 bg-background/30 p-4">
-                <p className="text-xs text-slate-400">
+              <div className="rounded-lg border border-border bg-background/30 p-4">
+                <p className="text-xs text-muted-foreground">
                   Recorded YTD mileage deduction estimate
                 </p>
-                <p className="mt-1 text-2xl font-semibold text-white">
+                <p className="mt-1 text-2xl font-semibold text-foreground">
                   {formatCurrency(ytd?.ytdDeduction ?? 0)}
                 </p>
-                <p className="mt-1 text-sm text-slate-400">
+                <p className="mt-1 text-sm text-muted-foreground">
                   From {formatMiles(ytd?.ytdMiles ?? 0)} in your records.
                 </p>
-                <p className="mt-3 text-xs leading-relaxed text-slate-400">
+                <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
                   A deduction reduces taxable income. It is not money set aside,
                   a refund, or your estimated tax bill. Review mileage
                   eligibility and the applicable tax-year rate before filing.
@@ -504,7 +511,7 @@ export default function GigHome() {
               </div>
             )}
             <div>
-              <p className="text-sm text-slate-300">
+              <p className="text-sm text-muted-foreground">
                 Your tax reserve depends on your income, expenses and filing
                 situation. Use the estimator to plan a reserve with your own
                 inputs.
@@ -516,8 +523,8 @@ export default function GigHome() {
                 </Link>
               </Button>
             </div>
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-3">
-              <p className="text-xs text-slate-400">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
+              <p className="text-xs text-muted-foreground">
                 Export your logged work and mileage records.
               </p>
               <TaxExportButton />
@@ -527,7 +534,10 @@ export default function GigHome() {
       </div>
 
       <section aria-labelledby="next-step-heading">
-        <h2 id="next-step-heading" className="text-lg font-semibold text-white">
+        <h2
+          id="next-step-heading"
+          className="text-lg font-semibold text-foreground"
+        >
           What do you need to do next?
         </h2>
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -535,7 +545,7 @@ export default function GigHome() {
             <Link
               key={link.href}
               href={link.href}
-              className="group rounded-xl border border-border bg-card p-5 transition-colors hover:border-[#D4A843]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4A843]"
+              className="group rounded-lg border border-border bg-card p-5 transition-colors hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <div
                 className={cn(
@@ -545,11 +555,11 @@ export default function GigHome() {
               >
                 <link.icon className="h-5 w-5" />
               </div>
-              <h3 className="font-medium text-white">{link.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-400">
+              <h3 className="font-medium text-foreground">{link.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                 {link.description}
               </p>
-              <span className="mt-4 inline-flex items-center text-sm font-medium text-[#D4A843]">
+              <span className="mt-4 inline-flex items-center text-sm font-medium text-primary">
                 {link.cta}
                 <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </span>

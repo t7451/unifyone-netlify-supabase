@@ -90,25 +90,25 @@ function ChallengeModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-[#0D1B3E] border border-[#D4A843]/20 text-white max-w-lg">
+      <DialogContent className="bg-card border border-primary/20 text-foreground max-w-lg">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-[#D4A843]">
+          <DialogTitle className="flex items-center gap-2 text-primary">
             <Swords className="w-5 h-5" />
             Challenge {friendName}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-muted-foreground">
             Pick an active challenge to compete on:
           </p>
 
           {challenges.isLoading ? (
-            <div className="text-center text-gray-500 py-4">
+            <div className="text-center text-muted-foreground py-4">
               Loading challenges…
             </div>
           ) : challenges.data?.length === 0 ? (
-            <div className="text-center text-gray-500 py-4">
+            <div className="text-center text-muted-foreground py-4">
               No active challenges right now. Ask an admin to create one.
             </div>
           ) : (
@@ -119,21 +119,21 @@ function ChallengeModal({
                   onClick={() => setSelectedChallengeId(c.id)}
                   className={`w-full text-left p-3 rounded-lg border transition-all ${
                     selectedChallengeId === c.id
-                      ? "border-[#D4A843] bg-[#D4A843]/10"
-                      : "border-white/10 bg-white/5 hover:border-white/20"
+                      ? "border-primary bg-primary/10"
+                      : "border-border bg-muted/30 hover:border-white/20"
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-sm">{c.name}</span>
                     <Badge
                       variant="outline"
-                      className="text-[#D4A843] border-[#D4A843]/40 text-xs"
+                      className="text-primary border-primary/40 text-xs"
                     >
                       +{c.pointsReward} pts
                     </Badge>
                   </div>
-                  <p className="text-xs text-gray-400 mt-1">{c.description}</p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">{c.description}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
                     Goal: {c.goal} {c.unit} · Ends {timeAgo(c.endsAt)}
                   </p>
                 </button>
@@ -142,14 +142,14 @@ function ChallengeModal({
           )}
 
           <div>
-            <label className="text-sm text-gray-400 mb-1 block">
+            <label className="text-sm text-muted-foreground mb-1 block">
               Optional trash talk message
             </label>
             <Textarea
               value={message}
               onChange={e => setMessage(e.target.value)}
               placeholder="Think you can beat me? 😏"
-              className="bg-white/5 border-white/10 text-white placeholder:text-gray-600 resize-none"
+              className="bg-muted/30 border-border text-foreground placeholder:text-muted-foreground resize-none"
               rows={2}
               maxLength={500}
             />
@@ -160,7 +160,7 @@ function ChallengeModal({
           <Button
             variant="outline"
             onClick={onClose}
-            className="border-white/20 text-gray-300"
+            className="border-white/20 text-foreground"
           >
             Cancel
           </Button>
@@ -177,7 +177,7 @@ function ChallengeModal({
               });
             }}
             disabled={!selectedChallengeId || challengeFriend.isPending}
-            className="bg-[#D4A843] text-black hover:bg-[#D4A843]/90"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
             <Swords className="w-4 h-4 mr-2" />
             {challengeFriend.isPending ? "Sending…" : "Send Challenge"}
@@ -205,15 +205,15 @@ function FriendsTab() {
 
   if (friends.isLoading)
     return (
-      <div className="text-center text-gray-500 py-12">Loading friends…</div>
+      <div className="text-center text-muted-foreground py-12">Loading friends…</div>
     );
 
   if (!friends.data?.length) {
     return (
       <div className="text-center py-16 space-y-3">
-        <Users className="w-12 h-12 text-gray-600 mx-auto" />
-        <p className="text-gray-400 font-medium">No friends yet</p>
-        <p className="text-gray-600 text-sm">
+        <Users className="w-12 h-12 text-muted-foreground mx-auto" />
+        <p className="text-muted-foreground font-medium">No friends yet</p>
+        <p className="text-muted-foreground text-sm">
           Search for users in the Search tab to add your first friend.
         </p>
       </div>
@@ -225,23 +225,23 @@ function FriendsTab() {
       {friends.data.map(f => (
         <Card
           key={f.friendshipId}
-          className="bg-[#0D1B3E]/60 border border-white/10"
+          className="bg-card border border-border"
         >
           <CardContent className="p-4">
             <div className="flex items-center gap-4">
-              <Avatar className="h-12 w-12 border border-[#D4A843]/30">
-                <AvatarFallback className="bg-[#D4A843]/10 text-[#D4A843] font-bold">
+              <Avatar className="h-12 w-12 border border-primary/30">
+                <AvatarFallback className="bg-primary/10 text-primary font-bold">
                   {(f.name ?? "?").charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-white truncate">
+                <p className="font-semibold text-foreground truncate">
                   {f.name ?? "Unknown"}
                 </p>
-                <p className="text-xs text-gray-400 truncate">{f.email}</p>
+                <p className="text-xs text-muted-foreground truncate">{f.email}</p>
                 <div className="flex items-center gap-3 mt-1">
-                  <span className="text-xs text-[#D4A843]">Lv {f.level}</span>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-primary">Lv {f.level}</span>
+                  <span className="text-xs text-muted-foreground">
                     {f.totalPoints.toLocaleString()} pts
                   </span>
                   <span className="text-xs text-yellow-400 flex items-center gap-1">
@@ -259,7 +259,7 @@ function FriendsTab() {
                       name: f.name ?? "Friend",
                     })
                   }
-                  className="bg-purple-600/20 text-purple-300 border border-purple-600/30 hover:bg-purple-600/40 text-xs"
+                  className="bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 text-xs"
                 >
                   <Swords className="w-3 h-3 mr-1" />
                   Challenge
@@ -272,7 +272,7 @@ function FriendsTab() {
                       removeFriend.mutate({ friendshipId: f.friendshipId });
                     }
                   }}
-                  className="text-gray-500 hover:text-red-400 hover:bg-red-900/20"
+                  className="text-muted-foreground hover:text-red-400 hover:bg-red-900/20"
                 >
                   <UserX className="w-4 h-4" />
                 </Button>
@@ -313,7 +313,7 @@ function SearchTab() {
   return (
     <div className="space-y-4">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
           value={query}
           onChange={e => {
@@ -323,41 +323,41 @@ function SearchTab() {
             setTimeout(() => setDebouncedQuery(v), 400);
           }}
           placeholder="Search by name or email…"
-          className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-gray-600"
+          className="pl-9 bg-muted/30 border-border text-foreground placeholder:text-muted-foreground"
         />
       </div>
 
       {debouncedQuery.length < 2 && (
-        <p className="text-center text-gray-600 text-sm py-8">
+        <p className="text-center text-muted-foreground text-sm py-8">
           Type at least 2 characters to search
         </p>
       )}
 
       {results.isLoading && (
-        <div className="text-center text-gray-500 py-8">Searching…</div>
+        <div className="text-center text-muted-foreground py-8">Searching…</div>
       )}
 
       {results.data?.length === 0 && debouncedQuery.length >= 2 && (
-        <div className="text-center text-gray-500 py-8">
+        <div className="text-center text-muted-foreground py-8">
           No users found for "{debouncedQuery}"
         </div>
       )}
 
       <div className="space-y-2">
         {results.data?.map(u => (
-          <Card key={u.id} className="bg-[#0D1B3E]/60 border border-white/10">
+          <Card key={u.id} className="bg-card border border-border">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <Avatar className="h-10 w-10 border border-white/10">
-                  <AvatarFallback className="bg-white/5 text-gray-300 text-sm">
+                <Avatar className="h-10 w-10 border border-border">
+                  <AvatarFallback className="bg-muted/30 text-foreground text-sm">
                     {(u.name ?? "?").charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-white text-sm truncate">
+                  <p className="font-medium text-foreground text-sm truncate">
                     {u.name ?? "Unknown"}
                   </p>
-                  <p className="text-xs text-gray-500 truncate">{u.email}</p>
+                  <p className="text-xs text-muted-foreground truncate">{u.email}</p>
                 </div>
                 <div className="shrink-0">
                   {u.friendshipStatus === "accepted" ? (
@@ -380,7 +380,7 @@ function SearchTab() {
                       size="sm"
                       onClick={() => sendRequest.mutate({ addresseeId: u.id })}
                       disabled={sendRequest.isPending}
-                      className="bg-[#D4A843]/10 text-[#D4A843] border border-[#D4A843]/30 hover:bg-[#D4A843]/20 text-xs"
+                      className="bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 text-xs"
                     >
                       <UserPlus className="w-3 h-3 mr-1" />
                       Add Friend
@@ -418,14 +418,14 @@ function RequestsTab() {
   const outgoing = requests.data?.outgoing ?? [];
 
   if (requests.isLoading)
-    return <div className="text-center text-gray-500 py-12">Loading…</div>;
+    return <div className="text-center text-muted-foreground py-12">Loading…</div>;
 
   if (!incoming.length && !outgoing.length) {
     return (
       <div className="text-center py-16 space-y-3">
-        <Bell className="w-12 h-12 text-gray-600 mx-auto" />
-        <p className="text-gray-400 font-medium">No pending requests</p>
-        <p className="text-gray-600 text-sm">
+        <Bell className="w-12 h-12 text-muted-foreground mx-auto" />
+        <p className="text-muted-foreground font-medium">No pending requests</p>
+        <p className="text-muted-foreground text-sm">
           Friend requests you send or receive will appear here.
         </p>
       </div>
@@ -436,7 +436,7 @@ function RequestsTab() {
     <div className="space-y-6">
       {incoming.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-gray-400 mb-3 flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
             <Bell className="w-4 h-4" />
             Incoming ({incoming.length})
           </h3>
@@ -444,18 +444,18 @@ function RequestsTab() {
             {incoming.map(r => (
               <Card
                 key={r.friendshipId}
-                className="bg-[#0D1B3E]/60 border border-[#D4A843]/20"
+                className="bg-card border border-primary/20"
               >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10 border border-[#D4A843]/20">
-                      <AvatarFallback className="bg-[#D4A843]/10 text-[#D4A843] text-sm">
+                    <Avatar className="h-10 w-10 border border-primary/20">
+                      <AvatarFallback className="bg-primary/10 text-primary text-sm">
                         {(r.name ?? "?").charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-white text-sm">{r.name}</p>
-                      <p className="text-xs text-gray-500">
+                      <p className="font-medium text-foreground text-sm">{r.name}</p>
+                      <p className="text-xs text-muted-foreground">
                         {timeAgo(r.sentAt)}
                       </p>
                     </div>
@@ -478,7 +478,7 @@ function RequestsTab() {
                           decline.mutate({ friendshipId: r.friendshipId })
                         }
                         disabled={decline.isPending}
-                        className="text-gray-500 hover:text-red-400 hover:bg-red-900/20 text-xs"
+                        className="text-muted-foreground hover:text-red-400 hover:bg-red-900/20 text-xs"
                       >
                         <X className="w-3 h-3" />
                       </Button>
@@ -493,7 +493,7 @@ function RequestsTab() {
 
       {outgoing.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-gray-400 mb-3 flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
             <Clock className="w-4 h-4" />
             Sent ({outgoing.length})
           </h3>
@@ -501,18 +501,18 @@ function RequestsTab() {
             {outgoing.map(r => (
               <Card
                 key={r.friendshipId}
-                className="bg-[#0D1B3E]/40 border border-white/10"
+                className="bg-card border border-border"
               >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-10 w-10 border border-white/10">
-                      <AvatarFallback className="bg-white/5 text-gray-400 text-sm">
+                    <Avatar className="h-10 w-10 border border-border">
+                      <AvatarFallback className="bg-muted/30 text-muted-foreground text-sm">
                         {(r.name ?? "?").charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-white text-sm">{r.name}</p>
-                      <p className="text-xs text-gray-500">
+                      <p className="font-medium text-foreground text-sm">{r.name}</p>
+                      <p className="text-xs text-muted-foreground">
                         Sent {timeAgo(r.sentAt)}
                       </p>
                     </div>
@@ -556,7 +556,7 @@ function ChallengesTab() {
 
   if (challenges.isLoading || results.isLoading)
     return (
-      <div className="text-center text-gray-500 py-12">
+      <div className="text-center text-muted-foreground py-12">
         Loading challenges...
       </div>
     );
@@ -590,9 +590,9 @@ function ChallengesTab() {
   if (!activeReceived.length && !activeSent.length && !resolved.length) {
     return (
       <div className="text-center py-16 space-y-3">
-        <Swords className="w-12 h-12 text-gray-600 mx-auto" />
-        <p className="text-gray-400 font-medium">No challenges yet</p>
-        <p className="text-gray-600 text-sm">
+        <Swords className="w-12 h-12 text-muted-foreground mx-auto" />
+        <p className="text-muted-foreground font-medium">No challenges yet</p>
+        <p className="text-muted-foreground text-sm">
           Go to the Friends tab and hit "Challenge" to start a head-to-head
           competition.
         </p>
@@ -605,7 +605,7 @@ function ChallengesTab() {
       {/* Resolved Challenges Results */}
       {resolved.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-gray-400 mb-3 flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
             <Trophy className="w-4 h-4 text-yellow-400" />
             Results ({resolved.length})
           </h3>
@@ -618,7 +618,7 @@ function ChallengesTab() {
                     ? "bg-purple-900/10 border-purple-500/30"
                     : r.iWon
                       ? "bg-yellow-900/10 border-yellow-500/30"
-                      : "bg-[#0D1B3E]/40 border-white/10"
+                      : "bg-card border-border"
                 }`}
               >
                 <CardContent className="p-4 space-y-3">
@@ -629,7 +629,7 @@ function ChallengesTab() {
                         ? "bg-purple-600/20 text-purple-300"
                         : r.iWon
                           ? "bg-yellow-600/20 text-yellow-300"
-                          : "bg-gray-700/30 text-gray-300"
+                          : "bg-muted/30 text-foreground"
                     }`}
                   >
                     {r.isTie ? (
@@ -653,7 +653,7 @@ function ChallengesTab() {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-semibold text-white text-sm">
+                        <p className="font-semibold text-foreground text-sm">
                           {r.challengeName}
                         </p>
                         {r.isTie ? (
@@ -665,13 +665,13 @@ function ChallengesTab() {
                             🏆 You Won!
                           </Badge>
                         ) : (
-                          <span className="text-[10px] text-gray-400 uppercase tracking-wide">
+                          <span className="text-[10px] text-muted-foreground uppercase tracking-wide">
                             Better luck next time
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        vs <span className="text-white">{r.opponentName}</span>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        vs <span className="text-foreground">{r.opponentName}</span>
                         {" -- "}
                         {r.myRole === "challenger"
                           ? "you challenged them"
@@ -683,17 +683,17 @@ function ChallengesTab() {
                     </Badge>
                   </div>
 
-                  <div className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-xs text-gray-300 space-y-1">
+                  <div className="rounded-lg border border-border bg-muted/30 px-3 py-2 text-xs text-foreground space-y-1">
                     <div className="flex items-center justify-between gap-4">
                       <span>You</span>
-                      <span className="font-medium text-white">
+                      <span className="font-medium text-foreground">
                         {formatChallengeScore(r.myScore, r.unit)} /{" "}
                         {formatChallengeScore(r.goal, r.unit)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between gap-4">
                       <span>{r.opponentName}</span>
-                      <span className="font-medium text-white">
+                      <span className="font-medium text-foreground">
                         {formatChallengeScore(r.opponentScore, r.unit)} /{" "}
                         {formatChallengeScore(r.goal, r.unit)}
                       </span>
@@ -701,11 +701,11 @@ function ChallengesTab() {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <span className="text-xs text-[#D4A843]">
+                    <span className="text-xs text-primary">
                       +{r.pointsReward} pts
                     </span>
                     {r.resolvedAt && (
-                      <span className="text-xs text-gray-600">
+                      <span className="text-xs text-muted-foreground">
                         Resolved {timeAgo(r.resolvedAt)}
                       </span>
                     )}
@@ -719,23 +719,23 @@ function ChallengesTab() {
 
       {activeReceived.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-gray-400 mb-3 flex items-center gap-2">
-            <Swords className="w-4 h-4 text-purple-400" />
+          <h3 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
+            <Swords className="w-4 h-4 text-primary" />
             Challenges Received ({activeReceived.length})
           </h3>
           <div className="space-y-3">
             {activeReceived.map(fc => (
               <Card
                 key={fc.id}
-                className="bg-[#0D1B3E]/60 border border-purple-500/20"
+                className="bg-card border border-primary/20"
               >
                 <CardContent className="p-4 space-y-3">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="font-semibold text-white text-sm">
+                      <p className="font-semibold text-foreground text-sm">
                         {fc.challengeTitle}
                       </p>
-                      <p className="text-xs text-gray-400 mt-0.5">
+                      <p className="text-xs text-muted-foreground mt-0.5">
                         {fc.challengeDescription}
                       </p>
                       {fc.message && (
@@ -748,14 +748,14 @@ function ChallengesTab() {
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-muted-foreground">
                         From:{" "}
-                        <span className="text-white">{fc.otherUserName}</span>
+                        <span className="text-foreground">{fc.otherUserName}</span>
                       </span>
-                      <span className="text-xs text-[#D4A843]">
+                      <span className="text-xs text-primary">
                         +{fc.pointsReward} pts
                       </span>
-                      <span className="text-xs text-gray-600">
+                      <span className="text-xs text-muted-foreground">
                         {timeAgo(fc.createdAt)}
                       </span>
                     </div>
@@ -785,7 +785,7 @@ function ChallengesTab() {
                             })
                           }
                           disabled={respond.isPending}
-                          className="text-gray-500 hover:text-red-400 hover:bg-red-900/20 text-xs"
+                          className="text-muted-foreground hover:text-red-400 hover:bg-red-900/20 text-xs"
                         >
                           <X className="w-3 h-3" />
                         </Button>
@@ -801,7 +801,7 @@ function ChallengesTab() {
 
       {activeSent.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-gray-400 mb-3 flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
             <ChevronRight className="w-4 h-4 text-blue-400" />
             Challenges Sent ({activeSent.length})
           </h3>
@@ -809,15 +809,15 @@ function ChallengesTab() {
             {activeSent.map(fc => (
               <Card
                 key={fc.id}
-                className="bg-[#0D1B3E]/40 border border-white/10"
+                className="bg-card border border-border"
               >
                 <CardContent className="p-4 space-y-2">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="font-semibold text-white text-sm">
+                      <p className="font-semibold text-foreground text-sm">
                         {fc.challengeTitle}
                       </p>
-                      <p className="text-xs text-gray-400 mt-0.5">
+                      <p className="text-xs text-muted-foreground mt-0.5">
                         {fc.challengeDescription}
                       </p>
                       {fc.message && (
@@ -829,13 +829,13 @@ function ChallengesTab() {
                     {statusBadge(fc.status)}
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-xs text-gray-500">
-                      To: <span className="text-white">{fc.otherUserName}</span>
+                    <span className="text-xs text-muted-foreground">
+                      To: <span className="text-foreground">{fc.otherUserName}</span>
                     </span>
-                    <span className="text-xs text-[#D4A843]">
+                    <span className="text-xs text-primary">
                       +{fc.pointsReward} pts
                     </span>
-                    <span className="text-xs text-gray-600">
+                    <span className="text-xs text-muted-foreground">
                       {timeAgo(fc.createdAt)}
                     </span>
                   </div>
@@ -865,18 +865,18 @@ export default function Friends() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-            <Users className="w-7 h-7 text-[#D4A843]" />
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
+            <Users className="w-7 h-7 text-primary" />
             Friends & Social
           </h1>
-          <p className="text-gray-400 text-sm mt-1">
+          <p className="text-muted-foreground text-sm mt-1">
             {friends.data?.length ?? 0} friends · View achievements, challenge
             rivals
           </p>
         </div>
         <div className="flex items-center gap-2">
           {pendingCount > 0 && (
-            <Badge className="bg-[#D4A843]/20 text-[#D4A843] border-[#D4A843]/40">
+            <Badge className="bg-primary/20 text-primary border-primary/40">
               {pendingCount} request{pendingCount > 1 ? "s" : ""}
             </Badge>
           )}
@@ -890,41 +890,41 @@ export default function Friends() {
 
       {/* Tabs */}
       <Tabs defaultValue="friends">
-        <TabsList className="bg-white/5 border border-white/10 w-full grid grid-cols-4">
+        <TabsList className="bg-muted/30 border border-border w-full grid grid-cols-4">
           <TabsTrigger
             value="friends"
-            className="data-[state=active]:bg-[#D4A843]/10 data-[state=active]:text-[#D4A843] text-gray-400 text-xs sm:text-sm"
+            className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary text-muted-foreground text-xs sm:text-sm"
           >
             <Users className="w-3.5 h-3.5 sm:mr-1.5" />
             <span className="hidden sm:inline">Friends</span>
           </TabsTrigger>
           <TabsTrigger
             value="search"
-            className="data-[state=active]:bg-[#D4A843]/10 data-[state=active]:text-[#D4A843] text-gray-400 text-xs sm:text-sm"
+            className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary text-muted-foreground text-xs sm:text-sm"
           >
             <Search className="w-3.5 h-3.5 sm:mr-1.5" />
             <span className="hidden sm:inline">Search</span>
           </TabsTrigger>
           <TabsTrigger
             value="requests"
-            className="relative data-[state=active]:bg-[#D4A843]/10 data-[state=active]:text-[#D4A843] text-gray-400 text-xs sm:text-sm"
+            className="relative data-[state=active]:bg-primary/10 data-[state=active]:text-primary text-muted-foreground text-xs sm:text-sm"
           >
             <Bell className="w-3.5 h-3.5 sm:mr-1.5" />
             <span className="hidden sm:inline">Requests</span>
             {pendingCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#D4A843] text-black text-[10px] font-bold rounded-full flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
                 {pendingCount}
               </span>
             )}
           </TabsTrigger>
           <TabsTrigger
             value="challenges"
-            className="relative data-[state=active]:bg-purple-600/10 data-[state=active]:text-purple-300 text-gray-400 text-xs sm:text-sm"
+            className="relative data-[state=active]:bg-primary/10 data-[state=active]:text-primary text-muted-foreground text-xs sm:text-sm"
           >
             <Swords className="w-3.5 h-3.5 sm:mr-1.5" />
             <span className="hidden sm:inline">Challenges</span>
             {receivedChallenges > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-purple-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
                 {receivedChallenges}
               </span>
             )}

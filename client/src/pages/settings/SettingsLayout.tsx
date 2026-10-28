@@ -1,3 +1,4 @@
+import { DashboardPageShell } from "@/components/DashboardPageShell";
 import { useLocation } from "wouter";
 import {
   Building2,
@@ -7,7 +8,6 @@ import {
   Palette,
   Wrench,
   ChevronRight,
-  Settings2,
   CreditCard,
   Users,
   KeyRound,
@@ -97,27 +97,22 @@ export default function SettingsLayout({
     settingsNav.find(n => n.path === location) ?? settingsNav[0];
 
   return (
-    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          <Settings2 className="w-6 h-6 text-[#D4A843]" />
-          Settings
-        </h1>
-        <p className="text-gray-400 text-sm mt-1">
-          Manage your {isCommerce ? "store" : "workspace"}, account, and
-          preferences
-        </p>
-      </div>
-
+    <DashboardPageShell
+      eyebrow="Your account"
+      title="Settings"
+      description={`Manage your ${isCommerce ? "store" : "workspace"}, account, and preferences.`}
+    >
       {/* Mobile: dropdown nav */}
       {isMobile ? (
         <div className="space-y-4">
           <Select value={currentNav.path} onValueChange={v => setLocation(v)}>
-            <SelectTrigger className="bg-white/5 border-white/10 text-white">
+            <SelectTrigger
+              aria-label="Settings section"
+              className="min-h-11 bg-background border-border text-foreground"
+            >
               <SelectValue>
                 <span className="flex items-center gap-2">
-                  <currentNav.icon className="w-4 h-4 text-[#D4A843]" />
+                  <currentNav.icon className="w-4 h-4 text-primary" />
                   {currentNav.label}
                 </span>
               </SelectValue>
@@ -139,41 +134,45 @@ export default function SettingsLayout({
         /* Desktop: sidebar + content */
         <div className="flex gap-6">
           {/* Sidebar navigation */}
-          <nav className="w-56 shrink-0 space-y-1">
+          <nav
+            className="w-56 shrink-0 space-y-1"
+            aria-label="Settings sections"
+          >
             {settingsNav.map(nav => {
               const isActive = location === nav.path;
               return (
                 <button
                   key={nav.path}
+                  aria-current={isActive ? "page" : undefined}
                   onClick={() => setLocation(nav.path)}
                   className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all group",
+                    "min-h-11 w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors group",
                     isActive
-                      ? "bg-[#D4A843]/10 border border-[#D4A843]/20"
-                      : "hover:bg-white/5 border border-transparent"
+                      ? "bg-primary/10 border border-primary/20"
+                      : "hover:bg-muted/40 border border-transparent"
                   )}
                 >
                   <nav.icon
                     className={cn(
                       "w-4 h-4 shrink-0",
-                      isActive ? "text-[#D4A843]" : "text-gray-500"
+                      isActive ? "text-primary" : "text-muted-foreground"
                     )}
                   />
                   <div className="flex-1 min-w-0">
                     <p
                       className={cn(
                         "text-sm font-medium",
-                        isActive ? "text-white" : "text-gray-400"
+                        isActive ? "text-foreground" : "text-muted-foreground"
                       )}
                     >
                       {nav.label}
                     </p>
-                    <p className="text-xs text-gray-600 truncate">
+                    <p className="text-xs text-muted-foreground truncate">
                       {nav.description}
                     </p>
                   </div>
                   {isActive && (
-                    <ChevronRight className="w-3 h-3 text-[#D4A843] shrink-0" />
+                    <ChevronRight className="w-3 h-3 text-primary shrink-0" />
                   )}
                 </button>
               );
@@ -184,6 +183,6 @@ export default function SettingsLayout({
           <div className="flex-1 min-w-0">{children}</div>
         </div>
       )}
-    </div>
+    </DashboardPageShell>
   );
 }

@@ -75,17 +75,17 @@ export default function AdvancedSettings() {
                   <CreditCard className="w-5 h-5 text-emerald-400" />
                 </div>
                 <div>
-                  <p className="text-white font-medium">
+                  <p className="text-foreground font-medium">
                     Billing & Subscription
                   </p>
-                  <p className="text-gray-500 text-sm">
+                  <p className="text-muted-foreground text-sm">
                     Manage your plan, payment method, and invoices
                   </p>
                 </div>
               </div>
               <Button
                 variant="outline"
-                className="border-white/10 text-gray-300 hover:text-white hover:border-white/20 shrink-0"
+                className="border-border text-muted-foreground hover:text-foreground hover:border-border shrink-0"
                 onClick={() => navigate("/billing")}
               >
                 Manage
@@ -153,23 +153,23 @@ function GoogleOAuthCard() {
   return (
     <Card className="bg-card border-border">
       <CardHeader>
-        <CardTitle className="text-white text-base flex items-center gap-2">
-          <KeyRound className="w-4 h-4 text-[#D4A843]" />
+        <CardTitle className="text-foreground text-base flex items-center gap-2">
+          <KeyRound className="w-4 h-4 text-primary" />
           Google OAuth
         </CardTitle>
-        <CardDescription className="text-gray-400">
+        <CardDescription className="text-muted-foreground">
           Save tenant-specific Google OAuth values for workspace sign-in. The
           callback exchanges Google authorization codes for UnifyOne sessions.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-1.5">
-          <Label className="text-gray-300 text-sm">Enabled</Label>
+          <Label className="text-muted-foreground text-sm">Enabled</Label>
           <Select
             value={String(enabled)}
             onValueChange={value => setEnabled(value === "true")}
           >
-            <SelectTrigger className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50">
+            <SelectTrigger className="bg-muted/40 border-border text-foreground focus:border-primary/50">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -180,17 +180,17 @@ function GoogleOAuthCard() {
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-gray-300 text-sm">Client ID</Label>
+          <Label className="text-muted-foreground text-sm">Client ID</Label>
           <Input
             value={clientId}
             onChange={e => setClientId(e.target.value)}
             placeholder="Google OAuth client ID"
-            className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50"
+            className="bg-muted/40 border-border text-foreground focus:border-primary/50"
           />
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-gray-300 text-sm">Client Secret</Label>
+          <Label className="text-muted-foreground text-sm">Client Secret</Label>
           <Input
             type="password"
             value={clientSecret}
@@ -200,10 +200,10 @@ function GoogleOAuthCard() {
                 ? "Saved — enter a new value to replace it"
                 : "Google OAuth client secret"
             }
-            className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50"
+            className="bg-muted/40 border-border text-foreground focus:border-primary/50"
           />
           {resolvedGoogle?.hasClientSecret && (
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               A client secret is already stored and is never sent back to the
               UI.
             </p>
@@ -211,42 +211,42 @@ function GoogleOAuthCard() {
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-gray-300 text-sm">Redirect URI</Label>
+          <Label className="text-muted-foreground text-sm">Redirect URI</Label>
           <Input
             value={redirectUri}
             onChange={e => setRedirectUri(e.target.value)}
             placeholder="https://your-app.com/api/auth/google/callback"
-            className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50"
+            className="bg-muted/40 border-border text-foreground focus:border-primary/50"
           />
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted-foreground">
             This should match the callback configured in your Google app.
           </p>
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-gray-300 text-sm">Scopes</Label>
+          <Label className="text-muted-foreground text-sm">Scopes</Label>
           <Textarea
             value={scopes}
             onChange={e => setScopes(e.target.value)}
             rows={3}
             placeholder="openid email profile"
-            className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50 resize-none"
+            className="bg-muted/40 border-border text-foreground focus:border-primary/50 resize-none"
           />
         </div>
 
-        <div className="rounded-lg bg-white/5 border border-white/10 p-3 space-y-1">
-          <p className="text-xs uppercase tracking-wider text-gray-500">
+        <div className="rounded-lg bg-muted/40 border border-border p-3 space-y-1">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">
             Usage
           </p>
-          <p className="text-sm text-gray-300">
+          <p className="text-sm text-muted-foreground">
             After saving, open the login page with
-            <span className="font-mono text-white">
+            <span className="font-mono text-foreground">
               {" "}
               ?tenant=your-store-slug
             </span>
             and use the Google button to test sign-in.
           </p>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted-foreground">
             Callback URL: use /api/auth/google/callback on the same public app
             domain you entered in Google Cloud.
           </p>
@@ -256,7 +256,7 @@ function GoogleOAuthCard() {
           <Button
             onClick={handleSave}
             disabled={saveOAuth.isPending || isLoading}
-            className="bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-semibold"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
           >
             {saveOAuth.isPending ? (
               <>
@@ -319,20 +319,20 @@ function OwnerAlertComposer() {
   return (
     <Card className="bg-card border-border">
       <CardHeader className="pb-3">
-        <CardTitle className="text-white text-base flex items-center gap-2">
-          <Bell className="w-4 h-4 text-[#D4A843]" />
+        <CardTitle className="text-foreground text-base flex items-center gap-2">
+          <Bell className="w-4 h-4 text-primary" />
           Owner Alert Composer
         </CardTitle>
-        <CardDescription className="text-gray-400 text-sm">
+        <CardDescription className="text-muted-foreground text-sm">
           Send on-demand push notifications to individual team members.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <Label className="text-gray-300 text-sm">Recipient</Label>
+            <Label className="text-muted-foreground text-sm">Recipient</Label>
             <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-              <SelectTrigger className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50">
+              <SelectTrigger className="bg-muted/40 border-border text-foreground focus:border-primary/50">
                 <SelectValue
                   placeholder={
                     membersLoading ? "Loading team..." : "Select a user"
@@ -344,7 +344,7 @@ function OwnerAlertComposer() {
                   <SelectItem key={String(m.id)} value={String(m.id)}>
                     <span className="flex items-center gap-2">
                       <span>{(m.name as string) || (m.email as string)}</span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-muted-foreground">
                         #{String(m.id)}
                       </span>
                     </span>
@@ -354,9 +354,9 @@ function OwnerAlertComposer() {
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-gray-300 text-sm">Alert Type</Label>
+            <Label className="text-muted-foreground text-sm">Alert Type</Label>
             <Select value={alertType} onValueChange={setAlertType}>
-              <SelectTrigger className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50">
+              <SelectTrigger className="bg-muted/40 border-border text-foreground focus:border-primary/50">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -377,17 +377,17 @@ function OwnerAlertComposer() {
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-gray-300 text-sm">Title</Label>
+          <Label className="text-muted-foreground text-sm">Title</Label>
           <Input
             value={title}
             onChange={e => setTitle(e.target.value)}
             placeholder="e.g. Action required on order #1042"
-            className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50"
+            className="bg-muted/40 border-border text-foreground focus:border-primary/50"
           />
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-gray-300 text-sm">
+          <Label className="text-muted-foreground text-sm">
             Message Body (optional)
           </Label>
           <Textarea
@@ -395,24 +395,26 @@ function OwnerAlertComposer() {
             onChange={e => setBody(e.target.value)}
             placeholder="Additional context or instructions..."
             rows={3}
-            className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50 resize-none"
+            className="bg-muted/40 border-border text-foreground focus:border-primary/50 resize-none"
           />
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-gray-300 text-sm">Link (optional)</Label>
+          <Label className="text-muted-foreground text-sm">
+            Link (optional)
+          </Label>
           <Input
             value={link}
             onChange={e => setLink(e.target.value)}
             placeholder="/orders/1042 or https://..."
-            className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50"
+            className="bg-muted/40 border-border text-foreground focus:border-primary/50"
           />
         </div>
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2">
           {selectedMember && title.trim() ? (
-            <div className="flex-1 p-3 rounded-lg bg-white/5 border border-white/10">
-              <p className="text-xs text-gray-500 mb-1">Preview</p>
+            <div className="flex-1 p-3 rounded-lg bg-muted/40 border border-border">
+              <p className="text-xs text-muted-foreground mb-1">Preview</p>
               <div className="flex items-center gap-2">
                 {(() => {
                   const typeInfo = ALERT_TYPES.find(t => t.value === alertType);
@@ -424,13 +426,15 @@ function OwnerAlertComposer() {
                   );
                 })()}
                 <div>
-                  <p className="text-sm text-white font-medium">{title}</p>
+                  <p className="text-sm text-foreground font-medium">{title}</p>
                   {body && (
-                    <p className="text-xs text-gray-400 mt-0.5">{body}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {body}
+                    </p>
                   )}
                 </div>
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 To:{" "}
                 {(selectedMember.name as string) ||
                   (selectedMember.email as string)}
@@ -442,7 +446,7 @@ function OwnerAlertComposer() {
           <Button
             onClick={handleSend}
             disabled={sendToUser.isPending || !selectedUserId || !title.trim()}
-            className="bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-semibold shrink-0"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold shrink-0"
           >
             {sendToUser.isPending ? (
               <>
@@ -477,19 +481,19 @@ function DemoDataCard() {
   return (
     <Card className="bg-card border-border">
       <CardHeader className="pb-3">
-        <CardTitle className="text-white text-base flex items-center gap-2">
-          <FlaskConical className="w-4 h-4 text-[#D4A843]" />
+        <CardTitle className="text-foreground text-base flex items-center gap-2">
+          <FlaskConical className="w-4 h-4 text-primary" />
           Demo Data
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div className="flex-1">
-            <p className="text-gray-400 text-sm mb-1">
+            <p className="text-muted-foreground text-sm mb-1">
               Populate your store with sample catalog data to explore the
               platform features.
             </p>
-            <p className="text-gray-500 text-xs">
+            <p className="text-muted-foreground text-xs">
               Creates 6 products (Apparel + Industrial), 3 customers, and 3
               orders across different statuses.
             </p>
@@ -497,7 +501,7 @@ function DemoDataCard() {
           <Button
             onClick={() => seedMutation.mutate()}
             disabled={seedMutation.isPending}
-            className="bg-[#D4A843]/10 border border-[#D4A843]/30 text-[#D4A843] hover:bg-[#D4A843]/20 shrink-0"
+            className="bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20 shrink-0"
           >
             {seedMutation.isPending ? (
               <>

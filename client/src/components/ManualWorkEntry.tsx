@@ -426,7 +426,7 @@ export default function ManualWorkEntry({
         <Button
           className={
             isEditing
-              ? "mt-1 min-h-10 gap-1 text-muted-foreground"
+              ? "mt-1 min-h-11 gap-1 text-muted-foreground"
               : "min-h-11 gap-2"
           }
           variant={isEditing ? "ghost" : "default"}
@@ -445,10 +445,10 @@ export default function ManualWorkEntry({
         </Button>
       </DialogTrigger>
       <DialogContent
-        className="max-h-[90dvh] overflow-y-auto sm:max-w-xl"
+        className="max-h-[90dvh] gap-5 overflow-y-auto sm:max-w-xl"
         showCloseButton={!pending}
       >
-        <DialogHeader>
+        <DialogHeader className="border-b pb-4">
           <DialogTitle>
             {isEditing ? "Edit completed work" : "Add completed work"}
           </DialogTitle>

@@ -1,0 +1,277 @@
+/* The signed-in workspace and its portaled controls share the public identity. */
+.workspace-shell,
+:root[data-workspace-brand="unifyone"] {
+  color-scheme: dark;
+  --background: #111416;
+  --foreground: #f4f2ed;
+  --card: #1c2022;
+  --card-foreground: #f4f2ed;
+  --popover: #1c2022;
+  --popover-foreground: #f4f2ed;
+  --primary: #f39450;
+  --primary-foreground: #111416;
+  --secondary: #252c2f;
+  --secondary-foreground: #f4f2ed;
+  --muted: #252c2f;
+  --muted-foreground: #b5bab7;
+  --accent: #30383c;
+  --accent-foreground: #f4f2ed;
+  --destructive: #ef8e86;
+  --destructive-foreground: #111416;
+  --border: #3c4549;
+  --input: #414b50;
+  --ring: #f39450;
+  --radius: 0.375rem;
+  --sidebar: #151a1c;
+  --sidebar-foreground: #f4f2ed;
+  --sidebar-primary: #f39450;
+  --sidebar-primary-foreground: #111416;
+  --sidebar-accent: #252c2f;
+  --sidebar-accent-foreground: #f4f2ed;
+  --sidebar-border: #343d41;
+  --sidebar-ring: #f39450;
+  --chart-1: #f39450;
+  --chart-2: #9bc5ae;
+  --chart-3: #a1bfd3;
+  --chart-4: #c9b2d8;
+  --chart-5: #e0bf82;
+  /* Keep old named tokens on-brand while older workspace modules migrate. */
+  --gold-apex: #ffb77f;
+  --gold-illuminate: #f39450;
+  --gold-warm: #ffab70;
+  --gold-deep: #bb6630;
+  --gold-ember: #452d20;
+  --gold-trace: #2d231d;
+  --stone-void: #111416;
+  --stone-crypt: #151a1c;
+  --stone-nave: #1c2022;
+  --stone-wall: #252c2f;
+  --stone-mortar: #343d41;
+  --stone-carved: #414b50;
+  --stone-worn: #89938e;
+  --stone-pale: #b5bab7;
+}
+.workspace-shell {
+  min-width: 0;
+  min-height: 100svh;
+  width: 100%;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: "Inter", Arial, sans-serif;
+}
+.workspace-shell :is(h1, h2, h3, h4, .font-cinzel, .font-crimson) {
+  font-family: "Inter", Arial, sans-serif;
+  letter-spacing: -0.025em;
+}
+.workspace-shell :is(input, select, textarea, button) {
+  font-family: inherit;
+}
+.workspace-shell :is(input, select, textarea) {
+  accent-color: var(--primary);
+}
+.workspace-shell
+  :is(
+    a,
+    button,
+    input,
+    select,
+    textarea,
+    [role="tab"],
+    [role="switch"]
+  ):focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+.workspace-shell :is(button, a, summary, [role="tab"]) {
+  -webkit-tap-highlight-color: #f3945026;
+}
+.workspace-shell [data-slot="sidebar-container"] {
+  border-color: var(--sidebar-border);
+}
+.workspace-shell [data-slot="sidebar-inset"] {
+  min-width: 0;
+  background: var(--background);
+}
+.workspace-shell [data-slot="card"] {
+  border-color: var(--border);
+  background: var(--card);
+  border-radius: 8px;
+  box-shadow: none;
+}
+.workspace-shell [data-slot="card-title"] {
+  color: var(--foreground);
+  font-weight: 600;
+}
+.workspace-shell [data-slot="tabs-list"] {
+  background: var(--secondary);
+  padding: 4px;
+  min-height: 44px;
+}
+.workspace-shell [data-slot="tabs-trigger"] {
+  min-height: 36px;
+}
+.workspace-shell [data-slot="tabs-trigger"][data-state="active"] {
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: inset 0 -2px 0 var(--primary);
+}
+.workspace-shell
+  :is(
+    [data-slot="input"],
+    [data-slot="textarea"],
+    [data-slot="select-trigger"]
+  ) {
+  border-color: var(--input);
+  background: var(--background);
+  color: var(--foreground);
+}
+.workspace-shell :is([data-slot="input"], [data-slot="select-trigger"]) {
+  min-height: 44px;
+}
+.workspace-shell [data-slot="button"] {
+  border-radius: 5px;
+}
+.workspace-shell [data-slot="button"]:disabled {
+  cursor: not-allowed;
+}
+:root[data-workspace-brand="unifyone"] [data-slot="dialog-content"],
+:root[data-workspace-brand="unifyone"] [data-slot="dropdown-menu-content"],
+:root[data-workspace-brand="unifyone"] [data-slot="popover-content"],
+:root[data-workspace-brand="unifyone"] [data-slot="select-content"] {
+  font-family: "Inter", Arial, sans-serif;
+  border-color: var(--border);
+  background: var(--popover);
+  color: var(--popover-foreground);
+  border-radius: 8px;
+}
+:root[data-workspace-brand="unifyone"]
+  :is([data-slot="dialog-title"], [data-slot="alert-dialog-title"]) {
+  font-family: "Inter", Arial, sans-serif;
+  letter-spacing: -0.025em;
+}
+.workspace-page {
+  max-width: 1400px;
+  margin-inline: auto;
+}
+.workspace-page-header {
+  border-bottom: 1px solid var(--border);
+  padding-block: 5px 24px;
+}
+.workspace-page-header-grid {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+.workspace-page-kicker {
+  margin-bottom: 12px;
+  font:
+    10px/1.5 ui-monospace,
+    SFMono-Regular,
+    Consolas,
+    monospace;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+.workspace-page-title {
+  font-size: clamp(26px, 3vw, 36px);
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--foreground);
+  letter-spacing: -0.045em !important;
+}
+.workspace-page-description {
+  max-width: 720px;
+  margin-top: 12px;
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--muted-foreground);
+}
+.workspace-page-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.workspace-page-actions :is(a, button) {
+  min-height: 44px;
+}
+.workspace-page-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+.workspace-page-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+.workspace-page-stat {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--card);
+}
+.workspace-page-stat-label {
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.workspace-page-stat-value {
+  margin-top: 8px;
+  color: var(--foreground);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.workspace-page-stat-helper {
+  margin-top: 12px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.6;
+}
+@media (max-width: 767px) {
+  .workspace-page-header-grid {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .workspace-page-actions {
+    justify-content: flex-start;
+  }
+  .workspace-page-actions > * {
+    min-width: 0;
+  }
+  .workspace-page-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .workspace-page-stat {
+    padding: 14px;
+  }
+  .workspace-page-stat-value {
+    font-size: 23px;
+    overflow-wrap: anywhere;
+  }
+}
+@media (max-width: 360px) {
+  .workspace-page-stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .workspace-shell *,
+  .workspace-shell *::before,
+  .workspace-shell *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

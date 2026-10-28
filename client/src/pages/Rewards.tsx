@@ -99,7 +99,7 @@ function OpportunityCard({
 
   return (
     <Card
-      className={`border transition-all ${claimed ? "opacity-60" : "hover:border-teal-500/40"}`}
+      className={`border transition-all ${claimed ? "opacity-60" : "hover:border-primary/40"}`}
     >
       <CardContent className="p-4 flex items-start gap-4">
         <div className={`rounded-xl p-3 ${cfg.bg} flex-shrink-0`}>
@@ -118,7 +118,7 @@ function OpportunityCard({
             <div className="flex flex-col items-end gap-1 flex-shrink-0">
               <Badge
                 variant="secondary"
-                className="text-teal-400 bg-teal-400/10 border-teal-400/20 font-bold text-sm px-2"
+                className="text-primary bg-primary/10 border-primary/20 font-bold text-sm px-2"
               >
                 +{opp.credits} <Key className="w-3 h-3 ml-1 inline" />
               </Badge>
@@ -153,7 +153,7 @@ function OpportunityCard({
               <Button
                 size="sm"
                 variant="outline"
-                className="h-7 text-xs border-teal-500/40 text-teal-400 hover:bg-teal-500/10"
+                className="h-7 text-xs border-primary/40 text-primary hover:bg-primary/10"
                 onClick={() => onClaim(opp.id)}
                 disabled={claiming || !opp.canClaim}
               >
@@ -239,7 +239,7 @@ export default function Rewards() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Key className="w-6 h-6 text-teal-400" />
+          <Key className="w-6 h-6 text-primary" />
           Rewards Keys
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
@@ -249,13 +249,13 @@ export default function Rewards() {
 
       {/* Balance Strip */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="border-teal-500/30 bg-teal-500/5">
+        <Card className="border-primary/30 bg-primary/5">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="rounded-xl bg-teal-400/20 p-3">
-              <Key className="w-5 h-5 text-teal-400" />
+            <div className="rounded-xl bg-primary/20 p-3">
+              <Key className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-teal-400">
+              <p className="text-2xl font-bold text-primary">
                 {balance.toLocaleString()}
               </p>
               <p className="text-xs text-muted-foreground">Current Balance</p>
@@ -385,7 +385,7 @@ export default function Rewards() {
                         </div>
                         <Badge
                           variant="secondary"
-                          className="text-teal-400 bg-teal-400/10 font-bold"
+                          className="text-primary bg-primary/10 font-bold"
                         >
                           +{claim.credits}{" "}
                           <Key className="w-3 h-3 ml-1 inline" />

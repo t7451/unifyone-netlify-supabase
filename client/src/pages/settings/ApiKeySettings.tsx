@@ -57,10 +57,10 @@ export default function ApiKeySettings() {
   return (
     <SettingsLayout>
       <div className="space-y-4">
-        <Card className="bg-white/5 border-white/10">
+        <Card className="bg-muted/40 border-border">
           <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <KeyRound className="w-4 h-4 text-[#D4A843]" />
+            <CardTitle className="text-foreground flex items-center gap-2">
+              <KeyRound className="w-4 h-4 text-primary" />
               AI API keys
             </CardTitle>
             <CardDescription>
@@ -71,22 +71,22 @@ export default function ApiKeySettings() {
           </CardHeader>
           <CardContent className="space-y-4">
             {isLoading ? (
-              <div className="flex items-center gap-2 text-sm text-gray-400 py-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Loading your keys…
               </div>
             ) : openRouterKey ? (
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/5 p-3">
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-muted/40 p-3">
                 <div className="flex items-center gap-3">
                   <ShieldCheck className="h-5 w-5 text-emerald-400" />
                   <div>
-                    <p className="text-sm font-medium text-white">
+                    <p className="text-sm font-medium text-foreground">
                       OpenRouter key active
-                      <span className="ml-2 text-gray-400 font-mono">
+                      <span className="ml-2 text-muted-foreground font-mono">
                         ••••{openRouterKey.last4}
                       </span>
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       Updated{" "}
                       {new Date(openRouterKey.updatedAt).toLocaleString()}
                     </p>
@@ -110,14 +110,14 @@ export default function ApiKeySettings() {
                 </Button>
               </div>
             ) : (
-              <div className="rounded-lg border border-dashed border-white/15 p-3 text-sm text-gray-400">
+              <div className="rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">
                 No key saved yet. Kai currently uses platform billing (Kai
                 credits) for premium models; free models are always free.
               </div>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="openrouter-key" className="text-gray-300">
+              <Label htmlFor="openrouter-key" className="text-muted-foreground">
                 {openRouterKey ? "Replace key" : "Add OpenRouter key"}
               </Label>
               <div className="flex gap-2">
@@ -128,7 +128,7 @@ export default function ApiKeySettings() {
                   placeholder="sk-or-v1-…"
                   value={keyInput}
                   onChange={e => setKeyInput(e.target.value)}
-                  className="bg-white/5 border-white/10 text-white font-mono"
+                  className="bg-muted/40 border-border text-foreground font-mono"
                 />
                 <Button
                   onClick={() =>
@@ -149,13 +149,13 @@ export default function ApiKeySettings() {
                   {saveMutation.isPending ? "Validating…" : "Save key"}
                 </Button>
               </div>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 Get a key at{" "}
                 <a
                   href="https://openrouter.ai/keys"
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-0.5 text-[#D4A843] hover:underline"
+                  className="inline-flex items-center gap-0.5 text-primary hover:underline"
                 >
                   openrouter.ai/keys
                   <ExternalLink className="h-3 w-3" />

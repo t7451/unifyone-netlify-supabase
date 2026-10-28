@@ -42,24 +42,49 @@ function DefaultErrorFallback({
     : GENERIC_ERROR_MESSAGE;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
-      <Card className="w-full max-w-lg text-center shadow-lg">
+    <div
+      className="brand-error flex min-h-screen items-center justify-center px-4 py-8"
+      style={{
+        background: "var(--brand-background, #141718)",
+        color: "var(--brand-ink, #f4f2ed)",
+        fontFamily: '"Inter", Arial, sans-serif',
+      }}
+    >
+      <Card
+        className="w-full max-w-lg border-white/10 text-center shadow-none"
+        style={{
+          background: "var(--brand-surface, #1c2022)",
+          color: "inherit",
+        }}
+      >
         <CardHeader className="items-center space-y-4">
           <div className="rounded-full bg-destructive/10 p-3 text-destructive">
-            <AlertTriangle className="h-7 w-7" />
+            <AlertTriangle aria-hidden="true" className="h-7 w-7" />
           </div>
           <div className="space-y-2">
-            <CardTitle>Something went wrong</CardTitle>
-            <CardDescription>{message}</CardDescription>
+            <CardTitle style={{ fontFamily: "inherit", color: "inherit" }}>
+              Something went wrong
+            </CardTitle>
+            <CardDescription style={{ color: "var(--brand-muted, #b5bab7)" }}>
+              {message}
+            </CardDescription>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4" role="alert">
           {import.meta.env.DEV && error?.stack ? (
             <pre className="max-h-64 overflow-auto rounded-md bg-muted p-4 text-left text-xs text-muted-foreground whitespace-pre-wrap">
               {error.stack}
             </pre>
           ) : null}
-          <Button className="gap-2" onClick={resetError} type="button">
+          <Button
+            className="min-h-11 gap-2"
+            style={{
+              background: "var(--brand-accent, #f39450)",
+              color: "#141718",
+            }}
+            onClick={resetError}
+            type="button"
+          >
             <RotateCcw className="h-4 w-4" />
             Try again
           </Button>

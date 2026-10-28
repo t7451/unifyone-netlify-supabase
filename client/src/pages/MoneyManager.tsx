@@ -560,7 +560,7 @@ export default function MoneyManager() {
           />
           {points.data && (
             <Badge variant="secondary" className="gap-1 text-sm px-3 py-1">
-              <Zap className="h-3.5 w-3.5 text-yellow-500" />
+              <Zap className="h-3.5 w-3.5 text-primary" />
               {points.data.totalPoints.toLocaleString()} pts · Lv
               {points.data.level}
             </Badge>
@@ -571,7 +571,7 @@ export default function MoneyManager() {
           >
             <SelectTrigger
               aria-label="Earnings summary period"
-              className="w-36"
+              className="w-36 min-h-11"
             >
               <SelectValue />
             </SelectTrigger>
@@ -597,7 +597,7 @@ export default function MoneyManager() {
               .getElementById("money-tools")
               ?.scrollIntoView({ behavior: "smooth", block: "start" });
           }}
-          className="flex items-start gap-3 rounded-xl border bg-card p-4 text-left transition-colors hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex items-start gap-3 rounded-lg border bg-card p-4 text-left transition-colors hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <Upload className="mt-1 h-5 w-5 shrink-0 text-primary" />
           <span>
@@ -611,7 +611,7 @@ export default function MoneyManager() {
         </button>
         <Link
           href="/connected-money"
-          className="flex items-start gap-3 rounded-xl border bg-card p-4 transition-colors hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex items-start gap-3 rounded-lg border bg-card p-4 transition-colors hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <DollarSign className="mt-1 h-5 w-5 shrink-0 text-primary" />
           <span>
@@ -627,7 +627,7 @@ export default function MoneyManager() {
       {stats.isError && (
         <div
           role="alert"
-          className="flex flex-wrap items-center justify-between gap-2 rounded-xl border p-4 text-sm"
+          className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-4 text-sm"
         >
           <span>
             Your earnings summary could not load. Your recorded data has not
@@ -666,25 +666,25 @@ export default function MoneyManager() {
             label: "Miles",
             value: `${(s?.totalMiles ?? 0).toFixed(1)}`,
             icon: Car,
-            color: "text-blue-500",
+            color: "text-muted-foreground",
           },
           {
             label: "Shifts",
             value: String(s?.totalShifts ?? 0),
             icon: BarChart3,
-            color: "text-purple-500",
+            color: "text-muted-foreground",
           },
           {
             label: "Hours",
             value: `${(s?.totalHours ?? 0).toFixed(1)}h`,
             icon: Clock,
-            color: "text-orange-500",
+            color: "text-muted-foreground",
           },
           {
             label: "Gross / tracked hour",
             value: `$${(s?.avgPerHour ?? 0).toFixed(2)}`,
             icon: TrendingUp,
-            color: "text-cyan-500",
+            color: "text-muted-foreground",
           },
           {
             label: "Mileage deduction",
@@ -693,7 +693,7 @@ export default function MoneyManager() {
                 ? "Unavailable"
                 : `$${s.taxDeduction.toFixed(2)}`,
             icon: FileText,
-            color: "text-yellow-500",
+            color: "text-primary",
           },
         ].map(kpi => (
           <Card key={kpi.label} className="bg-card border-border">
@@ -748,7 +748,10 @@ export default function MoneyManager() {
                 value={selectedPlatform}
                 onValueChange={setSelectedPlatform}
               >
-                <SelectTrigger aria-label="Work platform" className="flex-1">
+                <SelectTrigger
+                  aria-label="Work platform"
+                  className="flex-1 min-h-11"
+                >
                   <SelectValue placeholder="Select platform" />
                 </SelectTrigger>
                 <SelectContent>
@@ -803,6 +806,7 @@ export default function MoneyManager() {
                           Base pay, before tips ($)
                         </Label>
                         <Input
+                          className="min-h-11"
                           id="session-base"
                           type="number"
                           min="0"
@@ -825,6 +829,7 @@ export default function MoneyManager() {
                       <div>
                         <Label htmlFor="session-tips">Tips ($)</Label>
                         <Input
+                          className="min-h-11"
                           id="session-tips"
                           type="number"
                           min="0"
@@ -847,6 +852,7 @@ export default function MoneyManager() {
                       <div>
                         <Label htmlFor="session-bonuses">Bonuses ($)</Label>
                         <Input
+                          className="min-h-11"
                           id="session-bonuses"
                           type="number"
                           min="0"
@@ -869,6 +875,7 @@ export default function MoneyManager() {
                       <div>
                         <Label htmlFor="session-miles">Miles Driven</Label>
                         <Input
+                          className="min-h-11"
                           id="session-miles"
                           type="number"
                           min="0"
@@ -892,6 +899,7 @@ export default function MoneyManager() {
                     <div>
                       <Label htmlFor="session-notes">Notes (optional)</Label>
                       <Input
+                        className="min-h-11"
                         id="session-notes"
                         placeholder="Any notes about this shift..."
                         maxLength={1000}
@@ -910,6 +918,7 @@ export default function MoneyManager() {
                           Date these business miles were driven
                         </Label>
                         <Input
+                          className="min-h-11"
                           id="session-mileage-date"
                           type="date"
                           value={shiftEndForm.mileageDate}
@@ -1088,7 +1097,7 @@ export default function MoneyManager() {
                       <div
                         role="group"
                         aria-label="Delete completed work"
-                        className="w-full space-y-3 rounded-xl border border-destructive/30 p-4 text-sm"
+                        className="w-full space-y-3 rounded-lg border border-destructive/30 p-4 text-sm"
                       >
                         <p>
                           Delete this completed entry and its linked mileage? It
@@ -1178,10 +1187,18 @@ export default function MoneyManager() {
 
       <Tabs id="money-tools" value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid h-auto w-full grid-cols-2 gap-1 p-1 sm:grid-cols-4">
-          <TabsTrigger value="mileage">Mileage & Tax</TabsTrigger>
-          <TabsTrigger value="import">Import earnings</TabsTrigger>
-          <TabsTrigger value="rules">Planning rules</TabsTrigger>
-          <TabsTrigger value="envelopes">Set-aside plan</TabsTrigger>
+          <TabsTrigger className="min-h-11" value="mileage">
+            Mileage & Tax
+          </TabsTrigger>
+          <TabsTrigger className="min-h-11" value="import">
+            Import earnings
+          </TabsTrigger>
+          <TabsTrigger className="min-h-11" value="rules">
+            Planning rules
+          </TabsTrigger>
+          <TabsTrigger className="min-h-11" value="envelopes">
+            Set-aside plan
+          </TabsTrigger>
         </TabsList>
 
         {/* Mileage Tab */}
@@ -1204,6 +1221,7 @@ export default function MoneyManager() {
                 <div>
                   <Label htmlFor="mileage-miles">Miles Driven</Label>
                   <Input
+                    className="min-h-11"
                     id="mileage-miles"
                     type="number"
                     min="0"
@@ -1225,7 +1243,7 @@ export default function MoneyManager() {
                       setMileageForm(f => ({ ...f, purpose: v }))
                     }
                   >
-                    <SelectTrigger id="mileage-purpose">
+                    <SelectTrigger className="min-h-11" id="mileage-purpose">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -1239,6 +1257,7 @@ export default function MoneyManager() {
                   Date these miles were driven
                 </Label>
                 <Input
+                  className="min-h-11"
                   id="mileage-date"
                   type="date"
                   value={mileageForm.date}
@@ -1264,6 +1283,7 @@ export default function MoneyManager() {
                 <div>
                   <Label htmlFor="mileage-from">From (optional)</Label>
                   <Input
+                    className="min-h-11"
                     id="mileage-from"
                     placeholder="Start address"
                     value={mileageForm.startAddress}
@@ -1278,6 +1298,7 @@ export default function MoneyManager() {
                 <div>
                   <Label htmlFor="mileage-to">To (optional)</Label>
                   <Input
+                    className="min-h-11"
                     id="mileage-to"
                     placeholder="End address"
                     value={mileageForm.endAddress}
@@ -1335,7 +1356,7 @@ export default function MoneyManager() {
 
           {/* Mileage Summary */}
           {mileage.isError && (
-            <div role="alert" className="rounded-xl border p-4 text-sm">
+            <div role="alert" className="rounded-lg border p-4 text-sm">
               Mileage totals could not load.{" "}
               <Button variant="link" onClick={() => void mileage.refetch()}>
                 Retry mileage
@@ -1454,7 +1475,7 @@ export default function MoneyManager() {
                 Download a blank CSV template
               </a>
               {importAccess.data?.hasAccess === false && (
-                <div className="rounded-xl border border-primary/25 p-3 text-sm">
+                <div className="rounded-lg border border-primary/25 p-3 text-sm">
                   Previewing is free. Saving earnings imports requires Pro.{" "}
                   <Link href="/gig-worker-plans" className="underline">
                     Compare plans
@@ -1488,7 +1509,7 @@ export default function MoneyManager() {
                       setImportNotice("");
                     }}
                   >
-                    <SelectTrigger id="import-platform">
+                    <SelectTrigger className="min-h-11" id="import-platform">
                       <SelectValue placeholder="Select platform" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1503,6 +1524,7 @@ export default function MoneyManager() {
                 <div>
                   <Label htmlFor="import-file">CSV File</Label>
                   <Input
+                    className="min-h-11"
                     id="import-file"
                     type="file"
                     accept=".csv,text/csv"
@@ -1643,7 +1665,7 @@ export default function MoneyManager() {
                     <Button
                       asChild
                       variant="outline"
-                      className="w-full border-violet-500/40 text-violet-200 hover:bg-violet-500/10"
+                      className="w-full border-border text-primary hover:bg-muted"
                     >
                       <Link href="/gig-worker-plans">
                         <Lock className="mr-1.5 h-3.5 w-3.5" />
@@ -1732,7 +1754,7 @@ export default function MoneyManager() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 text-destructive hover:text-destructive"
+                        className="min-h-11 min-w-11 text-destructive hover:text-destructive"
                         disabled={
                           deleteImportBatch.isPending ||
                           importLocked ||
@@ -1802,7 +1824,7 @@ export default function MoneyManager() {
 
         {/* Financial Rules Tab */}
         <TabsContent value="rules" className="space-y-4 mt-4">
-          <p className="rounded-xl border p-4 text-sm text-muted-foreground">
+          <p className="rounded-lg border p-4 text-sm text-muted-foreground">
             Rules organize your recorded income and planning balances. A tracked
             allocation or set-aside does not transfer money between bank
             accounts.
@@ -1828,6 +1850,7 @@ export default function MoneyManager() {
                   <div>
                     <Label htmlFor="rule-name">Rule Name</Label>
                     <Input
+                      className="min-h-11"
                       id="rule-name"
                       placeholder="e.g. Save 20% of every DoorDash payout"
                       maxLength={200}
@@ -1849,7 +1872,7 @@ export default function MoneyManager() {
                           }))
                         }
                       >
-                        <SelectTrigger id="rule-type">
+                        <SelectTrigger className="min-h-11" id="rule-type">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -1872,7 +1895,7 @@ export default function MoneyManager() {
                           }))
                         }
                       >
-                        <SelectTrigger id="rule-trigger">
+                        <SelectTrigger className="min-h-11" id="rule-trigger">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -1891,6 +1914,7 @@ export default function MoneyManager() {
                         Trigger Value ($)
                       </Label>
                       <Input
+                        className="min-h-11"
                         id="rule-trigger-value"
                         type="number"
                         min="0"
@@ -1916,7 +1940,7 @@ export default function MoneyManager() {
                           }))
                         }
                       >
-                        <SelectTrigger id="rule-action">
+                        <SelectTrigger className="min-h-11" id="rule-action">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -1935,6 +1959,7 @@ export default function MoneyManager() {
                         Action Value ($)
                       </Label>
                       <Input
+                        className="min-h-11"
                         id="rule-action-value"
                         type="number"
                         min="0"
@@ -1952,6 +1977,7 @@ export default function MoneyManager() {
                     <div>
                       <Label htmlFor="rule-percent">Action % (optional)</Label>
                       <Input
+                        className="min-h-11"
                         id="rule-percent"
                         type="number"
                         min="0"
@@ -2070,7 +2096,7 @@ export default function MoneyManager() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 text-destructive hover:text-destructive"
+                      className="min-h-11 min-w-11 text-destructive hover:text-destructive"
                       aria-label={`Delete rule ${rule.name}`}
                       disabled={deleteRule.isPending}
                       onClick={() => deleteRule.mutate({ ruleId: rule.id })}
@@ -2086,7 +2112,7 @@ export default function MoneyManager() {
 
         {/* Envelopes / Set-Aside Tab */}
         <TabsContent value="envelopes" className="space-y-4 mt-4">
-          <p className="rounded-xl border p-4 text-sm text-muted-foreground">
+          <p className="rounded-lg border p-4 text-sm text-muted-foreground">
             Envelopes are a virtual plan, not bank balances. Amounts here do not
             prove money is saved or taxes are paid. Move actual funds separately
             in your bank when appropriate.
@@ -2171,6 +2197,7 @@ export default function MoneyManager() {
                   <div>
                     <Label htmlFor="envelope-name">Envelope Name</Label>
                     <Input
+                      className="min-h-11"
                       id="envelope-name"
                       placeholder="e.g. Quarterly Taxes"
                       maxLength={100}
@@ -2192,7 +2219,10 @@ export default function MoneyManager() {
                           }))
                         }
                       >
-                        <SelectTrigger id="envelope-category">
+                        <SelectTrigger
+                          className="min-h-11"
+                          id="envelope-category"
+                        >
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -2209,6 +2239,7 @@ export default function MoneyManager() {
                         Target ($, optional)
                       </Label>
                       <Input
+                        className="min-h-11"
                         id="envelope-target"
                         type="number"
                         min="0"

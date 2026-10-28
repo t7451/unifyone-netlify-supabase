@@ -119,8 +119,8 @@ function N8nTab() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-white font-semibold">n8n Workflows</h3>
-          <p className="text-xs text-gray-400 mt-0.5">
+          <h3 className="text-foreground font-semibold">n8n Workflows</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
             Fire HTTP webhooks to your n8n instance on any platform event
           </p>
         </div>
@@ -148,8 +148,8 @@ function N8nTab() {
         <Card className="bg-card border-border">
           <CardContent className="p-10 text-center">
             <Zap className="w-10 h-10 text-orange-400/40 mx-auto mb-3" />
-            <p className="text-gray-400">No workflows yet</p>
-            <p className="text-xs text-gray-600 mt-1">
+            <p className="text-muted-foreground">No workflows yet</p>
+            <p className="text-xs text-muted-foreground mt-1">
               Add your n8n webhook URL and choose a trigger event
             </p>
           </CardContent>
@@ -162,7 +162,7 @@ function N8nTab() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-white text-sm">
+                      <span className="font-medium text-foreground text-sm">
                         {wf.name}
                       </span>
                       <Badge
@@ -176,17 +176,17 @@ function N8nTab() {
                           Active
                         </Badge>
                       ) : (
-                        <Badge className="text-xs bg-gray-500/20 text-gray-400 border-gray-500/30">
+                        <Badge className="text-xs bg-gray-500/20 text-muted-foreground border-gray-500/30">
                           Disabled
                         </Badge>
                       )}
                     </div>
                     {wf.description && (
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         {wf.description}
                       </p>
                     )}
-                    <div className="flex items-center gap-4 mt-2 text-xs text-gray-500 flex-wrap">
+                    <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground flex-wrap">
                       <span className="flex items-center gap-1">
                         <Globe className="w-3 h-3" />{" "}
                         {wf.webhookUrl.substring(0, 50)}
@@ -211,7 +211,7 @@ function N8nTab() {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {updatingId === wf.id ? (
-                      <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                      <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
                     ) : (
                       <Switch
                         checked={wf.enabled}
@@ -260,7 +260,7 @@ function N8nTab() {
       )}
 
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="bg-card border-border text-white">
+        <DialogContent className="bg-card border-border text-foreground">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Zap className="w-4 h-4 text-orange-400" /> New n8n Workflow
@@ -273,7 +273,7 @@ function N8nTab() {
                 value={form.name}
                 onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                 placeholder="Lead notification"
-                className="bg-gray-800 border-gray-700 mt-1"
+                className="bg-muted border-input mt-1"
               />
             </div>
             <div>
@@ -282,7 +282,7 @@ function N8nTab() {
                 value={form.triggerEvent}
                 onValueChange={v => setForm(f => ({ ...f, triggerEvent: v }))}
               >
-                <SelectTrigger className="bg-gray-800 border-gray-700 mt-1">
+                <SelectTrigger className="bg-muted border-input mt-1">
                   <SelectValue placeholder="Select event" />
                 </SelectTrigger>
                 <SelectContent>
@@ -302,7 +302,7 @@ function N8nTab() {
                   setForm(f => ({ ...f, webhookUrl: e.target.value }))
                 }
                 placeholder="https://your-n8n.app.n8n.cloud/webhook/..."
-                className="bg-gray-800 border-gray-700 mt-1"
+                className="bg-muted border-input mt-1"
               />
             </div>
             <div>
@@ -313,7 +313,7 @@ function N8nTab() {
                   setForm(f => ({ ...f, description: e.target.value }))
                 }
                 placeholder="What does this workflow do?"
-                className="bg-gray-800 border-gray-700 mt-1"
+                className="bg-muted border-input mt-1"
               />
             </div>
           </div>
@@ -347,20 +347,20 @@ function N8nTab() {
         open={deletingId !== null}
         onOpenChange={open => !open && setDeletingId(null)}
       >
-        <AlertDialogContent className="bg-card border-border text-white">
+        <AlertDialogContent className="bg-card border-border text-foreground">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Workflow?</AlertDialogTitle>
-            <AlertDialogDescription className="text-gray-400">
+            <AlertDialogDescription className="text-muted-foreground">
               This will permanently remove the workflow and stop all future
               triggers. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-white/10 text-gray-300 hover:bg-white/5">
+            <AlertDialogCancel className="border-border text-foreground hover:bg-muted/30">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-red-600 hover:bg-red-700 text-foreground"
               onClick={() =>
                 deletingId !== null && del.mutate({ id: deletingId })
               }
@@ -436,8 +436,8 @@ function ZapierTab() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-white font-semibold">Zapier Webhooks</h3>
-          <p className="text-xs text-gray-400 mt-0.5">
+          <h3 className="text-foreground font-semibold">Zapier Webhooks</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
             Connect UnifyOne events to 6,000+ apps via Zapier catch hooks
           </p>
         </div>
@@ -465,8 +465,8 @@ function ZapierTab() {
         <Card className="bg-card border-border">
           <CardContent className="p-10 text-center">
             <Zap className="w-10 h-10 text-yellow-400/40 mx-auto mb-3" />
-            <p className="text-gray-400">No Zapier hooks yet</p>
-            <p className="text-xs text-gray-600 mt-1">
+            <p className="text-muted-foreground">No Zapier hooks yet</p>
+            <p className="text-xs text-muted-foreground mt-1">
               Create a "Catch Hook" Zap, paste the URL here, and pick a trigger
             </p>
           </CardContent>
@@ -479,7 +479,7 @@ function ZapierTab() {
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-white text-sm">
+                      <span className="font-medium text-foreground text-sm">
                         {hook.name}
                       </span>
                       <Badge
@@ -493,12 +493,12 @@ function ZapierTab() {
                           Active
                         </Badge>
                       ) : (
-                        <Badge className="text-xs bg-gray-500/20 text-gray-400 border-gray-500/30">
+                        <Badge className="text-xs bg-gray-500/20 text-muted-foreground border-gray-500/30">
                           Disabled
                         </Badge>
                       )}
                     </div>
-                    <div className="flex items-center gap-4 mt-1.5 text-xs text-gray-500">
+                    <div className="flex items-center gap-4 mt-1.5 text-xs text-muted-foreground">
                       <span>
                         {hook.webhookUrl.substring(0, 55)}
                         {hook.webhookUrl.length > 55 ? "…" : ""}
@@ -508,7 +508,7 @@ function ZapierTab() {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {updatingId === hook.id ? (
-                      <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                      <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
                     ) : (
                       <Switch
                         checked={hook.enabled}
@@ -536,7 +536,7 @@ function ZapierTab() {
       )}
 
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="bg-card border-border text-white">
+        <DialogContent className="bg-card border-border text-foreground">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Zap className="w-4 h-4 text-yellow-400" /> New Zapier Hook
@@ -549,7 +549,7 @@ function ZapierTab() {
                 value={form.name}
                 onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                 placeholder="New Lead → Google Sheets"
-                className="bg-gray-800 border-gray-700 mt-1"
+                className="bg-muted border-input mt-1"
               />
             </div>
             <div>
@@ -558,7 +558,7 @@ function ZapierTab() {
                 value={form.triggerEvent}
                 onValueChange={v => setForm(f => ({ ...f, triggerEvent: v }))}
               >
-                <SelectTrigger className="bg-gray-800 border-gray-700 mt-1">
+                <SelectTrigger className="bg-muted border-input mt-1">
                   <SelectValue placeholder="Select event" />
                 </SelectTrigger>
                 <SelectContent>
@@ -578,7 +578,7 @@ function ZapierTab() {
                   setForm(f => ({ ...f, webhookUrl: e.target.value }))
                 }
                 placeholder="https://hooks.zapier.com/hooks/catch/..."
-                className="bg-gray-800 border-gray-700 mt-1"
+                className="bg-muted border-input mt-1"
               />
             </div>
           </div>
@@ -612,20 +612,20 @@ function ZapierTab() {
         open={deletingId !== null}
         onOpenChange={open => !open && setDeletingId(null)}
       >
-        <AlertDialogContent className="bg-card border-border text-white">
+        <AlertDialogContent className="bg-card border-border text-foreground">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Zapier Hook?</AlertDialogTitle>
-            <AlertDialogDescription className="text-gray-400">
+            <AlertDialogDescription className="text-muted-foreground">
               This will permanently remove the hook and stop all future
               triggers. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-white/10 text-gray-300 hover:bg-white/5">
+            <AlertDialogCancel className="border-border text-foreground hover:bg-muted/30">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-red-600 hover:bg-red-700 text-foreground"
               onClick={() => del.mutate({ id: deletingId! })}
             >
               {del.isPending ? (
@@ -677,8 +677,8 @@ function MailchimpTab() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-white font-semibold">Mailchimp Integration</h3>
-          <p className="text-xs text-gray-400 mt-0.5">
+          <h3 className="text-foreground font-semibold">Mailchimp Integration</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
             Auto-subscribe leads and customers to your Mailchimp audience
           </p>
         </div>
@@ -757,7 +757,7 @@ function MailchimpTab() {
                 },
               ].map(f => (
                 <div key={f.label}>
-                  <span className="text-gray-500 text-xs">{f.label}</span>
+                  <span className="text-muted-foreground text-xs">{f.label}</span>
                   <p className="text-gray-200 font-medium mt-0.5">{f.value}</p>
                 </div>
               ))}
@@ -768,8 +768,8 @@ function MailchimpTab() {
         <Card className="bg-card border-border">
           <CardContent className="p-10 text-center">
             <Mail className="w-10 h-10 text-blue-400/40 mx-auto mb-3" />
-            <p className="text-gray-400">Mailchimp not configured</p>
-            <p className="text-xs text-gray-600 mt-1">
+            <p className="text-muted-foreground">Mailchimp not configured</p>
+            <p className="text-xs text-muted-foreground mt-1">
               Add your API key to start syncing contacts automatically
             </p>
           </CardContent>
@@ -777,7 +777,7 @@ function MailchimpTab() {
       )}
 
       <Dialog open={editing} onOpenChange={setEditing}>
-        <DialogContent className="bg-card border-border text-white">
+        <DialogContent className="bg-card border-border text-foreground">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Mail className="w-4 h-4 text-blue-400" /> Mailchimp Configuration
@@ -791,7 +791,7 @@ function MailchimpTab() {
                 value={form.apiKey}
                 onChange={e => setForm(f => ({ ...f, apiKey: e.target.value }))}
                 placeholder="Enter new API key (leave blank to keep current)"
-                className="bg-gray-800 border-gray-700 mt-1"
+                className="bg-muted border-input mt-1"
               />
             </div>
             <div>
@@ -802,7 +802,7 @@ function MailchimpTab() {
                   setForm(f => ({ ...f, serverPrefix: e.target.value }))
                 }
                 placeholder="us1, us6, us21, etc."
-                className="bg-gray-800 border-gray-700 mt-1"
+                className="bg-muted border-input mt-1"
               />
             </div>
             <div>
@@ -811,7 +811,7 @@ function MailchimpTab() {
                 value={form.listId}
                 onChange={e => setForm(f => ({ ...f, listId: e.target.value }))}
                 placeholder="abc123def"
-                className="bg-gray-800 border-gray-700 mt-1"
+                className="bg-muted border-input mt-1"
               />
             </div>
             <div>
@@ -822,7 +822,7 @@ function MailchimpTab() {
                   setForm(f => ({ ...f, tagPrefix: e.target.value }))
                 }
                 placeholder="unifyone"
-                className="bg-gray-800 border-gray-700 mt-1"
+                className="bg-muted border-input mt-1"
               />
             </div>
             <div className="flex items-center gap-3">
@@ -867,11 +867,11 @@ export default function Automations() {
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+        <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
           <Zap className="w-6 h-6 text-orange-400" />
           Automations
         </h1>
-        <p className="text-sm text-gray-400 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           Optional power-user add-on — connect UnifyOne events to n8n, Zapier,
           and Mailchimp if you also run a store or brand alongside your gig work
         </p>
@@ -903,8 +903,8 @@ export default function Automations() {
             <CardContent className="p-4 flex gap-3">
               <div className="mt-0.5">{c.icon}</div>
               <div>
-                <p className="text-white font-medium text-sm">{c.title}</p>
-                <p className="text-xs text-gray-400 mt-0.5 leading-relaxed">
+                <p className="text-foreground font-medium text-sm">{c.title}</p>
+                <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
                   {c.desc}
                 </p>
               </div>
@@ -914,7 +914,7 @@ export default function Automations() {
       </div>
 
       <Tabs defaultValue="n8n" className="space-y-4">
-        <TabsList className="bg-card border border-gray-800">
+        <TabsList className="bg-card border border-border">
           <TabsTrigger
             value="n8n"
             className="data-[state=active]:bg-orange-500/20 data-[state=active]:text-orange-300"

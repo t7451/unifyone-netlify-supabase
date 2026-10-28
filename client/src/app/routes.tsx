@@ -179,8 +179,8 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
       <LoadingExperience
         fullScreen
         title="Restoring your workspace"
-        description="Reconnecting your session, tenant permissions, and saved workspace state."
-        label="Session recovery in progress"
+        description="Loading your account and saved work."
+        label="Checking your session"
       />
     );
   }
@@ -215,9 +215,9 @@ function TenantGuard({ children }: { children: ReactNode }) {
     return (
       <LoadingExperience
         fullScreen
-        title="Preparing tenant workspace"
-        description="Loading tenant access, dashboard modules, and personalized workspace data."
-        label="Tenant setup loading"
+        title="Opening your workspace"
+        description="Getting your workspace ready."
+        label="Workspace"
       />
     );
   }

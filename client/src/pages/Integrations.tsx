@@ -72,14 +72,14 @@ export default function Integrations() {
   const integrationsHeader = (
     <div className="flex items-center justify-between">
       <div>
-        <h1 className="text-2xl font-bold text-white">Integrations</h1>
-        <p className="text-gray-400 text-sm mt-1">
+        <h1 className="text-2xl font-bold text-foreground">Integrations</h1>
+        <p className="text-muted-foreground text-sm mt-1">
           Connect your payment rails and external services
         </p>
       </div>
       <Button
         onClick={() => navigate("/checkout")}
-        className="bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-bold"
+        className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold"
       >
         <CreditCard className="w-4 h-4 mr-2" />
         Test Checkout
@@ -115,15 +115,15 @@ export default function Integrations() {
         <Card className="bg-card border-border">
           <CardContent className="p-10 text-center">
             <AlertCircle className="w-10 h-10 text-red-400/60 mx-auto mb-3" />
-            <p className="text-white font-medium">
+            <p className="text-foreground font-medium">
               Couldn&apos;t load integration status
             </p>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {intStatus.error.message}
             </p>
             <Button
               variant="outline"
-              className="mt-4 border-white/10 text-gray-300"
+              className="mt-4 border-border text-foreground"
               onClick={() => intStatus.refetch()}
             >
               Retry
@@ -140,14 +140,14 @@ export default function Integrations() {
 
       {/* Payment Rails */}
       <div>
-        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
           Payment Rails
         </h2>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Stripe */}
           <Card className="bg-card border-border">
             <CardHeader className="pb-3">
-              <CardTitle className="text-white text-base flex items-center gap-2">
+              <CardTitle className="text-foreground text-base flex items-center gap-2">
                 <div
                   className="w-8 h-8 rounded-lg flex items-center justify-center"
                   style={{ backgroundColor: "#635BFF20" }}
@@ -165,7 +165,7 @@ export default function Integrations() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <p className="text-gray-400 text-sm">
+              <p className="text-muted-foreground text-sm">
                 Card payments, subscriptions, and billing portal.
               </p>
               <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2">
@@ -174,7 +174,7 @@ export default function Integrations() {
               </div>
               <Button
                 onClick={() => navigate("/checkout")}
-                className="w-full font-semibold text-sm text-white"
+                className="w-full font-semibold text-sm text-foreground"
                 style={{ backgroundColor: "#635BFF" }}
               >
                 <CreditCard className="w-3.5 h-3.5 mr-2" />
@@ -186,7 +186,7 @@ export default function Integrations() {
           {/* PayPal */}
           <Card className="bg-card border-border">
             <CardHeader className="pb-3">
-              <CardTitle className="text-white text-base flex items-center gap-2">
+              <CardTitle className="text-foreground text-base flex items-center gap-2">
                 <div
                   className="w-8 h-8 rounded-lg flex items-center justify-center"
                   style={{ backgroundColor: "#003087" + "20" }}
@@ -209,7 +209,7 @@ export default function Integrations() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <p className="text-gray-400 text-sm">
+              <p className="text-muted-foreground text-sm">
                 PayPal Smart Buttons, Venmo, Pay Later support.
               </p>
               {intStatus.data?.paypal?.configured ? (
@@ -220,7 +220,7 @@ export default function Integrations() {
                   </div>
                   <Button
                     onClick={() => navigate("/checkout?rail=paypal")}
-                    className="w-full font-semibold text-sm text-white"
+                    className="w-full font-semibold text-sm text-foreground"
                     style={{ backgroundColor: "#003087" }}
                   >
                     Test PayPal Checkout
@@ -228,13 +228,13 @@ export default function Integrations() {
                 </>
               ) : (
                 <div className="space-y-2">
-                  <p className="text-gray-500 text-xs">
+                  <p className="text-muted-foreground text-xs">
                     Add PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET in Settings →
                     Secrets to enable PayPal.
                   </p>
                   <Button
                     variant="outline"
-                    className="w-full text-sm border-white/10 text-gray-300"
+                    className="w-full text-sm border-border text-foreground"
                     onClick={() =>
                       window.open(
                         "https://developer.paypal.com/dashboard/applications/live",
@@ -253,7 +253,7 @@ export default function Integrations() {
           {/* Shopify Checkout */}
           <Card className="bg-card border-border">
             <CardHeader className="pb-3">
-              <CardTitle className="text-white text-base flex items-center gap-2">
+              <CardTitle className="text-foreground text-base flex items-center gap-2">
                 <div
                   className="w-8 h-8 rounded-lg flex items-center justify-center"
                   style={{ backgroundColor: "#96BF4820" }}
@@ -274,18 +274,18 @@ export default function Integrations() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <p className="text-gray-400 text-sm">
+              <p className="text-muted-foreground text-sm">
                 Direct payment link to your Shopify storefront.
               </p>
               <div>
-                <Label className="text-gray-300 text-xs">
+                <Label className="text-foreground text-xs">
                   Store Checkout / Product URL
                 </Label>
                 <Input
                   value={shopifyCheckoutUrlInput}
                   onChange={e => setShopifyCheckoutUrlInput(e.target.value)}
                   placeholder="https://yourstore.myshopify.com/checkout"
-                  className="bg-white/5 border-white/10 text-white mt-1 text-sm"
+                  className="bg-muted/30 border-border text-foreground mt-1 text-sm"
                 />
               </div>
               <Button
@@ -297,7 +297,7 @@ export default function Integrations() {
                 disabled={
                   shopifySetCheckoutUrl.isPending || !shopifyCheckoutUrlInput
                 }
-                className="w-full font-semibold text-sm text-white"
+                className="w-full font-semibold text-sm text-foreground"
                 style={{ backgroundColor: "#96BF48" }}
               >
                 {shopifySetCheckoutUrl.isPending
@@ -311,14 +311,14 @@ export default function Integrations() {
 
       {/* Platform Integrations */}
       <div>
-        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
           Platform Integrations
         </h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Shopify Sync */}
           <Card className="bg-card border-border">
             <CardHeader className="pb-3">
-              <CardTitle className="text-white text-base flex items-center gap-2">
+              <CardTitle className="text-foreground text-base flex items-center gap-2">
                 <div
                   className="w-8 h-8 rounded-lg flex items-center justify-center"
                   style={{ backgroundColor: "#96BF4820" }}
@@ -332,7 +332,7 @@ export default function Integrations() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <p className="text-gray-400 text-sm">
+              <p className="text-muted-foreground text-sm">
                 Sync products and orders from your Shopify Admin API.
               </p>
               {intStatus.data?.shopify?.connected ? (
@@ -342,18 +342,18 @@ export default function Integrations() {
               ) : (
                 <>
                   <div>
-                    <Label className="text-gray-300 text-xs">
+                    <Label className="text-foreground text-xs">
                       Store Domain
                     </Label>
                     <Input
                       value={shopifyDomain}
                       onChange={e => setShopifyDomain(e.target.value)}
                       placeholder="mystore.myshopify.com"
-                      className="bg-white/5 border-white/10 text-white mt-1 text-sm"
+                      className="bg-muted/30 border-border text-foreground mt-1 text-sm"
                     />
                   </div>
                   <div>
-                    <Label className="text-gray-300 text-xs">
+                    <Label className="text-foreground text-xs">
                       Admin Access Token
                     </Label>
                     <Input
@@ -361,7 +361,7 @@ export default function Integrations() {
                       value={shopifyToken}
                       onChange={e => setShopifyToken(e.target.value)}
                       placeholder="shpat_..."
-                      className="bg-white/5 border-white/10 text-white mt-1 text-sm"
+                      className="bg-muted/30 border-border text-foreground mt-1 text-sm"
                     />
                   </div>
                   <Button
@@ -376,7 +376,7 @@ export default function Integrations() {
                       !shopifyDomain ||
                       !shopifyToken
                     }
-                    className="w-full font-semibold text-sm text-white"
+                    className="w-full font-semibold text-sm text-foreground"
                     style={{ backgroundColor: "#96BF48" }}
                   >
                     {shopifyConnect.isPending
@@ -391,7 +391,7 @@ export default function Integrations() {
           {/* n8n */}
           <Card className="bg-card border-border">
             <CardHeader className="pb-3">
-              <CardTitle className="text-white text-base flex items-center gap-2">
+              <CardTitle className="text-foreground text-base flex items-center gap-2">
                 <div
                   className="w-8 h-8 rounded-lg flex items-center justify-center"
                   style={{ backgroundColor: "#EA4B7120" }}
@@ -405,23 +405,23 @@ export default function Integrations() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <p className="text-gray-400 text-sm">
+              <p className="text-muted-foreground text-sm">
                 Trigger n8n workflows for order processing and notifications.
               </p>
               <div>
-                <Label className="text-gray-300 text-xs">Webhook URL</Label>
+                <Label className="text-foreground text-xs">Webhook URL</Label>
                 <Input
                   value={n8nUrl || intStatus.data?.n8n?.webhookUrl || ""}
                   onChange={e => setN8nUrl(e.target.value)}
                   placeholder="https://n8n.example.com/webhook/..."
-                  className="bg-white/5 border-white/10 text-white mt-1 text-sm"
+                  className="bg-muted/30 border-border text-foreground mt-1 text-sm"
                 />
               </div>
               <div className="flex gap-2">
                 <Button
                   onClick={() => n8nUpdate.mutate({ webhookUrl: n8nUrl })}
                   disabled={n8nUpdate.isPending || !n8nUrl}
-                  className="flex-1 font-semibold text-sm text-white"
+                  className="flex-1 font-semibold text-sm text-foreground"
                   style={{ backgroundColor: "#EA4B71" }}
                 >
                   {n8nUpdate.isPending ? "Saving..." : "Save URL"}
@@ -437,7 +437,7 @@ export default function Integrations() {
                     n8nTrigger.isPending || !intStatus.data?.n8n?.configured
                   }
                   variant="outline"
-                  className="flex-1 text-sm border-white/10 text-white"
+                  className="flex-1 text-sm border-border text-foreground"
                 >
                   {n8nTrigger.isPending ? "..." : "Test Trigger"}
                 </Button>
@@ -450,7 +450,7 @@ export default function Integrations() {
       {/* Status Summary */}
       <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="text-white text-base">
+          <CardTitle className="text-foreground text-base">
             Payment Rail Status
           </CardTitle>
         </CardHeader>
@@ -494,7 +494,7 @@ export default function Integrations() {
             ].map(s => (
               <div
                 key={s.name}
-                className="flex items-center gap-3 p-3 rounded-xl border border-white/10 bg-white/3"
+                className="flex items-center gap-3 p-3 rounded-xl border border-border bg-white/3"
               >
                 <div
                   className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
@@ -503,12 +503,12 @@ export default function Integrations() {
                   <s.icon className="w-4 h-4" style={{ color: s.color }} />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-white font-medium text-xs truncate">
+                  <div className="text-foreground font-medium text-xs truncate">
                     {s.name}
                   </div>
                   <Badge
                     variant="outline"
-                    className={`text-[10px] mt-0.5 ${s.connected ? "border-emerald-500/30 text-emerald-400" : "border-gray-600 text-gray-500"}`}
+                    className={`text-[10px] mt-0.5 ${s.connected ? "border-emerald-500/30 text-emerald-400" : "border-input text-muted-foreground"}`}
                   >
                     {s.label}
                   </Badge>

@@ -19,17 +19,17 @@ export default function MyThemes() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">
+          <h1 className="text-2xl font-bold text-foreground">
             My Storefront Themes
           </h1>
-          <p className="text-slate-400 text-sm mt-1">
+          <p className="text-muted-foreground text-sm mt-1">
             Storefront themes you've installed — an optional add-on to your gig
             tools
           </p>
         </div>
         <Button
           onClick={() => navigate("/themes")}
-          className="bg-gradient-to-r from-[#D4A843] to-[#B8863B] hover:from-[#E8C25A] hover:to-[#B8863B] text-[#020202] font-semibold gap-2"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold gap-2"
         >
           <ShoppingBag className="w-4 h-4" />
           Browse storefront themes
@@ -42,12 +42,12 @@ export default function MyThemes() {
           {Array.from({ length: 3 }).map((_, i) => (
             <div
               key={i}
-              className="bg-[#020202] border border-white/8 rounded-xl overflow-hidden animate-pulse"
+              className="bg-card border border-border rounded-xl overflow-hidden animate-pulse"
             >
-              <div className="aspect-[16/10] bg-white/5" />
+              <div className="aspect-[16/10] bg-muted/40" />
               <div className="p-4 space-y-2">
-                <div className="h-4 bg-white/5 rounded w-3/4" />
-                <div className="h-3 bg-white/5 rounded w-1/2" />
+                <div className="h-4 bg-muted/40 rounded w-3/4" />
+                <div className="h-3 bg-muted/40 rounded w-1/2" />
               </div>
             </div>
           ))}
@@ -56,18 +56,18 @@ export default function MyThemes() {
 
       {/* Empty state */}
       {!isLoading && installs.length === 0 && (
-        <div className="text-center py-20 bg-[#020202] border border-white/8 rounded-xl">
-          <Package className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-white mb-2">
+        <div className="text-center py-20 bg-card border border-border rounded-xl">
+          <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">
             No storefront themes installed yet
           </h3>
-          <p className="text-slate-500 text-sm mb-6 max-w-sm mx-auto">
+          <p className="text-muted-foreground text-sm mb-6 max-w-sm mx-auto">
             Storefront themes are an optional add-on. Browse them if you also
             run a storefront — your gig earnings and tax tools work without one.
           </p>
           <Button
             onClick={() => navigate("/themes")}
-            className="bg-gradient-to-r from-[#D4A843] to-[#B8863B] text-[#020202] font-semibold gap-2"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold gap-2"
           >
             Browse storefront themes <ArrowRight className="w-4 h-4" />
           </Button>
@@ -87,9 +87,9 @@ export default function MyThemes() {
             return (
               <div
                 key={install.id}
-                className="bg-[#020202] border border-white/8 rounded-xl overflow-hidden hover:border-[#D4A843]/30 transition-all"
+                className="bg-card border border-border rounded-xl overflow-hidden hover:border-primary/30 transition-all"
               >
-                <div className="relative aspect-[16/10] overflow-hidden bg-[#020202]">
+                <div className="relative aspect-[16/10] overflow-hidden bg-card">
                   <img
                     src={thumbnail}
                     alt={theme.name}
@@ -101,7 +101,7 @@ export default function MyThemes() {
                   />
                   <div className="absolute top-2 right-2">
                     {Number(install.amountPaid) > 0 ? (
-                      <span className="text-xs font-semibold text-[#D4A843] bg-[#D4A843]/10 border border-[#D4A843]/20 px-2 py-0.5 rounded-full">
+                      <span className="text-xs font-semibold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full">
                         ${install.amountPaid}
                       </span>
                     ) : (
@@ -114,17 +114,17 @@ export default function MyThemes() {
 
                 <div className="p-4 space-y-3">
                   <div>
-                    <h3 className="font-semibold text-white text-sm">
+                    <h3 className="font-semibold text-foreground text-sm">
                       {theme.name}
                     </h3>
                     {theme.description && (
-                      <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                         {theme.description}
                       </p>
                     )}
                   </div>
 
-                  <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Calendar className="w-3 h-3" />
                     Installed{" "}
                     {new Date(install.installedAt).toLocaleDateString()}
@@ -134,7 +134,7 @@ export default function MyThemes() {
                     {theme.downloadUrl && (
                       <Button
                         size="sm"
-                        className="flex-1 h-8 bg-gradient-to-r from-[#D4A843] to-[#B8863B] text-[#020202] font-semibold text-xs gap-1.5"
+                        className="flex-1 h-8 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs gap-1.5"
                         onClick={() => window.open(theme.downloadUrl, "_blank")}
                       >
                         <Download className="w-3.5 h-3.5" />
@@ -145,7 +145,7 @@ export default function MyThemes() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="h-8 border-white/10 bg-white/5 text-slate-300 text-xs gap-1.5"
+                        className="h-8 border-border bg-muted/40 text-muted-foreground text-xs gap-1.5"
                         onClick={() => window.open(theme.previewUrl, "_blank")}
                       >
                         <ExternalLink className="w-3.5 h-3.5" />

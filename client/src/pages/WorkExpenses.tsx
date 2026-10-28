@@ -219,7 +219,7 @@ export default function WorkExpenses() {
           <Label htmlFor="expense-period">Review period</Label>
           <select
             id="expense-period"
-            className="mt-1 block min-h-11 rounded-md border bg-background px-3 text-sm"
+            className="mt-1 block min-h-11 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             value={period}
             onChange={event => {
               setPeriod(event.target.value as Period);
@@ -243,7 +243,7 @@ export default function WorkExpenses() {
         spending and does not determine whether an expense is tax deductible.
       </p>
       {list.isError ? (
-        <Card>
+        <Card className="border-destructive/30">
           <CardContent className="space-y-3 pt-6">
             <p role="alert">
               Your expenses could not be loaded. Totals are unavailable.
@@ -254,7 +254,10 @@ export default function WorkExpenses() {
           </CardContent>
         </Card>
       ) : list.isPending ? (
-        <p role="status" className="p-6">
+        <p
+          role="status"
+          className="rounded-xl border bg-card p-6 text-sm text-muted-foreground"
+        >
           Loading expenses…
         </p>
       ) : data ? (
@@ -431,10 +434,10 @@ export default function WorkExpenses() {
         }}
       >
         <DialogContent
-          className="max-h-[90dvh] overflow-y-auto sm:max-w-lg"
+          className="max-h-[90dvh] gap-5 overflow-y-auto sm:max-w-lg"
           showCloseButton={!create.isPending}
         >
-          <DialogHeader>
+          <DialogHeader className="border-b pb-4">
             <DialogTitle>Add work expense</DialogTitle>
             <DialogDescription>
               Enter the business portion you paid in USD. Keep receipts
@@ -486,7 +489,7 @@ export default function WorkExpenses() {
                 <Label htmlFor="expense-category">Category</Label>
                 <select
                   id="expense-category"
-                  className="mt-1 block min-h-11 w-full rounded-md border bg-background px-3 text-sm"
+                  className="mt-1 block min-h-11 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   value={form.category}
                   onChange={event =>
                     setForm({
@@ -576,7 +579,7 @@ export default function WorkExpenses() {
         }}
       >
         <DialogContent showCloseButton={!remove.isPending}>
-          <DialogHeader>
+          <DialogHeader className="border-b pb-4">
             <DialogTitle>Delete recorded expense?</DialogTitle>
             <DialogDescription>
               This removes the entry from your expense history and period

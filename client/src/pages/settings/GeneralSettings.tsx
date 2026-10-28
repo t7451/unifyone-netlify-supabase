@@ -111,15 +111,15 @@ export default function GeneralSettings() {
         {/* Primary Experience */}
         <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-white text-base flex items-center gap-2">
+            <CardTitle className="text-foreground text-base flex items-center gap-2">
               {isCommerce ? (
-                <Store className="w-4 h-4 text-[#D4A843]" />
+                <Store className="w-4 h-4 text-primary" />
               ) : (
-                <Car className="w-4 h-4 text-[#D4A843]" />
+                <Car className="w-4 h-4 text-primary" />
               )}
               Primary Experience
             </CardTitle>
-            <CardDescription className="text-gray-400">
+            <CardDescription className="text-muted-foreground">
               Sets your default landing page and which tools lead the sidebar
             </CardDescription>
           </CardHeader>
@@ -144,24 +144,24 @@ export default function GeneralSettings() {
                     className={cn(
                       "flex flex-col gap-2 rounded-xl border p-4 text-left transition-colors disabled:opacity-60",
                       isSelected
-                        ? "border-[#D4A843]/40 bg-[#D4A843]/10"
-                        : "border-white/10 bg-white/5 hover:border-white/20"
+                        ? "border-primary/40 bg-primary/10"
+                        : "border-border bg-muted/40 hover:border-border"
                     )}
                   >
                     <div
                       className={cn(
                         "flex h-9 w-9 items-center justify-center rounded-full",
                         isSelected
-                          ? "bg-[#D4A843] text-[#020202]"
-                          : "bg-white/5 text-gray-400"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted/40 text-muted-foreground"
                       )}
                     >
                       <option.icon className="h-5 w-5" />
                     </div>
-                    <p className="text-sm font-semibold text-white">
+                    <p className="text-sm font-semibold text-foreground">
                       {option.label}
                     </p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-muted-foreground">
                       {option.description}
                     </p>
                   </button>
@@ -174,18 +174,20 @@ export default function GeneralSettings() {
         {/* Store Identity */}
         <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-white text-base flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-[#D4A843]" />
+            <CardTitle className="text-foreground text-base flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-primary" />
               {isCommerce ? "Store Identity" : "Workspace Identity"}
             </CardTitle>
-            <CardDescription className="text-gray-400">
+            <CardDescription className="text-muted-foreground">
               Your {isCommerce ? "store" : "workspace"} name and identifier used
               across the platform
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-1.5">
-              <Label className="text-gray-300 text-sm">{nameLabel}</Label>
+              <Label className="text-muted-foreground text-sm">
+                {nameLabel}
+              </Label>
               <Input
                 value={name || tenant?.name || ""}
                 onChange={e => setName(e.target.value)}
@@ -193,40 +195,40 @@ export default function GeneralSettings() {
                   tenant?.name ??
                   (isCommerce ? "Your store name" : "Your workspace name")
                 }
-                className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50"
+                className="bg-muted/40 border-border text-foreground focus:border-primary/50"
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-gray-300 text-sm">
+              <Label className="text-muted-foreground text-sm">
                 {isCommerce ? "Store Slug" : "Workspace Slug"}
               </Label>
               <div className="flex gap-2">
                 <Input
                   value={tenant?.slug ?? ""}
                   disabled
-                  className="bg-white/5 border-white/10 text-gray-500"
+                  className="bg-muted/40 border-border text-muted-foreground"
                 />
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="shrink-0 border border-white/10 hover:bg-white/5"
+                  className="shrink-0 border border-border hover:bg-muted/40"
                   onClick={copySlug}
                 >
                   {copiedSlug ? (
                     <Check className="w-4 h-4 text-emerald-400" />
                   ) : (
-                    <Copy className="w-4 h-4 text-gray-400" />
+                    <Copy className="w-4 h-4 text-muted-foreground" />
                   )}
                 </Button>
               </div>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 Slug cannot be changed after creation.
               </p>
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-gray-300 text-sm">Status</Label>
+              <Label className="text-muted-foreground text-sm">Status</Label>
               <div>
                 <Badge
                   variant="outline"
@@ -246,24 +248,26 @@ export default function GeneralSettings() {
         {/* Domain & Branding */}
         <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-white text-base flex items-center gap-2">
-              <Globe className="w-4 h-4 text-[#D4A843]" />
+            <CardTitle className="text-foreground text-base flex items-center gap-2">
+              <Globe className="w-4 h-4 text-primary" />
               Domain & Branding
             </CardTitle>
-            <CardDescription className="text-gray-400">
+            <CardDescription className="text-muted-foreground">
               Custom domain and visual identity for your{" "}
               {isCommerce ? "store" : "workspace"}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-1.5">
-              <Label className="text-gray-300 text-sm">Custom Domain</Label>
+              <Label className="text-muted-foreground text-sm">
+                Custom Domain
+              </Label>
               <div className="flex items-center gap-2">
                 <Input
                   value={domain || tenant?.domain || ""}
                   onChange={e => setDomain(e.target.value)}
                   placeholder="shop.yourdomain.com"
-                  className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50"
+                  className="bg-muted/40 border-border text-foreground focus:border-primary/50"
                 />
                 {tenant?.domain && (
                   <Button
@@ -274,29 +278,29 @@ export default function GeneralSettings() {
                       window.open(`https://${tenant.domain}`, "_blank")
                     }
                   >
-                    <ExternalLink className="w-4 h-4 text-gray-400" />
+                    <ExternalLink className="w-4 h-4 text-muted-foreground" />
                   </Button>
                 )}
               </div>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 Point your domain's CNAME to unifyone.app to use a custom
                 domain.
               </p>
             </div>
 
-            <Separator className="bg-white/10" />
+            <Separator className="bg-muted" />
 
             <div className="space-y-1.5">
-              <Label className="text-gray-300 text-sm">Logo URL</Label>
+              <Label className="text-muted-foreground text-sm">Logo URL</Label>
               <Input
                 value={logoUrl || tenant?.logoUrl || ""}
                 onChange={e => setLogoUrl(e.target.value)}
                 placeholder="https://example.com/logo.png"
-                className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50"
+                className="bg-muted/40 border-border text-foreground focus:border-primary/50"
               />
               {(logoUrl || tenant?.logoUrl) && (
-                <div className="mt-2 p-3 rounded-lg bg-white/5 border border-white/10 inline-flex items-center gap-3">
-                  <Image className="w-4 h-4 text-gray-500" />
+                <div className="mt-2 p-3 rounded-lg bg-muted/40 border border-border inline-flex items-center gap-3">
+                  <Image className="w-4 h-4 text-muted-foreground" />
                   {(() => {
                     const rawSrc = logoUrl || tenant?.logoUrl;
                     // Use URL constructor to reject malformed or non-http(s) URLs
@@ -333,7 +337,7 @@ export default function GeneralSettings() {
           <Button
             onClick={handleSave}
             disabled={updateTenant.isPending || (!name && !domain && !logoUrl)}
-            className="bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-semibold"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
           >
             {updateTenant.isPending ? (
               <>

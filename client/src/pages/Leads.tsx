@@ -112,11 +112,11 @@ export default function Leads() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Users className="w-6 h-6 text-indigo-400" />
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            <Users className="w-6 h-6 text-primary" />
             Leads Pipeline
           </h1>
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Optional side-business tool — CRM-grade lead management with
             automation tracking, for gig workers who also run a store or brand
           </p>
@@ -154,10 +154,10 @@ export default function Leads() {
             },
             { label: "Lost", value: stats.lost, color: "text-red-400" },
           ].map(s => (
-            <Card key={s.label} className="bg-card border-gray-800">
+            <Card key={s.label} className="bg-card border-border">
               <CardContent className="p-3 text-center">
                 <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
-                <div className="text-xs text-gray-500 mt-0.5">{s.label}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">{s.label}</div>
               </CardContent>
             </Card>
           ))}
@@ -166,12 +166,12 @@ export default function Leads() {
 
       {/* Filter */}
       <div className="flex items-center gap-3">
-        <Filter className="w-4 h-4 text-gray-400" />
+        <Filter className="w-4 h-4 text-muted-foreground" />
         <Select
           value={filterStatus}
           onValueChange={v => setFilterStatus(v as LeadStatus | "all")}
         >
-          <SelectTrigger className="w-48 bg-card border-gray-700">
+          <SelectTrigger className="w-48 bg-card border-input">
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent>
@@ -183,7 +183,7 @@ export default function Leads() {
             ))}
           </SelectContent>
         </Select>
-        <span className="text-sm text-gray-500">
+        <span className="text-sm text-muted-foreground">
           {leads.length} lead{leads.length !== 1 ? "s" : ""}
         </span>
       </div>
@@ -192,11 +192,11 @@ export default function Leads() {
         {/* Lead List */}
         <div className="flex-1 space-y-3 min-w-0">
           {leads.length === 0 ? (
-            <Card className="bg-card border-gray-800">
+            <Card className="bg-card border-border">
               <CardContent className="p-12 text-center">
-                <Users className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                <p className="text-gray-400 font-medium">No leads yet</p>
-                <p className="text-sm text-gray-600 mt-1">
+                <Users className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground font-medium">No leads yet</p>
+                <p className="text-sm text-muted-foreground mt-1">
                   Leads from the landing page wizard will appear here
                 </p>
               </CardContent>
@@ -207,7 +207,7 @@ export default function Leads() {
               return (
                 <Card
                   key={lead.id}
-                  className={`bg-card border-gray-800 border-l-4 ${sc.bg} cursor-pointer hover:bg-gray-800/50 transition-colors ${selectedLead === lead.id ? "ring-1 ring-indigo-500" : ""}`}
+                  className={`bg-card border-border border-l-4 ${sc.bg} cursor-pointer hover:bg-muted/50 transition-colors ${selectedLead === lead.id ? "ring-1 ring-ring" : ""}`}
                   onClick={() =>
                     setSelectedLead(selectedLead === lead.id ? null : lead.id)
                   }
@@ -216,7 +216,7 @@ export default function Leads() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-semibold text-white text-sm truncate">
+                          <span className="font-semibold text-foreground text-sm truncate">
                             {lead.companyName || lead.contactName || lead.email}
                           </span>
                           <Badge
@@ -227,23 +227,23 @@ export default function Leads() {
                           {lead.plan && (
                             <Badge
                               variant="outline"
-                              className="text-xs text-indigo-400 border-indigo-500/30"
+                              className="text-xs text-primary border-primary/30"
                             >
                               {lead.plan}
                             </Badge>
                           )}
                         </div>
                         <div className="flex items-center gap-4 mt-1.5 flex-wrap">
-                          <span className="text-xs text-gray-400 flex items-center gap-1">
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
                             <Mail className="w-3 h-3" /> {lead.email}
                           </span>
                           {lead.phone && (
-                            <span className="text-xs text-gray-400 flex items-center gap-1">
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
                               <Phone className="w-3 h-3" /> {lead.phone}
                             </span>
                           )}
                           {lead.website && (
-                            <span className="text-xs text-gray-400 flex items-center gap-1">
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
                               <Globe className="w-3 h-3" /> {lead.website}
                             </span>
                           )}
@@ -264,13 +264,13 @@ export default function Leads() {
                               <CheckCircle2 className="w-3 h-3" /> Notified
                             </span>
                           )}
-                          <span className="text-xs text-gray-600">
+                          <span className="text-xs text-muted-foreground">
                             {new Date(lead.createdAt).toLocaleDateString()}
                           </span>
                         </div>
                       </div>
                       <ChevronRight
-                        className={`w-4 h-4 text-gray-500 mt-1 transition-transform ${selectedLead === lead.id ? "rotate-90" : ""}`}
+                        className={`w-4 h-4 text-muted-foreground mt-1 transition-transform ${selectedLead === lead.id ? "rotate-90" : ""}`}
                       />
                     </div>
                   </CardContent>
@@ -283,10 +283,10 @@ export default function Leads() {
         {/* Lead Detail Panel */}
         {selected && (
           <div className="w-80 shrink-0 space-y-4">
-            <Card className="bg-card border-gray-800">
+            <Card className="bg-card border-border">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm text-white flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-indigo-400" />
+                <CardTitle className="text-sm text-foreground flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-primary" />
                   Lead #{selected.id}
                 </CardTitle>
               </CardHeader>
@@ -305,7 +305,7 @@ export default function Leads() {
                   .filter(f => f.value)
                   .map(f => (
                     <div key={f.label} className="flex justify-between gap-2">
-                      <span className="text-gray-500 shrink-0">{f.label}</span>
+                      <span className="text-muted-foreground shrink-0">{f.label}</span>
                       <span className="text-gray-200 text-right truncate">
                         {f.value}
                       </span>
@@ -314,7 +314,7 @@ export default function Leads() {
                 {selected.platforms &&
                   (selected.platforms as string[]).length > 0 && (
                     <div>
-                      <span className="text-gray-500 block mb-1">
+                      <span className="text-muted-foreground block mb-1">
                         Platforms
                       </span>
                       <div className="flex flex-wrap gap-1">
@@ -322,7 +322,7 @@ export default function Leads() {
                           <Badge
                             key={p}
                             variant="outline"
-                            className="text-xs text-gray-300 border-gray-600"
+                            className="text-xs text-foreground border-input"
                           >
                             {p}
                           </Badge>
@@ -332,8 +332,8 @@ export default function Leads() {
                   )}
                 {selected.message && (
                   <div>
-                    <span className="text-gray-500 block mb-1">Message</span>
-                    <p className="text-gray-300 text-xs leading-relaxed bg-gray-800 rounded p-2">
+                    <span className="text-muted-foreground block mb-1">Message</span>
+                    <p className="text-foreground text-xs leading-relaxed bg-muted rounded p-2">
                       {selected.message}
                     </p>
                   </div>
@@ -342,9 +342,9 @@ export default function Leads() {
             </Card>
 
             {/* Status Update */}
-            <Card className="bg-card border-gray-800">
+            <Card className="bg-card border-border">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-white flex items-center gap-2">
+                <CardTitle className="text-sm text-foreground flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-green-400" /> Update
                   Status
                 </CardTitle>
@@ -364,7 +364,7 @@ export default function Leads() {
                         onClick={() =>
                           updateStatus.mutate({ id: selected.id, status: s })
                         }
-                        className={`justify-start gap-2 text-xs ${selected.status === s ? "opacity-50" : "hover:bg-gray-800"}`}
+                        className={`justify-start gap-2 text-xs ${selected.status === s ? "opacity-50" : "hover:bg-muted"}`}
                       >
                         {sc.icon}
                         {sc.label}
@@ -379,15 +379,15 @@ export default function Leads() {
             </Card>
 
             {/* Notes */}
-            <Card className="bg-card border-gray-800">
+            <Card className="bg-card border-border">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-white flex items-center gap-2">
+                <CardTitle className="text-sm text-foreground flex items-center gap-2">
                   <StickyNote className="w-4 h-4 text-yellow-400" /> Notes
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 {selected.notes && (
-                  <div className="text-xs text-gray-300 bg-gray-800 rounded p-2 max-h-32 overflow-y-auto whitespace-pre-wrap">
+                  <div className="text-xs text-foreground bg-muted rounded p-2 max-h-32 overflow-y-auto whitespace-pre-wrap">
                     {selected.notes}
                   </div>
                 )}
@@ -395,7 +395,7 @@ export default function Leads() {
                   placeholder="Add a note..."
                   value={noteText}
                   onChange={e => setNoteText(e.target.value)}
-                  className="bg-gray-800 border-gray-700 text-white text-xs resize-none h-20"
+                  className="bg-muted border-input text-foreground text-xs resize-none h-20"
                 />
                 <Button
                   size="sm"
@@ -411,9 +411,9 @@ export default function Leads() {
             </Card>
 
             {/* Automation Status */}
-            <Card className="bg-card border-gray-800">
+            <Card className="bg-card border-border">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-white flex items-center gap-2">
+                <CardTitle className="text-sm text-foreground flex items-center gap-2">
                   <BarChart3 className="w-4 h-4 text-purple-400" /> Automation
                 </CardTitle>
               </CardHeader>
@@ -444,13 +444,13 @@ export default function Leads() {
                     key={item.label}
                     className="flex items-center justify-between"
                   >
-                    <span className="text-gray-400 flex items-center gap-1.5">
+                    <span className="text-muted-foreground flex items-center gap-1.5">
                       {item.icon} {item.label}
                     </span>
                     {item.value ? (
                       <CheckCircle2 className="w-3.5 h-3.5 text-green-400" />
                     ) : (
-                      <XCircle className="w-3.5 h-3.5 text-gray-600" />
+                      <XCircle className="w-3.5 h-3.5 text-muted-foreground" />
                     )}
                   </div>
                 ))}

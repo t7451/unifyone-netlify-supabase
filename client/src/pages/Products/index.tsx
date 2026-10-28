@@ -100,13 +100,13 @@ export default function Products() {
       actions={
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-semibold">
+            <Button className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
               <Plus className="w-4 h-4 mr-2" /> Add Product
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-[#0F172A] border-white/10 text-white max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogContent className="bg-card border-border text-foreground max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="text-white text-lg">
+              <DialogTitle className="text-foreground text-lg">
                 New Product
               </DialogTitle>
             </DialogHeader>
@@ -121,7 +121,7 @@ export default function Products() {
             <DialogFooter className="mt-4 gap-2">
               <Button
                 variant="ghost"
-                className="text-gray-400 hover:text-white"
+                className="text-gray-400 hover:text-foreground"
                 onClick={() => setCreateOpen(false)}
               >
                 Cancel
@@ -134,7 +134,7 @@ export default function Products() {
                   !form.price ||
                   Number(form.price) <= 0
                 }
-                className="bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-bold"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold"
               >
                 {createMutation.isPending ? (
                   <>
@@ -151,13 +151,13 @@ export default function Products() {
       }
       meta={
         <>
-          <Badge variant="outline" className="border-white/10 bg-white/5">
+          <Badge variant="outline" className="border-border bg-muted/40">
             {totalProducts} product{totalProducts === 1 ? "" : "s"}
           </Badge>
           {hasActiveFilters ? (
             <Badge
               variant="outline"
-              className="border-[#D4A843]/30 bg-[#D4A843]/10 text-[#E8C25A]"
+              className="border-primary/30 bg-primary/10 text-primary"
             >
               Filtered view
             </Badge>
@@ -219,7 +219,7 @@ export default function Products() {
                 setPage(1);
               }}
               placeholder="Search products…"
-              className="border-white/10 bg-white/5 pl-10 text-white placeholder:text-gray-500"
+              className="border-border bg-muted/40 pl-10 text-foreground placeholder:text-gray-500"
             />
           </div>
           <Select
@@ -229,10 +229,10 @@ export default function Products() {
               setPage(1);
             }}
           >
-            <SelectTrigger className="w-full border-white/10 bg-white/5 text-white sm:w-40">
+            <SelectTrigger className="w-full border-border bg-muted/40 text-foreground sm:w-40">
               <SelectValue placeholder="All" />
             </SelectTrigger>
-            <SelectContent className="bg-[#0F172A] border-white/10">
+            <SelectContent className="bg-card border-border">
               <SelectItem value="all">All</SelectItem>
               <SelectItem value="active">Active</SelectItem>
               <SelectItem value="draft">Draft</SelectItem>
@@ -247,7 +247,7 @@ export default function Products() {
                 setStatusFilter("all");
                 setPage(1);
               }}
-              className="border-white/10 text-gray-300 hover:bg-white/5 hover:text-white"
+              className="border-border text-gray-300 hover:bg-muted/40 hover:text-foreground"
             >
               Clear filters
             </Button>
@@ -257,14 +257,14 @@ export default function Products() {
           variant="outline"
           onClick={toggleSelectAllVisible}
           disabled={productList.length === 0}
-          className="border-white/10 text-gray-300 hover:text-white hover:bg-white/5"
+          className="border-border text-gray-300 hover:text-foreground hover:bg-muted/40"
         >
           {allVisibleSelected ? "Clear Visible" : "Select Visible"}
         </Button>
       </div>
 
       {selectedIds.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-white/10 bg-white/5 p-3">
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-muted/40 p-3">
           <p className="text-sm text-gray-300 mr-2">
             {selectedIds.length} selected
           </p>
@@ -272,7 +272,7 @@ export default function Products() {
             size="sm"
             variant="outline"
             disabled={isBulkPending}
-            className="border-white/10 text-gray-300 hover:text-white hover:bg-white/5"
+            className="border-border text-gray-300 hover:text-foreground hover:bg-muted/40"
             onClick={() => {
               setBulkAction("active");
               bulkUpdateStatusMutation.mutate({
@@ -294,7 +294,7 @@ export default function Products() {
             size="sm"
             variant="outline"
             disabled={isBulkPending}
-            className="border-white/10 text-gray-300 hover:text-white hover:bg-white/5"
+            className="border-border text-gray-300 hover:text-foreground hover:bg-muted/40"
             onClick={() => {
               setBulkAction("draft");
               bulkUpdateStatusMutation.mutate({
@@ -315,7 +315,7 @@ export default function Products() {
           <Button
             size="sm"
             disabled={isBulkPending}
-            className="bg-red-500/90 hover:bg-red-500 text-white"
+            className="bg-red-500/90 hover:bg-red-500 text-foreground"
             onClick={() => {
               setBulkAction("archive");
               bulkArchiveMutation.mutate({ ids: selectedIds });
@@ -370,9 +370,9 @@ export default function Products() {
         open={bulkDeleteConfirmOpen}
         onOpenChange={setBulkDeleteConfirmOpen}
       >
-        <DialogContent className="bg-[#0F172A] border-white/10 text-white max-w-md">
+        <DialogContent className="bg-card border-border text-foreground max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-white text-lg flex items-center gap-2">
+            <DialogTitle className="text-foreground text-lg flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-red-400" />
               Delete {selectedIds.length} product
               {selectedIds.length === 1 ? "" : "s"}?
@@ -387,12 +387,12 @@ export default function Products() {
               variant="outline"
               onClick={() => setBulkDeleteConfirmOpen(false)}
               disabled={bulkDeleteMutation.isPending}
-              className="border-white/10 text-gray-300"
+              className="border-border text-gray-300"
             >
               Cancel
             </Button>
             <Button
-              className="bg-red-500/90 hover:bg-red-500 text-white"
+              className="bg-red-500/90 hover:bg-red-500 text-foreground"
               disabled={bulkDeleteMutation.isPending}
               onClick={() => {
                 setBulkAction("delete");
@@ -445,12 +445,12 @@ export default function Products() {
           />
         </div>
       ) : productList.length === 0 ? (
-        <Card className="border-dashed border-white/10 bg-gradient-to-br from-white/5 to-white/[0.02]">
+        <Card className="border-dashed border-border bg-muted/40">
           <CardContent className="flex flex-col items-center px-6 py-16 text-center">
-            <div className="mb-5 rounded-full border border-white/10 bg-white/5 p-4">
-              <Package className="h-10 w-10 text-[#D4A843]" />
+            <div className="mb-5 rounded-full border border-border bg-muted/40 p-4">
+              <Package className="h-10 w-10 text-primary" />
             </div>
-            <h2 className="text-xl font-semibold text-white">
+            <h2 className="text-xl font-semibold text-foreground">
               {hasActiveFilters ? "No matching products" : "No products yet"}
             </h2>
             <p className="mt-2 max-w-md text-sm text-gray-400">
@@ -460,7 +460,7 @@ export default function Products() {
             </p>
             {!hasActiveFilters && (
               <Button
-                className="mt-6 bg-[#D4A843] font-semibold text-[#020202] hover:bg-[#D4A843]/90"
+                className="mt-6 bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
                 onClick={() => setCreateOpen(true)}
               >
                 <Plus className="mr-2 h-4 w-4" /> Add your first product
@@ -481,14 +481,14 @@ export default function Products() {
             return (
               <Card
                 key={product.id}
-                className="group border-border bg-card transition-all hover:border-[#D4A843]/30 hover:shadow-lg hover:shadow-[#D4A843]/5"
+                className="group border-border bg-card transition-all hover:border-primary/30"
               >
                 <CardContent className="relative p-5">
                   <div className="absolute right-5 top-5 flex gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="h-8 w-8 border border-white/10 text-gray-400 hover:bg-[#D4A843]/5 hover:text-white"
+                      className="h-8 w-8 border border-border text-gray-400 hover:bg-primary/5 hover:text-foreground"
                       aria-label={`Edit ${product.name}`}
                       onClick={() => handleEdit(product)}
                     >
@@ -509,13 +509,13 @@ export default function Products() {
                     <Checkbox
                       checked={selectedIds.includes(product.id)}
                       onCheckedChange={() => toggleSelection(product.id)}
-                      className="mt-1 border-white/30 data-[state=checked]:border-[#D4A843] data-[state=checked]:bg-[#D4A843] data-[state=checked]:text-[#020202]"
+                      className="mt-1 border-border data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                       aria-label={`Select ${product.name}`}
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <h3 className="truncate font-semibold text-white">
+                          <h3 className="truncate font-semibold text-foreground">
                             {product.name}
                           </h3>
                           {product.sku && (
@@ -544,7 +544,7 @@ export default function Products() {
                   </div>
 
                   {product.imageUrl && isValidImageUrl(product.imageUrl) && (
-                    <div className="mb-4 overflow-hidden rounded-xl border border-white/10 bg-white/5">
+                    <div className="mb-4 overflow-hidden rounded-xl border border-border bg-muted/40">
                       <img
                         src={product.imageUrl}
                         alt={product.name}
@@ -554,7 +554,7 @@ export default function Products() {
                   )}
 
                   <div className="mb-3 flex items-baseline gap-2">
-                    <span className="text-2xl font-bold text-[#D4A843]">
+                    <span className="text-2xl font-bold text-primary">
                       ${Number(product.price).toFixed(2)}
                     </span>
                     {hasDiscount && (
@@ -570,7 +570,7 @@ export default function Products() {
                         "mb-4 flex items-center gap-1.5 rounded-md px-2 py-1 text-xs",
                         isLowStock
                           ? "bg-amber-500/10 text-amber-400"
-                          : "bg-white/5 text-gray-400"
+                          : "bg-muted/40 text-gray-400"
                       )}
                     >
                       {isLowStock ? (
@@ -590,7 +590,7 @@ export default function Products() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="w-full border border-white/10 text-gray-300 transition-colors hover:border-[#D4A843]/40 hover:bg-[#D4A843]/5 hover:text-white"
+                    className="w-full border border-border text-gray-300 transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-foreground"
                     onClick={() => handleEdit(product)}
                   >
                     <Edit className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
@@ -608,10 +608,10 @@ export default function Products() {
         open={!!editProduct}
         onOpenChange={open => !open && setEditProduct(null)}
       >
-        <DialogContent className="bg-[#0F172A] border-white/10 text-white max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-card border-border text-foreground max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-white text-lg flex items-center gap-2">
-              <Edit className="w-4 h-4 text-[#D4A843]" />
+            <DialogTitle className="text-foreground text-lg flex items-center gap-2">
+              <Edit className="w-4 h-4 text-primary" />
               Edit Product
             </DialogTitle>
           </DialogHeader>
@@ -626,7 +626,7 @@ export default function Products() {
           <DialogFooter className="mt-4 gap-2">
             <Button
               variant="ghost"
-              className="text-gray-400 hover:text-white"
+              className="text-gray-400 hover:text-foreground"
               onClick={() => setEditProduct(null)}
             >
               Cancel
@@ -639,7 +639,7 @@ export default function Products() {
                 !editForm.price ||
                 Number(editForm.price) <= 0
               }
-              className="bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-bold"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold"
             >
               {updateMutation.isPending ? (
                 <>
@@ -659,9 +659,9 @@ export default function Products() {
         open={!!deleteProduct}
         onOpenChange={open => !open && setDeleteProduct(null)}
       >
-        <DialogContent className="bg-[#0F172A] border-white/10 text-white max-w-sm">
+        <DialogContent className="bg-card border-border text-foreground max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-white flex items-center gap-2">
+            <DialogTitle className="text-foreground flex items-center gap-2">
               <Trash2 className="w-4 h-4 text-red-400" />
               Delete Product
             </DialogTitle>
@@ -669,7 +669,7 @@ export default function Products() {
           <div className="py-2">
             <p className="text-gray-300">
               Are you sure you want to delete{" "}
-              <span className="text-white font-semibold">
+              <span className="text-foreground font-semibold">
                 "{deleteProduct?.name}"
               </span>
               ?
@@ -682,7 +682,7 @@ export default function Products() {
           <DialogFooter className="gap-2">
             <Button
               variant="ghost"
-              className="text-gray-400 hover:text-white"
+              className="text-gray-400 hover:text-foreground"
               onClick={() => setDeleteProduct(null)}
             >
               Cancel
@@ -692,7 +692,7 @@ export default function Products() {
                 deleteProduct && deleteMutation.mutate({ id: deleteProduct.id })
               }
               disabled={deleteMutation.isPending}
-              className="bg-red-500 hover:bg-red-600 text-white font-bold"
+              className="bg-red-500 hover:bg-red-600 text-foreground font-bold"
             >
               {deleteMutation.isPending ? (
                 <>

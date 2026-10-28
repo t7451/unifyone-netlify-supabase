@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useId } from "react";
 import { trpc } from "@/lib/trpc";
 import {
   Bell,
@@ -25,15 +25,15 @@ import { useLocation } from "wouter";
 
 // ── Type icon map ─────────────────────────────────────────────────────────────
 const TYPE_ICONS: Record<string, { icon: React.ElementType; color: string }> = {
-  info: { icon: Info, color: "text-blue-400" },
+  info: { icon: Info, color: "text-primary" },
   success: { icon: CheckCircle2, color: "text-emerald-400" },
   warning: { icon: AlertTriangle, color: "text-amber-400" },
   error: { icon: AlertCircle, color: "text-red-400" },
-  order: { icon: ShoppingCart, color: "text-cyan-400" },
-  payment: { icon: CreditCard, color: "text-purple-400" },
-  team: { icon: Users, color: "text-indigo-400" },
-  social: { icon: Share2, color: "text-pink-400" },
-  lead: { icon: Target, color: "text-orange-400" },
+  order: { icon: ShoppingCart, color: "text-primary" },
+  payment: { icon: CreditCard, color: "text-primary" },
+  team: { icon: Users, color: "text-primary" },
+  social: { icon: Share2, color: "text-primary" },
+  lead: { icon: Target, color: "text-primary" },
 };
 
 function timeAgo(date: Date | string): string {
@@ -51,6 +51,7 @@ function timeAgo(date: Date | string): string {
 // ── NotificationCenter ────────────────────────────────────────────────────────
 export function NotificationCenter() {
   const [open, setOpen] = useState(false);
+  const panelId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const [, navigate] = useLocation();
   const utils = trpc.useUtils();
@@ -119,7 +120,7 @@ export function NotificationCenter() {
       <Button
         variant="ghost"
         size="icon"
-        className="relative h-9 w-9 text-slate-400 hover:text-white hover:bg-white/10"
+        className="relative h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted"
         onClick={() => {
           const opening = !open;
           setOpen(opening);
@@ -129,10 +130,12 @@ export function NotificationCenter() {
           }
         }}
         aria-label="Notifications"
+        aria-expanded={open}
+        aria-controls={open ? panelId : undefined}
       >
         <Bell className="h-5 w-5" />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-cyan-500 text-[10px] font-bold text-black leading-none">
+          <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground leading-none">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
@@ -140,18 +143,23 @@ export function NotificationCenter() {
 
       {/* Dropdown panel */}
       {open && (
-        <div className="absolute right-0 top-11 z-50 w-80 rounded-xl border border-white/10 bg-slate-900 shadow-2xl shadow-black/50 overflow-hidden">
+        <div
+          id={panelId}
+          role="region"
+          aria-label="Notification list"
+          className="absolute right-0 top-11 z-50 w-80 max-w-[calc(100vw-1rem)] rounded-xl border border-border bg-card shadow-lg shadow-black/20 overflow-hidden"
+        >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <div className="flex items-center gap-2">
-              <Bell className="h-4 w-4 text-cyan-400" />
-              <span className="text-sm font-semibold text-white">
+              <Bell className="h-4 w-4 text-primary" />
+              <span className="text-sm font-semibold text-foreground">
                 Notifications
               </span>
               {unreadCount > 0 && (
                 <Badge
                   variant="secondary"
-                  className="bg-cyan-500/20 text-cyan-400 border-0 text-xs px-1.5 py-0"
+                  className="bg-primary/20 text-primary border-0 text-xs px-1.5 py-0"
                 >
                   {unreadCount} new
                 </Badge>
@@ -161,7 +169,7 @@ export function NotificationCenter() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 px-2 text-xs text-slate-400 hover:text-white"
+                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
                 onClick={() => markAllRead.mutate()}
                 disabled={markAllRead.isPending}
               >
@@ -174,16 +182,16 @@ export function NotificationCenter() {
           {/* List */}
           <ScrollArea className="max-h-96">
             {isLoading ? (
-              <div className="flex items-center justify-center py-10 text-slate-500 text-sm">
+              <div className="flex items-center justify-center py-10 text-muted-foreground text-sm">
                 Loading…
               </div>
             ) : notifs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                 <Bell className="h-8 w-8 mb-2 opacity-30" />
                 <p className="text-sm">No notifications yet</p>
               </div>
             ) : (
-              <div className="divide-y divide-white/5">
+              <div className="divide-y divide-border">
                 {notifs.map(n => {
                   const typeInfo = TYPE_ICONS[n.type] ?? TYPE_ICONS.info;
                   const Icon = typeInfo.icon;
@@ -193,8 +201,8 @@ export function NotificationCenter() {
                       className={cn(
                         "group flex gap-3 px-4 py-3 cursor-pointer transition-colors",
                         n.read
-                          ? "hover:bg-white/5"
-                          : "bg-cyan-500/5 hover:bg-cyan-500/10"
+                          ? "hover:bg-muted/50"
+                          : "bg-primary/5 hover:bg-primary/10"
                       )}
                       onClick={() => handleNotifClick(n)}
                     >
@@ -212,51 +220,53 @@ export function NotificationCenter() {
                             className={cn(
                               "text-sm leading-tight truncate",
                               n.read
-                                ? "text-slate-300"
-                                : "text-white font-medium"
+                                ? "text-foreground"
+                                : "text-foreground font-medium"
                             )}
                           >
                             {n.title}
                           </p>
                           {!n.read && (
-                            <span className="flex-shrink-0 h-2 w-2 rounded-full bg-cyan-400 mt-1" />
+                            <span className="flex-shrink-0 h-2 w-2 rounded-full bg-primary mt-1" />
                           )}
                         </div>
                         {n.body && (
-                          <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">
+                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
                             {n.body}
                           </p>
                         )}
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-[11px] text-slate-600">
+                          <span className="text-[11px] text-muted-foreground">
                             {timeAgo(n.createdAt)}
                           </span>
                           {n.link && (
-                            <ExternalLink className="h-3 w-3 text-slate-600" />
+                            <ExternalLink className="h-3 w-3 text-muted-foreground" />
                           )}
                         </div>
                       </div>
 
                       {/* Actions (visible on hover) */}
-                      <div className="flex-shrink-0 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex-shrink-0 flex flex-col gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity">
                         {!n.read && (
                           <button
-                            className="p-1 rounded text-slate-500 hover:text-cyan-400 hover:bg-white/10"
+                            className="p-1 rounded text-muted-foreground hover:text-primary hover:bg-muted"
                             onClick={e => {
                               e.stopPropagation();
                               markRead.mutate({ id: n.id });
                             }}
+                            aria-label={`Mark ${n.title} as read`}
                             title="Mark as read"
                           >
                             <Check className="h-3 w-3" />
                           </button>
                         )}
                         <button
-                          className="p-1 rounded text-slate-500 hover:text-red-400 hover:bg-white/10"
+                          className="p-1 rounded text-muted-foreground hover:text-red-400 hover:bg-muted"
                           onClick={e => {
                             e.stopPropagation();
                             deleteNotif.mutate({ id: n.id });
                           }}
+                          aria-label={`Delete ${n.title}`}
                           title="Delete"
                         >
                           <Trash2 className="h-3 w-3" />
@@ -272,9 +282,9 @@ export function NotificationCenter() {
           {/* Footer */}
           {notifs.length > 0 && (
             <>
-              <Separator className="bg-white/10" />
+              <Separator className="bg-muted" />
               <div className="px-4 py-2 text-center">
-                <span className="text-xs text-slate-600">
+                <span className="text-xs text-muted-foreground">
                   Showing last {notifs.length} notifications
                 </span>
               </div>

@@ -166,7 +166,7 @@ export default function AchievementsPage() {
 
       {/* Points & Streak Banner */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="sm:col-span-2 border-border bg-gradient-to-br from-primary/10 to-transparent">
+        <Card className="sm:col-span-2 border-border bg-card">
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
@@ -472,7 +472,7 @@ export default function AchievementsPage() {
                         : idx === 1
                           ? "bg-slate-400 text-black"
                           : idx === 2
-                            ? "bg-orange-600 text-white"
+                            ? "bg-orange-600 text-foreground"
                             : "bg-muted text-muted-foreground"
                     }`}
                   >
@@ -499,7 +499,7 @@ export default function AchievementsPage() {
                     <Crown className="h-4 w-4 text-yellow-400 shrink-0" />
                   )}
                   {idx === 1 && (
-                    <Award className="h-4 w-4 text-gray-400 shrink-0" />
+                    <Award className="h-4 w-4 text-muted-foreground shrink-0" />
                   )}
                   {idx === 2 && (
                     <Award className="h-4 w-4 text-orange-500 shrink-0" />

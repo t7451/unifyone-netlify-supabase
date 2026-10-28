@@ -148,10 +148,16 @@ export default function WorkInsights() {
       description="See what stays yours after estimated work costs and a tax reserve you choose. Use your recorded delivery, rideshare and freelance work to decide what is worth your time."
       meta={
         <>
-          <Badge variant="outline" className="border-white/20 text-slate-200">
+          <Badge
+            variant="outline"
+            className="border-border text-muted-foreground"
+          >
             Recorded work only · USD
           </Badge>
-          <Badge variant="outline" className="border-white/20 text-slate-200">
+          <Badge
+            variant="outline"
+            className="border-border text-muted-foreground"
+          >
             {selectedPeriod}
           </Badge>
         </>
@@ -159,7 +165,7 @@ export default function WorkInsights() {
       actions={
         <Link
           href="/gig-command"
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#D4A843] px-4 text-sm font-semibold text-black hover:bg-[#D4A843]/90"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <Play className="h-4 w-4" />
           Track work
@@ -253,7 +259,7 @@ export default function WorkInsights() {
                 <CircleHelp className="h-4 w-4" />
                 Some earnings need more context
               </h2>
-              <div className="mt-2 space-y-2 text-sm leading-relaxed text-slate-300">
+              <div className="mt-2 space-y-2 text-sm leading-relaxed text-muted-foreground">
                 {data.excluded.count > 0 && (
                   <p>
                     {data.excluded.count} completed record
@@ -276,7 +282,7 @@ export default function WorkInsights() {
                   Linked bank and provider activity also stays in{" "}
                   <Link
                     href="/connected-money"
-                    className="font-medium text-[#E8C25A] underline underline-offset-4"
+                    className="font-medium text-primary underline underline-offset-4"
                   >
                     Connected accounts
                   </Link>
@@ -290,7 +296,7 @@ export default function WorkInsights() {
           {!hasTimedWork ? (
             <Card>
               <CardContent className="p-6 sm:p-8">
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#D4A843]/10 text-[#E8C25A]">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
                   <Clock3 className="h-6 w-6" />
                 </div>
                 <h2 className="text-2xl font-semibold">
@@ -305,7 +311,7 @@ export default function WorkInsights() {
                 <div className="mt-5 flex flex-wrap gap-3">
                   <Link
                     href="/gig-command"
-                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#D4A843] px-4 text-sm font-semibold text-black"
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   >
                     <Play className="h-4 w-4" />
                     Track a work session
@@ -322,7 +328,7 @@ export default function WorkInsights() {
                   Have earnings and hours handy?{" "}
                   <Link
                     href="/tools/gig-hourly-rate"
-                    className="font-medium text-[#E8C25A] underline underline-offset-4"
+                    className="font-medium text-primary underline underline-offset-4"
                   >
                     Try the hourly calculator
                   </Link>
@@ -363,7 +369,7 @@ export default function WorkInsights() {
                     <CardContent className="p-5">
                       <p className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
                         {item.label}
-                        <item.icon className="h-4 w-4 text-[#D4A843]" />
+                        <item.icon className="h-4 w-4 text-primary" />
                       </p>
                       <p className="mt-3 text-2xl font-semibold tabular-nums">
                         {item.value}
@@ -379,7 +385,7 @@ export default function WorkInsights() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
-                      <Calculator className="h-5 w-5 text-[#D4A843]" />
+                      <Calculator className="h-5 w-5 text-primary" />
                       Make the estimate yours
                     </CardTitle>
                     <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
@@ -416,7 +422,7 @@ export default function WorkInsights() {
                             value={value}
                             checked={costMode === value}
                             onChange={() => setCostMode(value)}
-                            className="mt-1"
+                            className="mt-1 h-4 w-4 accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           />
                           <span>
                             <span className="block text-sm font-medium">
@@ -443,7 +449,7 @@ export default function WorkInsights() {
                       </p>
                       <Link
                         href="/work-expenses"
-                        className="mt-3 inline-block font-medium text-[#E8C25A] underline underline-offset-4"
+                        className="mt-3 inline-block font-medium text-primary underline underline-offset-4"
                       >
                         Review or log expenses
                       </Link>
@@ -512,7 +518,7 @@ export default function WorkInsights() {
                     </div>
                   </CardContent>
                 </Card>
-                <Card className="border-[#D4A843]/30">
+                <Card className="border-primary/30">
                   <CardContent className="p-5 sm:p-6">
                     {!result ? (
                       <div role="status" className="py-8">
@@ -528,11 +534,11 @@ export default function WorkInsights() {
                       </div>
                     ) : (
                       <>
-                        <p className="text-xs font-semibold uppercase tracking-widest text-[#D4A843]">
+                        <p className="text-sm font-medium text-muted-foreground">
                           After estimated costs and reserve
                         </p>
                         <h2
-                          className={`mt-3 text-4xl font-semibold tracking-tight tabular-nums ${result.takeHome < 0 ? "text-red-300" : ""}`}
+                          className={`mt-3 text-4xl font-semibold tracking-tight tabular-nums ${result.takeHome < 0 ? "text-destructive" : ""}`}
                         >
                           {usd(result.takeHome)}
                         </h2>
@@ -577,7 +583,7 @@ export default function WorkInsights() {
                         </dl>
                         <div className="border-t pt-5">
                           <p
-                            className={`text-3xl font-semibold tabular-nums ${result.hourly! < 0 ? "text-red-300" : ""}`}
+                            className={`text-3xl font-semibold tabular-nums ${result.hourly! < 0 ? "text-destructive" : ""}`}
                           >
                             {usd(result.hourly!)}
                             <span className="ml-1 text-base font-normal text-muted-foreground">
@@ -602,7 +608,7 @@ export default function WorkInsights() {
                           </p>
                         </div>
                         {result.operatingProfit < 0 && (
-                          <p className="mt-4 text-sm text-red-300">
+                          <p className="mt-4 text-sm text-destructive">
                             Your entered costs exceed earnings for this period.
                             The loss stays visible; no tax reserve is added to a
                             loss.
@@ -617,7 +623,7 @@ export default function WorkInsights() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
-                      <Layers3 className="h-5 w-5 text-[#D4A843]" />
+                      <Layers3 className="h-5 w-5 text-primary" />
                       Which work paid best?
                     </CardTitle>
                     <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
@@ -643,7 +649,7 @@ export default function WorkInsights() {
                               {source.source}
                             </h3>
                             <p
-                              className={`shrink-0 font-semibold tabular-nums ${source.profit.operatingProfit < 0 ? "text-red-300" : ""}`}
+                              className={`shrink-0 font-semibold tabular-nums ${source.profit.operatingProfit < 0 ? "text-destructive" : ""}`}
                             >
                               {usd(
                                 source.profit.operatingProfit / source.hours
@@ -654,7 +660,7 @@ export default function WorkInsights() {
                           {index === 0 && sources.length > 1 && (
                             <Badge
                               variant="outline"
-                              className="mt-2 border-[#D4A843]/30 text-[#E8C25A]"
+                              className="mt-2 border-primary/30 text-primary"
                             >
                               Highest recorded rate
                             </Badge>
@@ -701,7 +707,7 @@ export default function WorkInsights() {
                                   {source.records === 1 ? "" : "s"}
                                 </p>
                                 {index === 0 && sources.length > 1 && (
-                                  <p className="mt-2 text-xs font-normal text-[#E8C25A]">
+                                  <p className="mt-2 text-xs font-normal text-primary">
                                     Highest recorded rate
                                   </p>
                                 )}
@@ -713,7 +719,7 @@ export default function WorkInsights() {
                                 {usd(source.profit.operatingProfit)}
                               </td>
                               <td
-                                className={`py-4 pl-3 text-right font-semibold tabular-nums ${source.profit.operatingProfit < 0 ? "text-red-300" : ""}`}
+                                className={`py-4 pl-3 text-right font-semibold tabular-nums ${source.profit.operatingProfit < 0 ? "text-destructive" : ""}`}
                               >
                                 {usd(
                                   source.profit.operatingProfit / source.hours
@@ -741,21 +747,21 @@ export default function WorkInsights() {
               Review the earnings behind these figures in{" "}
               <Link
                 href="/money-manager"
-                className="font-medium text-[#E8C25A] underline underline-offset-4"
+                className="font-medium text-primary underline underline-offset-4"
               >
                 Earnings & mileage
               </Link>
               . Add missing completed work there, and review saved costs in{" "}
               <Link
                 href="/work-expenses"
-                className="font-medium text-[#E8C25A] underline underline-offset-4"
+                className="font-medium text-primary underline underline-offset-4"
               >
                 Expenses
               </Link>
               , or{" "}
               <Link
                 href="/tools/gig-hourly-rate"
-                className="font-medium text-[#E8C25A] underline underline-offset-4"
+                className="font-medium text-primary underline underline-offset-4"
               >
                 compare a different work scenario
               </Link>

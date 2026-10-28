@@ -134,9 +134,9 @@ export default function Team() {
   return (
     <div className="p-6 space-y-6 max-w-4xl">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white">Team</h1>
+          <h1 className="text-2xl font-bold text-foreground">Team</h1>
           <p className="text-gray-400 text-sm mt-1">
             {members.data?.length ?? 0} member
             {(members.data?.length ?? 0) !== 1 ? "s" : ""} · Manage access and
@@ -150,7 +150,7 @@ export default function Team() {
               setInviteLink(null);
               setInviteEmail("");
             }}
-            className="bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-semibold"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
           >
             <UserPlus className="w-4 h-4 mr-2" /> Invite Member
           </Button>
@@ -159,7 +159,7 @@ export default function Team() {
 
       {/* Team Members */}
       <div className="rounded-xl border border-border overflow-hidden">
-        <div className="px-4 py-3 bg-white/3 border-b border-border flex items-center gap-2">
+        <div className="px-4 py-3 bg-muted/40 border-b border-border flex items-center gap-2">
           <Users className="w-4 h-4 text-gray-400" />
           <span className="text-gray-300 text-sm font-medium">
             Team Members
@@ -190,7 +190,7 @@ export default function Team() {
             </p>
             <Button
               variant="ghost"
-              className="mt-3 border border-white/10 text-gray-300 hover:bg-white/5"
+              className="mt-3 border border-border text-gray-300 hover:bg-muted/40"
               onClick={() => members.refetch()}
             >
               <RefreshCw className="w-4 h-4 mr-2" /> Retry
@@ -228,19 +228,19 @@ export default function Team() {
               {(members.data ?? []).map((m: any) => (
                 <tr
                   key={m.id}
-                  className="border-b border-border hover:bg-white/2 transition-colors"
+                  className="border-b border-border hover:bg-muted/40 transition-colors"
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D4A843]/30 to-purple-500/30 flex items-center justify-center text-white text-xs font-bold">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-foreground text-xs font-bold bg-muted/40">
                         {(m.name ?? m.email ?? "?")[0].toUpperCase()}
                       </div>
                       <div>
-                        <p className="text-white text-sm font-medium">
+                        <p className="text-foreground text-sm font-medium">
                           {m.name ?? "—"}
                         </p>
                         {m.id === user?.id && (
-                          <span className="text-[#D4A843] text-xs">You</span>
+                          <span className="text-primary text-xs">You</span>
                         )}
                       </div>
                     </div>
@@ -263,10 +263,10 @@ export default function Team() {
                           })
                         }
                       >
-                        <SelectTrigger className="w-28 h-7 bg-white/5 border-white/10 text-gray-300 text-xs">
+                        <SelectTrigger className="w-28 h-7 bg-muted/40 border-border text-gray-300 text-xs">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="bg-[#0F172A] border-white/10">
+                        <SelectContent className="bg-card border-border">
                           <SelectItem value="user" className="text-xs">
                             User
                           </SelectItem>
@@ -323,7 +323,7 @@ export default function Team() {
       {/* Invites loading */}
       {isAdmin && invites.isLoading && (
         <div className="rounded-xl border border-border overflow-hidden">
-          <div className="px-4 py-3 bg-white/3 border-b border-border flex items-center gap-2">
+          <div className="px-4 py-3 bg-muted/40 border-b border-border flex items-center gap-2">
             <Clock className="w-4 h-4 text-amber-400" />
             <span className="text-gray-300 text-sm font-medium">Invites</span>
           </div>
@@ -342,7 +342,7 @@ export default function Team() {
       {/* Invites error */}
       {isAdmin && invites.isError && (
         <div className="rounded-xl border border-border overflow-hidden">
-          <div className="px-4 py-3 bg-white/3 border-b border-border flex items-center gap-2">
+          <div className="px-4 py-3 bg-muted/40 border-b border-border flex items-center gap-2">
             <Clock className="w-4 h-4 text-amber-400" />
             <span className="text-gray-300 text-sm font-medium">Invites</span>
           </div>
@@ -354,7 +354,7 @@ export default function Team() {
             </p>
             <Button
               variant="ghost"
-              className="mt-3 border border-white/10 text-gray-300 hover:bg-white/5"
+              className="mt-3 border border-border text-gray-300 hover:bg-muted/40"
               onClick={() => invites.refetch()}
             >
               <RefreshCw className="w-4 h-4 mr-2" /> Retry
@@ -366,7 +366,7 @@ export default function Team() {
       {/* Pending Invites */}
       {isAdmin && pendingInvites.length > 0 && (
         <div className="rounded-xl border border-border overflow-hidden">
-          <div className="px-4 py-3 bg-white/3 border-b border-border flex items-center gap-2">
+          <div className="px-4 py-3 bg-muted/40 border-b border-border flex items-center gap-2">
             <Clock className="w-4 h-4 text-amber-400" />
             <span className="text-gray-300 text-sm font-medium">
               Pending Invites
@@ -392,12 +392,14 @@ export default function Team() {
               {pendingInvites.map((inv: any) => (
                 <tr
                   key={inv.id}
-                  className="border-b border-border hover:bg-white/2 transition-colors"
+                  className="border-b border-border hover:bg-muted/40 transition-colors"
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <Mail className="w-3.5 h-3.5 text-gray-500" />
-                      <span className="text-white text-sm">{inv.email}</span>
+                      <span className="text-foreground text-sm">
+                        {inv.email}
+                      </span>
                     </div>
                   </td>
                   <td className="px-4 py-3">
@@ -419,7 +421,7 @@ export default function Team() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-7 px-2 text-xs text-[#D4A843] hover:text-[#D4A843]/80 gap-1"
+                        className="h-7 px-2 text-xs text-primary hover:text-primary/80 gap-1"
                         onClick={() => {
                           const link = `${window.location.origin}/join?token=${inv.token}`;
                           navigator.clipboard.writeText(link);
@@ -457,7 +459,7 @@ export default function Team() {
       {/* Past Invites (collapsed) */}
       {isAdmin && pastInvites.length > 0 && (
         <div className="rounded-xl border border-border overflow-hidden">
-          <div className="px-4 py-3 bg-white/3 border-b border-border flex items-center gap-2">
+          <div className="px-4 py-3 bg-muted/40 border-b border-border flex items-center gap-2">
             <CheckCircle className="w-4 h-4 text-gray-500" />
             <span className="text-gray-400 text-sm font-medium">
               Invite History
@@ -494,10 +496,10 @@ export default function Team() {
 
       {/* Invite Modal */}
       <Dialog open={showInviteModal} onOpenChange={setShowInviteModal}>
-        <DialogContent className="bg-[#0F172A] border-white/10 text-white max-w-md">
+        <DialogContent className="bg-card border-border text-foreground max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <UserPlus className="w-5 h-5 text-[#D4A843]" />
+              <UserPlus className="w-5 h-5 text-primary" />
               Invite Team Member
             </DialogTitle>
           </DialogHeader>
@@ -513,7 +515,7 @@ export default function Team() {
                   value={inviteEmail}
                   onChange={e => setInviteEmail(e.target.value)}
                   placeholder="colleague@company.com"
-                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-500"
+                  className="bg-muted/40 border-border text-foreground placeholder:text-gray-500"
                   onKeyDown={e => e.key === "Enter" && handleSendInvite()}
                 />
               </div>
@@ -525,10 +527,10 @@ export default function Team() {
                   value={inviteRole}
                   onValueChange={v => setInviteRole(v as "user" | "admin")}
                 >
-                  <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                  <SelectTrigger className="bg-muted/40 border-border text-foreground">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#0F172A] border-white/10">
+                  <SelectContent className="bg-card border-border">
                     <SelectItem value="user">
                       <div className="flex items-center gap-2">
                         <Shield className="w-3.5 h-3.5 text-blue-400" />
@@ -554,7 +556,7 @@ export default function Team() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="bg-white/5 rounded-lg p-3 text-xs text-gray-400">
+              <div className="bg-muted/40 rounded-lg p-3 text-xs text-gray-400">
                 <p>
                   An invite link will be generated. Share it with your team
                   member — they'll need to sign in with their account to join.
@@ -564,13 +566,13 @@ export default function Team() {
               <div className="flex gap-3 pt-1">
                 <Button
                   variant="ghost"
-                  className="flex-1 border border-white/10 text-gray-300 hover:bg-white/5"
+                  className="flex-1 border border-border text-gray-300 hover:bg-muted/40"
                   onClick={() => setShowInviteModal(false)}
                 >
                   Cancel
                 </Button>
                 <Button
-                  className="flex-1 bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-semibold"
+                  className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
                   onClick={handleSendInvite}
                   disabled={!inviteEmail.trim() || sendInvite.isPending}
                 >
@@ -591,33 +593,33 @@ export default function Team() {
             <div className="space-y-4 pt-2">
               <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4 text-center">
                 <CheckCircle className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
-                <p className="text-white font-semibold">Invite Created!</p>
+                <p className="text-foreground font-semibold">Invite Created!</p>
                 <p className="text-gray-400 text-sm mt-1">
                   Share this link with your team member
                 </p>
               </div>
-              <div className="bg-white/5 rounded-lg p-3 flex items-center gap-2">
-                <code className="text-[#D4A843] text-xs flex-1 truncate">
+              <div className="bg-muted/40 rounded-lg p-3 flex items-center gap-2">
+                <code className="text-primary text-xs flex-1 truncate">
                   {inviteLink}
                 </code>
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="shrink-0 h-7 w-7 p-0 text-gray-400 hover:text-[#D4A843]"
+                  className="shrink-0 h-7 w-7 p-0 text-gray-400 hover:text-primary"
                   onClick={copyInviteLink}
                 >
                   <Copy className="w-3.5 h-3.5" />
                 </Button>
               </div>
               <Button
-                className="w-full bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-semibold"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
                 onClick={copyInviteLink}
               >
                 <Copy className="w-4 h-4 mr-2" /> Copy Invite Link
               </Button>
               <Button
                 variant="ghost"
-                className="w-full border border-white/10 text-gray-300 hover:bg-white/5"
+                className="w-full border border-border text-gray-300 hover:bg-muted/40"
                 onClick={() => {
                   setShowInviteModal(false);
                   setInviteLink(null);
@@ -634,12 +636,12 @@ export default function Team() {
         open={removingMemberId !== null}
         onOpenChange={open => !open && setRemovingMemberId(null)}
       >
-        <AlertDialogContent className="bg-[#0F172A] border-white/10 text-white">
+        <AlertDialogContent className="bg-card border-border text-foreground">
           <AlertDialogHeader>
             <AlertDialogTitle>Remove Team Member?</AlertDialogTitle>
             <AlertDialogDescription className="text-gray-400">
               This will remove{" "}
-              <span className="text-white font-medium">
+              <span className="text-foreground font-medium">
                 {removingMemberName}
               </span>{" "}
               from the team. They will lose access immediately.
@@ -647,13 +649,13 @@ export default function Team() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel
-              className="border-white/10 text-gray-300 hover:bg-white/5"
+              className="border-border text-gray-300 hover:bg-muted/40"
               disabled={removeMember.isPending}
             >
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-red-600 hover:bg-red-700 text-foreground"
               onClick={() => removeMember.mutate({ userId: removingMemberId! })}
               disabled={removeMember.isPending || !removingMemberId}
             >

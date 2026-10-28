@@ -106,10 +106,10 @@ export default function AppearanceSettings() {
           <CardContent className="py-8">
             <div className="flex flex-col items-center gap-3 text-center">
               <AlertCircle className="w-8 h-8 text-red-400" />
-              <p className="text-white font-medium">
+              <p className="text-foreground font-medium">
                 Failed to load preferences
               </p>
-              <p className="text-gray-500 text-sm max-w-md">
+              <p className="text-muted-foreground text-sm max-w-md">
                 {prefs.error?.message ||
                   "Could not connect to the server. Please try again later."}
               </p>
@@ -128,11 +128,11 @@ export default function AppearanceSettings() {
         {/* Theme */}
         <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-white text-base flex items-center gap-2">
-              <Palette className="w-4 h-4 text-[#D4A843]" />
+            <CardTitle className="text-foreground text-base flex items-center gap-2">
+              <Palette className="w-4 h-4 text-primary" />
               Theme
             </CardTitle>
-            <CardDescription className="text-gray-400">
+            <CardDescription className="text-muted-foreground">
               Choose your preferred visual theme
             </CardDescription>
           </CardHeader>
@@ -149,21 +149,21 @@ export default function AppearanceSettings() {
                     className={cn(
                       "p-4 rounded-xl border text-left transition-all",
                       isActive
-                        ? "border-[#D4A843]/50 bg-[#D4A843]/5"
-                        : "border-white/10 bg-white/3 hover:border-white/20"
+                        ? "border-primary/50 bg-primary/5"
+                        : "border-border bg-white/3 hover:border-border"
                     )}
                   >
                     <div className="flex items-center gap-3 mb-3">
                       <div
                         className={cn(
                           "w-8 h-8 rounded-lg flex items-center justify-center",
-                          isActive ? "bg-[#D4A843]/10" : "bg-white/5"
+                          isActive ? "bg-primary/10" : "bg-muted/40"
                         )}
                       >
                         <Icon
                           className={cn(
                             "w-4 h-4",
-                            isActive ? "text-[#D4A843]" : "text-gray-400"
+                            isActive ? "text-primary" : "text-muted-foreground"
                           )}
                         />
                       </div>
@@ -171,12 +171,16 @@ export default function AppearanceSettings() {
                         <p
                           className={cn(
                             "text-sm font-medium",
-                            isActive ? "text-white" : "text-gray-400"
+                            isActive
+                              ? "text-foreground"
+                              : "text-muted-foreground"
                           )}
                         >
                           {t.label}
                         </p>
-                        <p className="text-xs text-gray-600">{t.description}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {t.description}
+                        </p>
                       </div>
                     </div>
                     {/* Color preview */}
@@ -184,7 +188,7 @@ export default function AppearanceSettings() {
                       {t.colors.map((color, i) => (
                         <div
                           key={i}
-                          className="w-6 h-6 rounded border border-white/10"
+                          className="w-6 h-6 rounded border border-border"
                           style={{ backgroundColor: color }}
                         />
                       ))}
@@ -193,7 +197,7 @@ export default function AppearanceSettings() {
                 );
               })}
             </div>
-            <p className="text-xs text-gray-600 mt-3">
+            <p className="text-xs text-muted-foreground mt-3">
               Theme preference is saved to your account and synced across
               devices.
             </p>
@@ -203,17 +207,17 @@ export default function AppearanceSettings() {
         {/* Localization */}
         <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-white text-base flex items-center gap-2">
+            <CardTitle className="text-foreground text-base flex items-center gap-2">
               <Globe className="w-4 h-4 text-emerald-400" />
               Localization
             </CardTitle>
-            <CardDescription className="text-gray-400">
+            <CardDescription className="text-muted-foreground">
               Language and timezone preferences
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-1.5">
-              <Label className="text-gray-300 text-sm flex items-center gap-2">
+              <Label className="text-muted-foreground text-sm flex items-center gap-2">
                 <Globe className="w-3.5 h-3.5" />
                 Language
               </Label>
@@ -222,7 +226,7 @@ export default function AppearanceSettings() {
                 onValueChange={v => updatePrefs.mutate({ language: v })}
                 disabled={updatePrefs.isPending}
               >
-                <SelectTrigger className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50 w-full sm:w-64">
+                <SelectTrigger className="bg-muted/40 border-border text-foreground focus:border-primary/50 w-full sm:w-64">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -233,14 +237,14 @@ export default function AppearanceSettings() {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-muted-foreground">
                 This changes the display language of the interface. Additional
                 languages are coming soon.
               </p>
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-gray-300 text-sm flex items-center gap-2">
+              <Label className="text-muted-foreground text-sm flex items-center gap-2">
                 <Clock className="w-3.5 h-3.5" />
                 Timezone
               </Label>
@@ -249,7 +253,7 @@ export default function AppearanceSettings() {
                 onValueChange={v => updatePrefs.mutate({ timezone: v })}
                 disabled={updatePrefs.isPending}
               >
-                <SelectTrigger className="bg-white/5 border-white/10 text-white focus:border-[#D4A843]/50 w-full sm:w-80">
+                <SelectTrigger className="bg-muted/40 border-border text-foreground focus:border-primary/50 w-full sm:w-80">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -260,7 +264,7 @@ export default function AppearanceSettings() {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-muted-foreground">
                 Used for displaying dates, times, and scheduling in your local
                 timezone.
               </p>

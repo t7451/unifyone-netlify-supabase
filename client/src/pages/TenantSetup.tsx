@@ -1,3 +1,5 @@
+import { BrandLockup } from "@/components/Brand";
+import "@/components/workspace.css";
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useLocation } from "wouter";
 import {
@@ -163,7 +165,7 @@ export default function TenantSetup() {
   if (loading)
     return (
       <main
-        className="flex min-h-screen items-center justify-center bg-[#020202] p-6 text-white"
+        className="workspace-shell flex min-h-screen items-center justify-center bg-background p-6 text-foreground"
         aria-busy="true"
       >
         <p role="status">Loading your workspace…</p>
@@ -172,18 +174,18 @@ export default function TenantSetup() {
 
   if (user?.tenantId && !createdTenantId)
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#020202] p-6 text-white">
-        <section className="w-full max-w-lg rounded-2xl border border-white/10 bg-white/5 p-6 sm:p-8">
+      <main className="workspace-shell flex min-h-screen items-center justify-center bg-background p-6 text-foreground">
+        <section className="w-full max-w-lg rounded-2xl border border-border bg-muted/40 p-6 sm:p-8">
           <Check className="mb-4 h-8 w-8 text-emerald-400" aria-hidden="true" />
           <h1 className="text-2xl font-bold">
             Your workspace is already ready
           </h1>
-          <p className="mt-3 text-sm text-slate-400">
+          <p className="mt-3 text-sm text-muted-foreground">
             Continue where you left off. You can change your workspace name and
             experience in Settings.
           </p>
           <Button
-            className="mt-6 min-h-11 w-full bg-[#D4A843] font-semibold text-black hover:bg-[#D4A843]/90"
+            className="mt-6 min-h-11 w-full bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
             onClick={() => navigate(landingPathForProduct(user.primaryProduct))}
           >
             Open my workspace <ArrowRight className="ml-2 h-4 w-4" />
@@ -193,24 +195,21 @@ export default function TenantSetup() {
     );
 
   return (
-    <main className="min-h-screen bg-[#020202] px-4 py-8 text-white sm:px-6 sm:py-12">
+    <main className="workspace-shell min-h-screen bg-background px-4 py-8 text-foreground sm:px-6 sm:py-12">
       <div className="mx-auto w-full max-w-2xl">
-        <Link
-          href="/"
-          className="text-sm font-semibold tracking-wide text-[#D4A843]"
-        >
-          UNIFYONE
+        <Link href="/" aria-label="UnifyOne home" className="inline-flex">
+          <BrandLockup size={36} />
         </Link>
         <header className="mb-7 mt-8">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-[#D4A843]">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-primary">
             {step === 2 ? "One optional step" : "Start with your own numbers"}
           </p>
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          <h1 className="text-3xl font-semibold tracking-tight">
             {step === 2
               ? "Your storefront workspace is ready"
               : "Make your work add up"}
           </h1>
-          <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-400 sm:text-base">
+          <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
             {step === 2
               ? "Choose an empty workspace or explore with clearly labeled sample products."
               : "Delivery, rideshare, freelance—or a mix. Set up your workspace, then track a shift or bring in your earnings."}
@@ -227,7 +226,7 @@ export default function TenantSetup() {
         {step === 1 ? (
           <form
             onSubmit={event => void createWorkspace(event)}
-            className="space-y-6 rounded-2xl border border-white/10 bg-white/5 p-5 sm:p-7"
+            className="space-y-6 rounded-2xl border border-border bg-muted/40 p-5 sm:p-7"
           >
             <fieldset disabled={busy || !!createdTenantId}>
               <legend className="mb-3 text-sm font-semibold">
@@ -255,10 +254,10 @@ export default function TenantSetup() {
                   <label
                     key={option.id}
                     className={cn(
-                      "relative flex cursor-pointer gap-3 rounded-xl border p-4 transition-colors focus-within:ring-2 focus-within:ring-[#D4A843]",
+                      "relative flex cursor-pointer gap-3 rounded-xl border p-4 transition-colors focus-within:ring-2 focus-within:ring-primary",
                       primaryProduct === option.id
-                        ? "border-[#D4A843]/60 bg-[#D4A843]/10"
-                        : "border-white/10 hover:border-white/25"
+                        ? "border-primary/60 bg-primary/10"
+                        : "border-border hover:border-white/25"
                     )}
                   >
                     <input
@@ -270,14 +269,14 @@ export default function TenantSetup() {
                         setPrimaryProduct(option.id);
                         setError("");
                       }}
-                      className="mt-1 h-4 w-4 shrink-0 accent-[#D4A843]"
+                      className="mt-1 h-4 w-4 shrink-0 accent-primary"
                     />
                     <span>
                       <span className="flex items-center gap-2 text-sm font-semibold">
                         <option.icon className="h-4 w-4" aria-hidden="true" />
                         {option.title}
                       </span>
-                      <span className="mt-2 block text-xs leading-relaxed text-slate-400">
+                      <span className="mt-2 block text-xs leading-relaxed text-muted-foreground">
                         {option.description}
                       </span>
                     </span>
@@ -295,7 +294,7 @@ export default function TenantSetup() {
                 required
                 disabled={busy || !!createdTenantId}
                 aria-describedby="workspace-name-hint"
-                className="min-h-11 border-white/15 bg-black/20 text-white"
+                className="min-h-11 border-border bg-background text-foreground"
                 placeholder="e.g. Sam's work"
                 onChange={event => {
                   const value = event.target.value;
@@ -307,7 +306,7 @@ export default function TenantSetup() {
               />
               <p
                 id="workspace-name-hint"
-                className="text-xs leading-relaxed text-slate-400"
+                className="text-xs leading-relaxed text-muted-foreground"
               >
                 A label for your records. Your name or business name is fine;
                 you can rename it later.
@@ -316,11 +315,11 @@ export default function TenantSetup() {
             <details
               open={showIdentifier}
               onToggle={event => setShowIdentifier(event.currentTarget.open)}
-              className="rounded-xl border border-white/10 p-3"
+              className="rounded-xl border border-border p-3"
             >
-              <summary className="cursor-pointer text-sm text-slate-300">
+              <summary className="cursor-pointer text-sm text-muted-foreground">
                 Workspace identifier{" "}
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-muted-foreground">
                   · optional to customize
                 </span>
               </summary>
@@ -334,7 +333,7 @@ export default function TenantSetup() {
                   maxLength={100}
                   pattern="[a-z0-9-]+"
                   aria-describedby="identifier-hint"
-                  className="min-h-11 border-white/15 bg-black/20 text-white"
+                  className="min-h-11 border-border bg-background text-foreground"
                   onChange={event => {
                     setSlugEdited(true);
                     setSlug(event.target.value);
@@ -343,7 +342,7 @@ export default function TenantSetup() {
                 />
                 <p
                   id="identifier-hint"
-                  className="text-xs leading-relaxed text-slate-400"
+                  className="text-xs leading-relaxed text-muted-foreground"
                 >
                   An internal identifier, not a public website. Use 2–100
                   lowercase letters, numbers or hyphens.
@@ -360,10 +359,10 @@ export default function TenantSetup() {
                     <label
                       key={action.value}
                       className={cn(
-                        "flex cursor-pointer gap-3 rounded-xl border p-3 focus-within:ring-2 focus-within:ring-[#D4A843]",
+                        "flex cursor-pointer gap-3 rounded-xl border p-3 focus-within:ring-2 focus-within:ring-primary",
                         firstAction === action.value
-                          ? "border-[#D4A843]/40 bg-[#D4A843]/5"
-                          : "border-white/10"
+                          ? "border-primary/40 bg-primary/5"
+                          : "border-border"
                       )}
                     >
                       <input
@@ -372,13 +371,13 @@ export default function TenantSetup() {
                         value={action.value}
                         checked={firstAction === action.value}
                         onChange={() => setFirstAction(action.value)}
-                        className="mt-1 h-4 w-4 shrink-0 accent-[#D4A843]"
+                        className="mt-1 h-4 w-4 shrink-0 accent-primary"
                       />
                       <span>
                         <span className="block text-sm font-medium">
                           {action.title}
                         </span>
-                        <span className="mt-1 block text-xs text-slate-400">
+                        <span className="mt-1 block text-xs text-muted-foreground">
                           {action.description}
                         </span>
                       </span>
@@ -390,7 +389,7 @@ export default function TenantSetup() {
             <Button
               type="submit"
               disabled={busy || !validName || !validSlug}
-              className="min-h-12 w-full bg-[#D4A843] font-bold text-black hover:bg-[#D4A843]/90"
+              className="min-h-12 w-full bg-primary font-bold text-primary-foreground hover:bg-primary/90"
             >
               {busy ? (
                 <>
@@ -411,7 +410,7 @@ export default function TenantSetup() {
               )}
             </Button>
             {primaryProduct === "gig" && (
-              <p className="text-center text-xs leading-relaxed text-slate-400">
+              <p className="text-center text-xs leading-relaxed text-muted-foreground">
                 No bank connection needed to get started. Track work or import
                 earnings while automatic account linking is being prepared. Your
                 records start empty.
@@ -419,7 +418,7 @@ export default function TenantSetup() {
             )}
           </form>
         ) : (
-          <section className="space-y-5 rounded-2xl border border-white/10 bg-white/5 p-5 sm:p-7">
+          <section className="space-y-5 rounded-2xl border border-border bg-muted/40 p-5 sm:p-7">
             <div className="flex items-start gap-3 rounded-xl border border-emerald-400/20 bg-emerald-400/5 p-4">
               <Check className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" />
               <p className="text-sm">
@@ -427,7 +426,7 @@ export default function TenantSetup() {
                 optional and do not represent real sales.
               </p>
             </div>
-            <div className="flex items-start gap-3 rounded-xl border border-white/10 p-4">
+            <div className="flex items-start gap-3 rounded-xl border border-border p-4">
               <Checkbox
                 id="sample-products"
                 checked={seedDemo}
@@ -442,7 +441,7 @@ export default function TenantSetup() {
                 >
                   Add sample products
                 </Label>
-                <p className="mt-2 text-xs leading-relaxed text-slate-400">
+                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
                   Explore the product catalog with example records. These are
                   storefront products, not gig earnings or tracked shifts.
                 </p>
@@ -451,7 +450,7 @@ export default function TenantSetup() {
             <Button
               disabled={busy}
               onClick={() => void finishCommerce(seedDemo)}
-              className="min-h-12 w-full bg-[#D4A843] font-bold text-black hover:bg-[#D4A843]/90"
+              className="min-h-12 w-full bg-primary font-bold text-primary-foreground hover:bg-primary/90"
             >
               {busy ? (
                 <>
@@ -469,17 +468,17 @@ export default function TenantSetup() {
                 variant="ghost"
                 disabled={busy}
                 onClick={() => void finishCommerce(false)}
-                className="min-h-11 w-full text-slate-300"
+                className="min-h-11 w-full text-muted-foreground"
               >
                 Skip sample products
               </Button>
             )}
           </section>
         )}
-        <p className="mt-6 text-center text-xs text-slate-500">
+        <p className="mt-6 text-center text-xs text-muted-foreground">
           <Link
             href="/tools"
-            className="inline-flex min-h-11 items-center gap-2 text-slate-400 hover:text-white"
+            className="inline-flex min-h-11 items-center gap-2 text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             Explore the free tools

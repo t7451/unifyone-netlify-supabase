@@ -157,13 +157,13 @@ export default function Orders() {
             size="sm"
             onClick={exportToCSV}
             disabled={orderList.length === 0}
-            className="border-white/10 text-gray-300 hover:text-white hover:bg-white/5"
+            className="border-border text-gray-300 hover:text-foreground hover:bg-muted/40"
           >
             <Download className="w-4 h-4 mr-2" /> Export CSV
           </Button>
           <Button
             onClick={() => setShowCreate(true)}
-            className="bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-semibold"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
           >
             <Plus className="w-4 h-4 mr-2" /> New Order
           </Button>
@@ -171,14 +171,14 @@ export default function Orders() {
       }
       meta={
         <>
-          <Badge variant="outline" className="border-white/10 bg-white/5">
+          <Badge variant="outline" className="border-border bg-muted/40">
             {totalOrders} order{totalOrders !== 1 ? "s" : ""}
           </Badge>
           <RealtimeStatus />
           {hasActiveFilters ? (
             <Badge
               variant="outline"
-              className="border-[#D4A843]/30 bg-[#D4A843]/10 text-[#E8C25A]"
+              className="border-primary/30 bg-primary/10 text-primary"
             >
               {activeFilterCount} active filter
               {activeFilterCount === 1 ? "" : "s"}
@@ -224,11 +224,11 @@ export default function Orders() {
             <Button
               variant="outline"
               onClick={() => setMobileFiltersOpen(open => !open)}
-              className="border-white/10 text-gray-300 hover:bg-white/5 hover:text-white"
+              className="border-border text-gray-300 hover:bg-muted/40 hover:text-foreground"
             >
               Filters
               {activeFilterCount > 0 && (
-                <Badge className="bg-[#D4A843]/15 text-[#D4A843] hover:bg-[#D4A843]/15">
+                <Badge className="bg-primary/15 text-primary hover:bg-primary/15">
                   {activeFilterCount}
                 </Badge>
               )}
@@ -238,15 +238,15 @@ export default function Orders() {
             variant="outline"
             onClick={toggleSelectAllVisible}
             disabled={orderList.length === 0}
-            className="border-white/10 text-gray-300 hover:bg-white/5 hover:text-white"
+            className="border-border text-gray-300 hover:bg-muted/40 hover:text-foreground"
           >
             {allVisibleSelected ? "Clear Visible" : "Select Visible"}
           </Button>
         </div>
 
         {(!isMobile || mobileFiltersOpen) && (
-          <div className="flex flex-col gap-3 rounded-lg border border-white/10 bg-white/5 p-3 lg:flex-row lg:flex-wrap lg:items-center">
-            <div className="relative min-w-[220px] flex-1 lg:max-w-sm">
+          <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted/40 p-3 lg:flex-row lg:flex-wrap lg:items-center">
+            <div className="relative min-w-0 w-full flex-1 lg:max-w-sm">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
                 value={search}
@@ -255,7 +255,7 @@ export default function Orders() {
                   setPage(1);
                 }}
                 placeholder="Search by customer, order ID…"
-                className="border-white/10 bg-white/5 pl-10 text-white placeholder:text-gray-500"
+                className="border-border bg-muted/40 pl-10 text-foreground placeholder:text-gray-500"
               />
             </div>
             <Select
@@ -264,10 +264,10 @@ export default function Orders() {
                 setStatusFilter(value as OrderStatus | "all")
               }
             >
-              <SelectTrigger className="w-full border-white/10 bg-white/5 text-white sm:w-48">
+              <SelectTrigger className="w-full border-border bg-muted/40 text-foreground sm:w-48">
                 <SelectValue placeholder="All statuses" />
               </SelectTrigger>
-              <SelectContent className="bg-[#0F172A] border-white/10">
+              <SelectContent className="bg-card border-border">
                 <SelectItem value="all">All</SelectItem>
                 {ORDER_FILTER_STATUSES.map(status => (
                   <SelectItem
@@ -286,10 +286,10 @@ export default function Orders() {
                 setPaymentStatusFilter(value as OrderPaymentStatus | "all")
               }
             >
-              <SelectTrigger className="w-full border-white/10 bg-white/5 text-white sm:w-44">
+              <SelectTrigger className="w-full border-border bg-muted/40 text-foreground sm:w-44">
                 <SelectValue placeholder="All payments" />
               </SelectTrigger>
-              <SelectContent className="bg-[#0F172A] border-white/10">
+              <SelectContent className="bg-card border-border">
                 <SelectItem value="all">All</SelectItem>
                 {PAYMENT_FILTER_STATUSES.map(status => (
                   <SelectItem
@@ -308,7 +308,7 @@ export default function Orders() {
                 type="date"
                 value={dateFrom}
                 onChange={e => setDateFrom(e.target.value)}
-                className="border-white/10 bg-white/5 text-white"
+                className="border-border bg-muted/40 text-foreground"
               />
             </div>
             <div className="flex flex-col gap-1 sm:w-[150px]">
@@ -317,7 +317,7 @@ export default function Orders() {
                 type="date"
                 value={dateTo}
                 onChange={e => setDateTo(e.target.value)}
-                className="border-white/10 bg-white/5 text-white"
+                className="border-border bg-muted/40 text-foreground"
               />
             </div>
             {hasActiveFilters && (
@@ -331,7 +331,7 @@ export default function Orders() {
                   setDateTo("");
                   setPage(1);
                 }}
-                className="border-white/10 text-gray-300 hover:bg-white/5 hover:text-white"
+                className="border-border text-gray-300 hover:bg-muted/40 hover:text-foreground"
               >
                 Clear filters
               </Button>
@@ -341,7 +341,7 @@ export default function Orders() {
       </div>
 
       {selectedIds.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-white/10 bg-white/5 p-3">
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-muted/40 p-3">
           <p className="mr-2 text-sm text-gray-300">
             {selectedIds.length} selected
           </p>
@@ -371,9 +371,9 @@ export default function Orders() {
         open={bulkDeleteConfirmOpen}
         onOpenChange={setBulkDeleteConfirmOpen}
       >
-        <DialogContent className="max-w-md border-white/10 bg-[#0F172A] text-white">
+        <DialogContent className="max-w-md border-border bg-card text-foreground">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-white">
+            <DialogTitle className="flex items-center gap-2 text-foreground">
               <AlertTriangle className="h-5 w-5 text-red-400" />
               Delete {selectedIds.length} order
               {selectedIds.length === 1 ? "" : "s"}?
@@ -386,14 +386,14 @@ export default function Orders() {
           <DialogFooter>
             <Button
               variant="outline"
-              className="border-white/10 text-gray-300"
+              className="border-border text-gray-300"
               disabled={bulkDeleteOrders.isPending}
               onClick={() => setBulkDeleteConfirmOpen(false)}
             >
               Cancel
             </Button>
             <Button
-              className="bg-red-500/90 text-white hover:bg-red-500"
+              className="bg-red-500/90 text-foreground hover:bg-red-500"
               disabled={bulkDeleteOrders.isPending}
               onClick={() => bulkDeleteOrders.mutate({ ids: selectedIds })}
             >
@@ -416,7 +416,7 @@ export default function Orders() {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[760px]">
               <thead>
-                <tr className="border-b border-border bg-white/3">
+                <tr className="border-b border-border bg-muted/40">
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-400">
                     <Checkbox
                       checked={
@@ -425,7 +425,7 @@ export default function Orders() {
                       }
                       onCheckedChange={() => toggleSelectAllVisible()}
                       aria-label="Select all visible orders"
-                      className="border-white/30 data-[state=checked]:border-[#D4A843] data-[state=checked]:bg-[#D4A843] data-[state=checked]:text-[#020202]"
+                      className="border-border data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                     />
                   </th>
                   {[
@@ -500,23 +500,23 @@ export default function Orders() {
                   orderList.map(order => (
                     <tr
                       key={order.id}
-                      className="border-b border-border/60 transition-colors hover:bg-white/[0.03] last:border-0"
+                      className="border-b border-border/60 transition-colors hover:bg-muted/40 last:border-0"
                     >
                       <td className="px-4 py-3 align-top">
                         <Checkbox
                           checked={selectedIds.includes(order.id)}
                           onCheckedChange={() => toggleSelection(order.id)}
                           aria-label={`Select order ${order.orderNumber}`}
-                          className="border-white/30 data-[state=checked]:border-[#D4A843] data-[state=checked]:bg-[#D4A843] data-[state=checked]:text-[#020202]"
+                          className="border-border data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
                         />
                       </td>
                       <td className="px-4 py-3 align-top">
-                        <span className="font-mono text-xs text-[#D4A843]">
+                        <span className="font-mono text-xs text-primary">
                           {order.orderNumber}
                         </span>
                       </td>
                       <td className="px-4 py-3 align-top">
-                        <div className="text-sm text-white">
+                        <div className="text-sm text-foreground">
                           {order.customerName ?? "Guest"}
                         </div>
                         <div className="text-xs text-gray-500">
@@ -526,7 +526,7 @@ export default function Orders() {
                       <td className="px-4 py-3 text-sm text-gray-300 align-top">
                         {order.itemCount ?? "—"}
                       </td>
-                      <td className="px-4 py-3 align-top font-semibold text-white">
+                      <td className="px-4 py-3 align-top font-semibold text-foreground">
                         ${Number(order.total).toFixed(2)}
                       </td>
                       <td className="px-4 py-3 align-top">
@@ -559,7 +559,7 @@ export default function Orders() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-7 w-7 p-0 text-gray-400 hover:text-[#D4A843]"
+                            className="h-7 w-7 p-0 text-gray-400 hover:text-primary"
                             aria-label={`View details for order ${order.orderNumber}`}
                             onClick={() => openDetail(order)}
                           >
@@ -595,12 +595,12 @@ export default function Orders() {
                             }
                           >
                             <SelectTrigger
-                              className="h-7 w-28 border-white/10 bg-white/5 text-xs text-gray-300"
+                              className="h-7 w-28 border-border bg-muted/40 text-xs text-gray-300"
                               aria-label={`Change status for order ${order.orderNumber}`}
                             >
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="border-white/10 bg-[#0F172A]">
+                            <SelectContent className="border-border bg-card">
                               {ORDER_STATUSES.map(status => (
                                 <SelectItem
                                   key={status}
@@ -623,7 +623,7 @@ export default function Orders() {
         )}
 
         {!orders.isLoading && !orders.isError && totalOrders > 0 && (
-          <div className="border-t border-white/10 px-4 py-4 sm:px-6">
+          <div className="border-t border-border px-4 py-4 sm:px-6">
             <PaginationControls
               page={page}
               limit={limit}
@@ -643,10 +643,10 @@ export default function Orders() {
         {!orders.isLoading && !orders.isError && orderList.length === 0 && (
           <Card className="rounded-none border-0 bg-transparent shadow-none">
             <CardContent className="flex flex-col items-center px-6 py-16 text-center">
-              <div className="mb-5 rounded-full border border-white/10 bg-white/5 p-4">
-                <ShoppingCart className="h-10 w-10 text-[#D4A843]" />
+              <div className="mb-5 rounded-full border border-border bg-muted/40 p-4">
+                <ShoppingCart className="h-10 w-10 text-primary" />
               </div>
-              <h2 className="text-xl font-semibold text-white">
+              <h2 className="text-xl font-semibold text-foreground">
                 {hasActiveFilters ? "No orders found" : "No orders yet"}
               </h2>
               <p className="mt-2 max-w-md text-sm text-gray-400">
@@ -657,7 +657,7 @@ export default function Orders() {
               {!hasActiveFilters && (
                 <Button
                   size="sm"
-                  className="mt-6 bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90"
+                  className="mt-6 bg-primary text-primary-foreground hover:bg-primary/90"
                   onClick={() => setShowCreate(true)}
                 >
                   <Plus className="mr-1 h-3.5 w-3.5" /> Create your first order
@@ -678,17 +678,17 @@ export default function Orders() {
           }
         }}
       >
-        <DialogContent className="bg-[#0F172A] border-white/10 text-white max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="bg-card border-border text-foreground max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-white flex items-center gap-2">
-              <Package className="w-5 h-5 text-[#D4A843]" />
+            <DialogTitle className="text-foreground flex items-center gap-2">
+              <Package className="w-5 h-5 text-primary" />
               Order {selectedOrder?.orderNumber ?? orderData?.orderNumber ?? ""}
             </DialogTitle>
           </DialogHeader>
 
           {orderDetail.isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-[#D4A843]" />
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           ) : orderDetail.isError ? (
             <div className="flex justify-center py-8">
@@ -705,7 +705,7 @@ export default function Orders() {
             <div className="space-y-5">
               {/* Status + Payment */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+                <div className="rounded-lg border border-border bg-muted/40 p-4">
                   <p className="mb-2 text-xs text-gray-400">Order Status</p>
                   <div className="mb-3 flex items-center gap-2">
                     <Badge
@@ -727,10 +727,10 @@ export default function Orders() {
                       })
                     }
                   >
-                    <SelectTrigger className="h-8 w-full border-white/10 bg-white/5 text-xs text-gray-300">
+                    <SelectTrigger className="h-8 w-full border-border bg-muted/40 text-xs text-gray-300">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="border-white/10 bg-[#0F172A]">
+                    <SelectContent className="border-border bg-card">
                       {ORDER_STATUSES.map(status => (
                         <SelectItem
                           key={status}
@@ -743,7 +743,7 @@ export default function Orders() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+                <div className="rounded-lg border border-border bg-muted/40 p-4">
                   <p className="mb-2 text-xs text-gray-400">Payment Status</p>
                   <div className="mb-3 flex items-center gap-2">
                     <span
@@ -765,10 +765,10 @@ export default function Orders() {
                       })
                     }
                   >
-                    <SelectTrigger className="h-8 w-full border-white/10 bg-white/5 text-xs text-gray-300">
+                    <SelectTrigger className="h-8 w-full border-border bg-muted/40 text-xs text-gray-300">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="border-white/10 bg-[#0F172A]">
+                    <SelectContent className="border-border bg-card">
                       {PAYMENT_STATUSES.map(status => (
                         <SelectItem
                           key={status}
@@ -820,7 +820,7 @@ export default function Orders() {
                 };
 
                 return (
-                  <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+                  <div className="rounded-lg border border-border bg-muted/40 p-4">
                     <div className="mb-4 flex items-center justify-between gap-3">
                       <p className="text-xs text-gray-400">Order Timeline</p>
                       {terminalStatus && (
@@ -841,20 +841,20 @@ export default function Orders() {
                               className={cn(
                                 "flex h-full flex-col gap-3 rounded-xl border p-3 transition-colors",
                                 isCurrent
-                                  ? "border-[#D4A843]/60 bg-[#D4A843]/10"
+                                  ? "border-primary/60 bg-primary/10"
                                   : isComplete
-                                    ? "border-[#D4A843]/30 bg-white/[0.04]"
-                                    : "border-white/10 bg-white/[0.02]"
+                                    ? "border-primary/30 bg-muted/40"
+                                    : "border-border bg-muted/40"
                               )}
                             >
                               <span
                                 className={cn(
                                   "flex h-8 w-8 items-center justify-center rounded-full border",
                                   isCurrent
-                                    ? "border-[#D4A843] bg-[#D4A843] text-[#020202]"
+                                    ? "border-primary bg-primary text-primary-foreground"
                                     : isComplete
-                                      ? "border-[#D4A843]/40 bg-[#D4A843]/15 text-[#D4A843]"
-                                      : "border-white/10 bg-white/5 text-gray-500"
+                                      ? "border-primary/40 bg-primary/15 text-primary"
+                                      : "border-border bg-muted/40 text-gray-500"
                                 )}
                               >
                                 {meta.icon}
@@ -864,16 +864,16 @@ export default function Orders() {
                                   className={cn(
                                     "text-sm font-medium",
                                     isCurrent
-                                      ? "text-[#D4A843]"
+                                      ? "text-primary"
                                       : isComplete
-                                        ? "text-white"
+                                        ? "text-foreground"
                                         : "text-gray-500"
                                   )}
                                 >
                                   {meta.label}
                                 </p>
                                 {isCurrent && (
-                                  <span className="mt-1 inline-flex rounded-full bg-[#D4A843]/15 px-1.5 py-0.5 text-xs text-[#D4A843]">
+                                  <span className="mt-1 inline-flex rounded-full bg-primary/15 px-1.5 py-0.5 text-xs text-primary">
                                     Current
                                   </span>
                                 )}
@@ -889,11 +889,11 @@ export default function Orders() {
 
               {/* Customer */}
               {(orderData.customerName || orderData.customerEmail) && (
-                <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+                <div className="rounded-lg border border-border bg-muted/40 p-4">
                   <p className="mb-2 flex items-center gap-1 text-xs text-gray-400">
                     <User className="h-3 w-3" /> Customer
                   </p>
-                  <p className="font-medium text-white">
+                  <p className="font-medium text-foreground">
                     {orderData.customerName ?? "—"}
                   </p>
                   <p className="text-sm text-gray-400">
@@ -906,10 +906,10 @@ export default function Orders() {
               {(orderData.items?.length ?? 0) > 0 && (
                 <div>
                   <p className="mb-2 text-xs text-gray-400">Line Items</p>
-                  <div className="overflow-hidden rounded-lg border border-white/10">
+                  <div className="overflow-hidden rounded-lg border border-border">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b border-white/10 bg-white/5">
+                        <tr className="border-b border-border bg-muted/40">
                           <th className="px-3 py-2 text-left text-xs text-gray-400">
                             Product
                           </th>
@@ -928,10 +928,10 @@ export default function Orders() {
                         {orderData.items?.map((item, index) => (
                           <tr
                             key={`${item.productName}-${index}`}
-                            className="border-b border-white/5 last:border-0"
+                            className="border-b border-border last:border-0"
                           >
                             <td className="px-3 py-2">
-                              <div className="text-white">
+                              <div className="text-foreground">
                                 {item.productName}
                               </div>
                               {item.productSku && (
@@ -946,7 +946,7 @@ export default function Orders() {
                             <td className="px-3 py-2 text-right text-gray-300">
                               ${Number(item.unitPrice).toFixed(2)}
                             </td>
-                            <td className="px-3 py-2 text-right font-medium text-white">
+                            <td className="px-3 py-2 text-right font-medium text-foreground">
                               $
                               {(item.quantity * Number(item.unitPrice)).toFixed(
                                 2
@@ -961,7 +961,7 @@ export default function Orders() {
               )}
 
               {/* Totals */}
-              <div className="space-y-2 rounded-lg border border-white/10 bg-white/5 p-4">
+              <div className="space-y-2 rounded-lg border border-border bg-muted/40 p-4">
                 <div className="flex justify-between text-sm text-gray-400">
                   <span>Subtotal</span>
                   <span>${Number(orderData.subtotal ?? 0).toFixed(2)}</span>
@@ -978,10 +978,10 @@ export default function Orders() {
                     <span>${Number(orderData.shippingAmount).toFixed(2)}</span>
                   </div>
                 )}
-                <Separator className="bg-white/10" />
-                <div className="flex justify-between font-bold text-white">
+                <Separator className="bg-muted/40" />
+                <div className="flex justify-between font-bold text-foreground">
                   <span>Total</span>
-                  <span className="text-[#D4A843]">
+                  <span className="text-primary">
                     ${Number(orderData.total).toFixed(2)}
                   </span>
                 </div>
@@ -989,7 +989,7 @@ export default function Orders() {
 
               {/* Notes */}
               {orderData.notes && (
-                <div className="rounded-lg border border-white/10 bg-white/3 p-3">
+                <div className="rounded-lg border border-border bg-muted/40 p-3">
                   <p className="mb-1 text-xs text-gray-400">Notes</p>
                   <p className="text-sm text-gray-300">{orderData.notes}</p>
                 </div>
@@ -1017,10 +1017,10 @@ export default function Orders() {
           if (!v) resetCreateForm();
         }}
       >
-        <DialogContent className="bg-[#0F172A] border-white/10 text-white max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="bg-card border-border text-foreground max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-white flex items-center gap-2">
-              <Plus className="w-5 h-5 text-[#D4A843]" /> Create Manual Order
+            <DialogTitle className="text-foreground flex items-center gap-2">
+              <Plus className="w-5 h-5 text-primary" /> Create Manual Order
             </DialogTitle>
           </DialogHeader>
 
@@ -1033,7 +1033,7 @@ export default function Orders() {
                   value={customerName}
                   onChange={e => setCustomerName(e.target.value)}
                   placeholder="John Doe"
-                  className="bg-white/5 border-white/10 text-white mt-1"
+                  className="bg-muted/40 border-border text-foreground mt-1"
                 />
               </div>
               <div>
@@ -1043,7 +1043,7 @@ export default function Orders() {
                   value={customerEmail}
                   onChange={e => setCustomerEmail(e.target.value)}
                   placeholder="john@example.com"
-                  className="bg-white/5 border-white/10 text-white mt-1"
+                  className="bg-muted/40 border-border text-foreground mt-1"
                 />
               </div>
             </div>
@@ -1055,7 +1055,7 @@ export default function Orders() {
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="text-[#D4A843] hover:text-[#D4A843]/80 text-xs h-7"
+                  className="text-primary hover:text-primary/80 text-xs h-7"
                   onClick={addItem}
                 >
                   <Plus className="w-3 h-3 mr-1" /> Add Item
@@ -1078,7 +1078,7 @@ export default function Orders() {
                           })
                         }
                         placeholder="Product name *"
-                        className={`bg-white/5 border-white/10 text-white text-sm ${itemsTouched[i] && !item.productName ? "border-red-500/70" : ""}`}
+                        className={`bg-muted/40 border-border text-foreground text-sm ${itemsTouched[i] && !item.productName ? "border-red-500/70" : ""}`}
                       />
                       {itemsTouched[i] && !item.productName && (
                         <p className="text-red-400 text-xs mt-0.5">Required</p>
@@ -1091,7 +1091,7 @@ export default function Orders() {
                           updateItem(i, "productSku", e.target.value)
                         }
                         placeholder="SKU"
-                        className="bg-white/5 border-white/10 text-white text-sm"
+                        className="bg-muted/40 border-border text-foreground text-sm"
                       />
                     </div>
                     <div className="col-span-2">
@@ -1107,7 +1107,7 @@ export default function Orders() {
                           )
                         }
                         placeholder="Qty"
-                        className="bg-white/5 border-white/10 text-white text-sm"
+                        className="bg-muted/40 border-border text-foreground text-sm"
                       />
                     </div>
                     <div className="col-span-2">
@@ -1124,7 +1124,7 @@ export default function Orders() {
                           )
                         }
                         placeholder="Price"
-                        className="bg-white/5 border-white/10 text-white text-sm"
+                        className="bg-muted/40 border-border text-foreground text-sm"
                       />
                     </div>
                     <div className="col-span-1 flex justify-center">
@@ -1156,7 +1156,7 @@ export default function Orders() {
                   onChange={e =>
                     setShippingAmount(parseFloat(e.target.value) || 0)
                   }
-                  className="bg-white/5 border-white/10 text-white mt-1"
+                  className="bg-muted/40 border-border text-foreground mt-1"
                 />
               </div>
               <div>
@@ -1167,7 +1167,7 @@ export default function Orders() {
                   step={0.01}
                   value={taxAmount}
                   onChange={e => setTaxAmount(parseFloat(e.target.value) || 0)}
-                  className="bg-white/5 border-white/10 text-white mt-1"
+                  className="bg-muted/40 border-border text-foreground mt-1"
                 />
               </div>
             </div>
@@ -1178,14 +1178,14 @@ export default function Orders() {
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
                 placeholder="Internal notes..."
-                className="bg-white/5 border-white/10 text-white mt-1"
+                className="bg-muted/40 border-border text-foreground mt-1"
               />
             </div>
 
             {/* Payment provider reference (required) */}
-            <div className="space-y-2 p-4 rounded-lg bg-white/5 border border-white/10">
-              <div className="flex items-center gap-2 text-white text-sm font-medium">
-                <CreditCard className="w-4 h-4 text-[#D4A843]" />
+            <div className="space-y-2 p-4 rounded-lg bg-muted/40 border border-border">
+              <div className="flex items-center gap-2 text-foreground text-sm font-medium">
+                <CreditCard className="w-4 h-4 text-primary" />
                 Payment reference
               </div>
               <p className="text-xs text-gray-400">
@@ -1201,7 +1201,7 @@ export default function Orders() {
                       setPaymentProvider(v as typeof paymentProvider)
                     }
                   >
-                    <SelectTrigger className="bg-white/5 border-white/10 text-white mt-1">
+                    <SelectTrigger className="bg-muted/40 border-border text-foreground mt-1">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -1229,7 +1229,7 @@ export default function Orders() {
                           ? "cs_..."
                           : "id"
                     }
-                    className="bg-white/5 border-white/10 text-white mt-1"
+                    className="bg-muted/40 border-border text-foreground mt-1"
                   />
                 </div>
               </div>
@@ -1241,14 +1241,14 @@ export default function Orders() {
                   <Input
                     value={squareOrderRefId}
                     onChange={e => setSquareOrderRefId(e.target.value)}
-                    className="bg-white/5 border-white/10 text-white mt-1"
+                    className="bg-muted/40 border-border text-foreground mt-1"
                   />
                 </div>
               )}
             </div>
 
             {/* Order Summary */}
-            <div className="p-4 rounded-lg bg-white/5 border border-white/10 space-y-2">
+            <div className="p-4 rounded-lg bg-muted/40 border border-border space-y-2">
               <div className="flex justify-between text-sm text-gray-400">
                 <span>Subtotal</span>
                 <span>${subtotal.toFixed(2)}</span>
@@ -1265,13 +1265,13 @@ export default function Orders() {
                   <span>${shippingAmount.toFixed(2)}</span>
                 </div>
               )}
-              <Separator className="bg-white/10" />
-              <div className="flex justify-between text-white font-bold">
+              <Separator className="bg-muted/40" />
+              <div className="flex justify-between text-foreground font-bold">
                 <span className="flex items-center gap-1">
-                  <DollarSign className="w-4 h-4 text-[#D4A843]" />
+                  <DollarSign className="w-4 h-4 text-primary" />
                   Total
                 </span>
-                <span className="text-[#D4A843]">${orderTotal.toFixed(2)}</span>
+                <span className="text-primary">${orderTotal.toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -1279,7 +1279,7 @@ export default function Orders() {
           <DialogFooter className="gap-2">
             <Button
               variant="ghost"
-              className="border border-white/10 text-gray-300 hover:text-white"
+              className="border border-border text-gray-300 hover:text-foreground"
               onClick={() => {
                 setShowCreate(false);
                 resetCreateForm();
@@ -1294,7 +1294,7 @@ export default function Orders() {
                 items.some(i => !i.productName) ||
                 !paymentRefId.trim()
               }
-              className="bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-semibold"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
             >
               {createOrder.isPending ? (
                 <>

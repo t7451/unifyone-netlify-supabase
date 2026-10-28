@@ -159,7 +159,7 @@ export default function Analytics() {
             void topProducts.refetch();
             void webhookLog.refetch();
           }}
-          className="border-white/10 bg-white/5 text-white hover:bg-white/10"
+          className="border-border bg-muted/40 text-foreground hover:bg-muted/40"
         >
           <RefreshCw className="mr-2 h-4 w-4" />
           Refresh analytics
@@ -169,7 +169,7 @@ export default function Analytics() {
         <Badge
           variant="outline"
           className={cn(
-            "border-white/10 bg-white/5",
+            "border-border bg-muted/40",
             operationalStatus ? "text-emerald-300" : "text-amber-300"
           )}
         >
@@ -208,7 +208,7 @@ export default function Analytics() {
                   />
                 </div>
               </div>
-              <div className="text-2xl font-bold text-white">
+              <div className="text-2xl font-bold text-foreground">
                 {metric.value}
               </div>
             </CardContent>
@@ -219,7 +219,7 @@ export default function Analytics() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card className="border-border bg-card lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-base text-white">
+            <CardTitle className="text-base text-foreground">
               Store Revenue &amp; Orders (30 Days)
             </CardTitle>
           </CardHeader>
@@ -257,8 +257,8 @@ export default function Analytics() {
                   />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "#0F172A",
-                      border: "1px solid #1e3a5f",
+                      backgroundColor: "var(--card)",
+                      border: "1px solid var(--border)",
                       borderRadius: "8px",
                       color: "#fff",
                     }}
@@ -291,7 +291,7 @@ export default function Analytics() {
                 </ComposedChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex h-[240px] items-center justify-center rounded-lg border border-dashed border-white/10 bg-white/[0.02] px-6 text-center text-sm text-gray-400">
+              <div className="flex h-[240px] items-center justify-center rounded-lg border border-dashed border-border bg-muted/40 px-6 text-center text-sm text-gray-400">
                 No store revenue yet. Orders and revenue trends will appear here
                 once your shop starts making sales.
               </div>
@@ -301,7 +301,9 @@ export default function Analytics() {
 
         <Card className="border-border bg-card">
           <CardHeader>
-            <CardTitle className="text-base text-white">Top Products</CardTitle>
+            <CardTitle className="text-base text-foreground">
+              Top Products
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {topProducts.isLoading ? (
@@ -309,7 +311,7 @@ export default function Analytics() {
                 {Array.from({ length: 5 }).map((_, index) => (
                   <div
                     key={index}
-                    className="flex items-center gap-3 rounded-lg border border-white/5 p-3"
+                    className="flex items-center gap-3 rounded-lg border border-border p-3"
                   >
                     <Skeleton className="h-8 w-8 rounded-full" />
                     <div className="min-w-0 flex-1 space-y-2">
@@ -327,7 +329,7 @@ export default function Analytics() {
                 {topProductData.map(product => (
                   <div
                     key={product.fullName}
-                    className="flex items-start gap-3 rounded-lg border border-white/5 bg-white/[0.02] p-3"
+                    className="flex items-start gap-3 rounded-lg border border-border bg-muted/40 p-3"
                   >
                     <div
                       className={cn(
@@ -338,13 +340,13 @@ export default function Analytics() {
                           "bg-slate-400/20 text-slate-200 ring-1 ring-slate-400/20",
                         product.rank === 3 &&
                           "bg-orange-500/20 text-orange-300 ring-1 ring-orange-500/20",
-                        product.rank > 3 && "bg-white/5 text-gray-400"
+                        product.rank > 3 && "bg-muted/40 text-gray-400"
                       )}
                     >
                       {product.rank}
                     </div>
                     <div className="min-w-0 flex-1 space-y-2">
-                      <div className="truncate font-medium text-white">
+                      <div className="truncate font-medium text-foreground">
                         {product.fullName}
                       </div>
                       <div className="flex flex-wrap gap-2">
@@ -369,8 +371,8 @@ export default function Analytics() {
                 ))}
               </div>
             ) : (
-              <div className="flex min-h-[240px] flex-col items-center justify-center rounded-lg border border-dashed border-white/10 bg-white/[0.02] px-6 text-center">
-                <p className="font-medium text-white">
+              <div className="flex min-h-[240px] flex-col items-center justify-center rounded-lg border border-dashed border-border bg-muted/40 px-6 text-center">
+                <p className="font-medium text-foreground">
                   No product performance yet
                 </p>
                 <p className="mt-2 text-sm text-gray-400">
@@ -397,7 +399,7 @@ export default function Analytics() {
 
       <Card className="border-border bg-card">
         <CardHeader>
-          <CardTitle className="text-base text-white">
+          <CardTitle className="text-base text-foreground">
             Recent Webhook Events
           </CardTitle>
         </CardHeader>
@@ -407,7 +409,7 @@ export default function Analytics() {
               {Array.from({ length: 5 }).map((_, index) => (
                 <div
                   key={index}
-                  className="grid grid-cols-[1fr_2fr_auto_1.4fr] items-center gap-3 rounded-lg border border-white/5 p-3"
+                  className="grid grid-cols-[1fr_2fr_auto_1.4fr] items-center gap-3 rounded-lg border border-border p-3"
                 >
                   <Skeleton className="h-4 w-16" />
                   <Skeleton className="h-4 w-full" />
@@ -419,7 +421,7 @@ export default function Analytics() {
           ) : recentWebhooks.length > 0 ? (
             <Table>
               <TableHeader>
-                <TableRow className="border-white/10">
+                <TableRow className="border-border">
                   <TableHead className="text-gray-400">Source</TableHead>
                   <TableHead className="text-gray-400">Event Type</TableHead>
                   <TableHead className="text-gray-400">Status</TableHead>
@@ -432,9 +434,9 @@ export default function Analytics() {
                 {recentWebhooks.map((event: WebhookEvent) => (
                   <TableRow
                     key={event.id}
-                    className="border-white/5 hover:bg-white/5"
+                    className="border-border hover:bg-muted/40"
                   >
-                    <TableCell className="font-medium capitalize text-white">
+                    <TableCell className="font-medium capitalize text-foreground">
                       {event.source}
                     </TableCell>
                     <TableCell className="font-mono text-xs text-gray-400">
@@ -467,8 +469,10 @@ export default function Analytics() {
               </TableBody>
             </Table>
           ) : (
-            <div className="flex min-h-[220px] flex-col items-center justify-center rounded-lg border border-dashed border-white/10 bg-white/[0.02] px-6 text-center">
-              <p className="font-medium text-white">No webhook activity yet</p>
+            <div className="flex min-h-[220px] flex-col items-center justify-center rounded-lg border border-dashed border-border bg-muted/40 px-6 text-center">
+              <p className="font-medium text-foreground">
+                No webhook activity yet
+              </p>
               <p className="mt-2 text-sm text-gray-400">
                 Incoming Stripe, Shopify, and internal webhook events will
                 appear here once integrations start sending traffic.

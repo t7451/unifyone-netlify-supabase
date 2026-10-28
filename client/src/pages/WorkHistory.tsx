@@ -166,7 +166,10 @@ export default function WorkHistory() {
       title="Work history"
       description="Review completed sessions and imported earnings together. Find a platform, client or date without losing track of where each record came from."
       meta={
-        <Badge variant="outline" className="border-white/20 text-slate-200">
+        <Badge
+          variant="outline"
+          className="border-border text-muted-foreground"
+        >
           Completed work and statement imports · USD
         </Badge>
       }
@@ -180,7 +183,7 @@ export default function WorkHistory() {
           id="history-filters-heading"
           className="flex items-center gap-2 text-lg font-semibold"
         >
-          <Filter className="h-4 w-4 text-[#D4A843]" />
+          <Filter className="h-4 w-4 text-primary" />
           Find your records
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
@@ -404,7 +407,7 @@ export default function WorkHistory() {
                 <CardContent className="p-4 sm:p-5">
                   <p className="flex justify-between gap-2 text-sm text-muted-foreground">
                     {stat.label}
-                    <stat.icon className="h-4 w-4 shrink-0 text-[#D4A843]" />
+                    <stat.icon className="h-4 w-4 shrink-0 text-primary" />
                   </p>
                   <p className="mt-3 text-2xl font-semibold tabular-nums">
                     {stat.value}
@@ -424,7 +427,7 @@ export default function WorkHistory() {
             separate in{" "}
             <Link
               href="/connected-money"
-              className="font-medium text-[#E8C25A] underline underline-offset-4"
+              className="font-medium text-primary underline underline-offset-4"
             >
               Connected accounts
             </Link>
@@ -533,7 +536,7 @@ export default function WorkHistory() {
                     ) : entry.kind === "import" ? (
                       <Link
                         href="/money-manager?tab=import"
-                        className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-[#E8C25A]"
+                        className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary"
                       >
                         Review imports <ArrowRight className="h-4 w-4" />
                       </Link>
@@ -584,7 +587,7 @@ export default function WorkHistory() {
             Need to compare what this work paid after costs? Open{" "}
             <Link
               href="/work-insights"
-              className="font-medium text-[#E8C25A] underline underline-offset-4"
+              className="font-medium text-primary underline underline-offset-4"
             >
               What your work pays
             </Link>

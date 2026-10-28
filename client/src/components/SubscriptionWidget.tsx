@@ -24,7 +24,7 @@ function StatusBadge({ status }: { status: string }) {
     },
     trialing: {
       label: "Trial",
-      className: "bg-cyan-500/20 text-cyan-400 border-cyan-500/30",
+      className: "bg-primary/10 text-primary border-primary/30",
     },
     past_due: {
       label: "Past Due",
@@ -36,7 +36,7 @@ function StatusBadge({ status }: { status: string }) {
     },
     none: {
       label: "Free",
-      className: "bg-slate-500/20 text-slate-400 border-slate-500/30",
+      className: "bg-muted text-muted-foreground border-border",
     },
   };
   const cfg = map[status] ?? map.none;
@@ -65,7 +65,7 @@ function UsageMeter({
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between text-xs">
-        <span className="flex items-center gap-1.5 text-slate-400">
+        <span className="flex items-center gap-1.5 text-muted-foreground">
           <Icon className="w-3.5 h-3.5" />
           {label}
         </span>
@@ -75,7 +75,7 @@ function UsageMeter({
               ? "text-red-400"
               : isWarning
                 ? "text-amber-400"
-                : "text-slate-400"
+                : "text-muted-foreground"
           }
         >
           {used.toLocaleString()} / {max.toLocaleString()}
@@ -83,14 +83,14 @@ function UsageMeter({
       </div>
       <Progress
         value={pct}
-        className="h-1.5 bg-slate-700/50"
+        className="h-1.5 bg-muted"
         style={
           {
             "--progress-color": isCritical
               ? "rgb(248 113 113)"
               : isWarning
                 ? "rgb(251 191 36)"
-                : "rgb(34 211 238)",
+                : "var(--brand-accent, #f39450)",
           } as React.CSSProperties
         }
       />
@@ -107,10 +107,14 @@ export function SubscriptionWidget() {
 
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-slate-700/50 bg-slate-800/40 p-4 space-y-3 animate-pulse">
-        <div className="h-4 bg-slate-700/60 rounded w-1/3" />
-        <div className="h-2 bg-slate-700/60 rounded w-full" />
-        <div className="h-2 bg-slate-700/60 rounded w-4/5" />
+      <div
+        role="status"
+        aria-label="Loading subscription"
+        className="rounded-xl border border-border bg-card p-4 space-y-3 animate-pulse motion-reduce:animate-none"
+      >
+        <div className="h-4 bg-muted rounded w-1/3" />
+        <div className="h-2 bg-muted rounded w-full" />
+        <div className="h-2 bg-muted rounded w-4/5" />
       </div>
     );
   }
@@ -129,7 +133,7 @@ export function SubscriptionWidget() {
     : null;
 
   return (
-    <div className="rounded-xl border border-slate-700/50 bg-slate-800/40 overflow-hidden">
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
       {/* Trial countdown banner — never shown to the platform owner account */}
       {!data.isMaster &&
         data.tenantStatus === "trial" &&
@@ -159,15 +163,15 @@ export function SubscriptionWidget() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-cyan-500/15 flex items-center justify-center">
-              <Zap className="w-4 h-4 text-cyan-400" />
+            <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Zap className="w-4 h-4 text-primary" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-white leading-none">
+              <p className="text-sm font-semibold text-foreground leading-none">
                 {plan?.name ?? "Free Tier"}
               </p>
               {periodEndStr && (
-                <p className="text-[11px] text-slate-500 mt-0.5">
+                <p className="text-[11px] text-muted-foreground mt-0.5">
                   Renews {periodEndStr}
                 </p>
               )}
@@ -199,7 +203,7 @@ export function SubscriptionWidget() {
           (status === "none" || data.tenantStatus === "trial") &&
           trialDaysLeft !== null &&
           trialDaysLeft > 7 && (
-            <div className="flex items-center gap-2 text-xs text-cyan-400">
+            <div className="flex items-center gap-2 text-xs text-primary">
               <Clock className="w-3.5 h-3.5 shrink-0" />
               {trialDaysLeft} days left in trial
             </div>
@@ -208,7 +212,7 @@ export function SubscriptionWidget() {
         {/* Usage meters */}
         {usage && (
           <div className="space-y-2.5 pt-1">
-            <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
+            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
               Usage
             </p>
             {isCommerce && (
@@ -233,7 +237,7 @@ export function SubscriptionWidget() {
               used={1}
               max={usage.maxUsers}
             />
-            <p className="text-[11px] text-slate-500">
+            <p className="text-[11px] text-muted-foreground">
               Kai unified API usage is billed at one model-agnostic credit rate
               for your tier.
             </p>
@@ -247,7 +251,7 @@ export function SubscriptionWidget() {
             data.tenantStatus === "trial") && (
             <Button
               size="sm"
-              className="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-semibold text-xs h-8"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs min-h-10"
               onClick={() => navigate("/settings")}
             >
               <ArrowUpRight className="w-3.5 h-3.5 mr-1.5" />

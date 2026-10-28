@@ -3,7 +3,6 @@ import type { inferRouterInputs } from "@trpc/server";
 import { trpc } from "@/lib/trpc";
 import type { AppRouter } from "../../../server/routers";
 import { useAuth } from "@/_core/hooks/useAuth";
-import DashboardLayout from "@/components/DashboardLayout";
 import { AIChatBox } from "@/components/AIChatBox";
 import LoadingExperience from "@/components/LoadingExperience";
 import type { Message } from "@/components/AIChatBox";
@@ -311,14 +310,14 @@ export default function AIAssistant() {
 
   if (loading) {
     return (
-      <DashboardLayout>
+      <>
         <LoadingExperience
           title="Starting Kai"
           description="Loading conversation history, assistant context, and recommended prompts."
           label="AI workspace loading"
           className="min-h-[24rem]"
         />
-      </DashboardLayout>
+      </>
     );
   }
 
@@ -484,7 +483,7 @@ export default function AIAssistant() {
   );
 
   return (
-    <DashboardLayout>
+    <>
       <div className="flex h-[calc(100vh-4rem)] overflow-hidden -mx-4 -mt-4 sm:-mx-6 sm:-mt-6">
         {/* Sidebar */}
         <div
@@ -748,6 +747,6 @@ export default function AIAssistant() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

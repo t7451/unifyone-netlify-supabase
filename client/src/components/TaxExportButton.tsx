@@ -135,7 +135,7 @@ export function TaxExportButton({
         size="sm"
         variant="outline"
         className={cn(
-          "min-h-11 border-violet-500/40 text-violet-200 hover:bg-violet-500/10",
+          "min-h-11 border-primary/30 text-primary hover:bg-primary/10",
           className
         )}
       >
@@ -170,8 +170,8 @@ export function TaxExportButton({
           Export records
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
-        <DialogHeader>
+      <DialogContent className="max-h-[90dvh] gap-5 overflow-y-auto sm:max-w-2xl">
+        <DialogHeader className="border-b pb-4">
           <DialogTitle>
             Accountant records
             {` · ${selectedYear}`}
@@ -186,7 +186,7 @@ export function TaxExportButton({
           <Label htmlFor="accountant-records-year">Report year</Label>
           <select
             id="accountant-records-year"
-            className="mt-2 min-h-11 w-full rounded-md border bg-background px-3 text-sm sm:max-w-48"
+            className="mt-2 min-h-11 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:max-w-48"
             value={selectedYear}
             disabled={busy !== null}
             onChange={event => {

@@ -310,11 +310,11 @@ export default function ConnectedMoney() {
       {notice && (
         <div
           role={notice.kind === "error" ? "alert" : "status"}
-          className={`flex items-start gap-3 rounded-xl border p-4 text-sm ${notice.kind === "error" ? "border-red-400/30 bg-red-500/5" : "border-emerald-400/30 bg-emerald-500/5"}`}
+          className={`flex items-start gap-3 rounded-xl border p-4 text-sm ${notice.kind === "error" ? "border-destructive/30 bg-destructive/5" : "border-emerald-400/30 bg-emerald-500/5"}`}
         >
           {notice.kind === "error" ? (
             <AlertCircle
-              className="mt-0.5 h-4 w-4 shrink-0 text-red-300"
+              className="mt-0.5 h-4 w-4 shrink-0 text-destructive"
               aria-hidden="true"
             />
           ) : (
@@ -418,7 +418,7 @@ export default function ConnectedMoney() {
             <input
               id="money-consent"
               type="checkbox"
-              className="mt-1 h-4 w-4"
+              className="mt-1 h-4 w-4 accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               checked={consent}
               onChange={event => setConsent(event.target.checked)}
             />
@@ -479,7 +479,7 @@ export default function ConnectedMoney() {
                 institution and platform.
               </p>
               <Button
-                className="w-full sm:w-auto"
+                className="min-h-11 w-full sm:w-auto"
                 disabled={
                   !consent || busy || !availability.data?.[provider].configured
                 }

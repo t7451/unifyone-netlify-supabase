@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import DashboardLayout from "@/components/DashboardLayout";
+import { DashboardPageShell } from "@/components/DashboardPageShell";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,15 +27,15 @@ const TIER_ICONS: Record<string, React.ElementType> = {
 };
 
 const TIER_COLORS: Record<string, string> = {
-  starter: "border-slate-600 bg-slate-800/40",
-  pro: "border-violet-500 bg-violet-900/20",
-  elite: "border-amber-400 bg-amber-900/20",
+  starter: "border-border bg-card",
+  pro: "border-primary/60 bg-card",
+  elite: "border-border bg-card",
 };
 
 const TIER_BADGE: Record<string, string> = {
-  starter: "bg-slate-700 text-slate-300",
-  pro: "bg-violet-700 text-violet-100",
-  elite: "bg-amber-600 text-amber-100",
+  starter: "bg-muted text-muted-foreground",
+  pro: "bg-primary/15 text-primary",
+  elite: "bg-muted text-foreground",
 };
 
 const FEATURE_LABELS: Record<
@@ -98,46 +98,50 @@ function PlanCard({
 
   return (
     <Card
-      className={`relative flex flex-col border-2 transition-all ${TIER_COLORS[plan.tier] ?? "border-slate-700 bg-slate-800/40"} ${isPopular ? "ring-2 ring-violet-500/40 scale-[1.02]" : ""}`}
+      className={`relative flex flex-col border transition-colors ${TIER_COLORS[plan.tier] ?? "border-border bg-card"} ${isPopular ? "ring-1 ring-primary/30" : ""}`}
     >
       {isPopular && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-          <Badge className="bg-violet-600 text-white text-xs px-3 py-1 shadow-lg">
+          <Badge className="bg-primary text-primary-foreground text-xs px-3 py-1">
             Most Popular
           </Badge>
         </div>
       )}
       <CardHeader className="pb-4">
         <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 rounded-lg bg-slate-700/60">
-            <Icon className="w-5 h-5 text-slate-200" />
+          <div className="p-2 rounded-lg bg-muted">
+            <Icon className="w-5 h-5 text-foreground" />
           </div>
           <div>
-            <CardTitle className="text-lg text-white">{plan.name}</CardTitle>
+            <CardTitle className="text-lg text-foreground">
+              {plan.name}
+            </CardTitle>
             <Badge
-              className={`text-xs mt-1 ${TIER_BADGE[plan.tier] ?? "bg-slate-700 text-slate-300"}`}
+              className={`text-xs mt-1 ${TIER_BADGE[plan.tier] ?? "bg-muted text-muted-foreground"}`}
             >
               {plan.tier.charAt(0).toUpperCase() + plan.tier.slice(1)}
             </Badge>
           </div>
         </div>
-        <p className="text-sm text-slate-400 leading-relaxed">
+        <p className="text-sm text-muted-foreground leading-relaxed">
           {plan.description}
         </p>
 
         <div className="mt-4">
           {isFree ? (
             <div className="flex items-end gap-1">
-              <span className="text-4xl font-bold text-white">Free</span>
-              <span className="text-slate-400 mb-1">forever</span>
+              <span className="text-3xl font-semibold text-foreground">
+                Free
+              </span>
+              <span className="text-muted-foreground mb-1">forever</span>
             </div>
           ) : (
             <div>
               <div className="flex items-end gap-1">
-                <span className="text-4xl font-bold text-white">
+                <span className="text-3xl font-semibold text-foreground">
                   ${price.toFixed(2)}
                 </span>
-                <span className="text-slate-400 mb-1">/mo</span>
+                <span className="text-muted-foreground mb-1">/mo</span>
               </div>
               {billingPeriod === "yearly" && (
                 <p className="text-xs text-emerald-400 mt-1">
@@ -146,7 +150,7 @@ function PlanCard({
               )}
             </div>
           )}
-          <p className="text-xs text-slate-400 mt-2">
+          <p className="text-xs text-muted-foreground mt-2">
             {plan.monthlyAICredits} AI requests/month
           </p>
         </div>
@@ -161,10 +165,10 @@ function PlanCard({
             return (
               <li
                 key={f}
-                className="flex items-center gap-2 text-sm text-slate-300"
+                className="flex items-center gap-2 text-sm text-muted-foreground"
               >
                 <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                <FIcon className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                <FIcon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                 <span>{info.label}</span>
               </li>
             );
@@ -228,48 +232,45 @@ export default function GigWorkerPlans() {
   }
 
   return (
-    <DashboardLayout>
-      <div className="max-w-5xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="text-center mb-10">
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <Navigation className="w-6 h-6 text-violet-400" />
-            <h1 className="text-3xl font-bold text-white">Gig Worker Plans</h1>
-          </div>
-          <p className="text-slate-400 max-w-xl mx-auto text-sm leading-relaxed">
-            Tools built for gig economy workers — shift tracking, IRS mileage
-            deductions, AI-powered route optimization, and tax export. Pick the
-            plan that matches your hustle.
-          </p>
-
-          {/* Billing toggle */}
-          <div className="inline-flex items-center gap-1 mt-6 p-1 rounded-lg bg-slate-800 border border-slate-700">
-            <button
-              onClick={() => setBillingPeriod("monthly")}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
-                billingPeriod === "monthly"
-                  ? "bg-slate-600 text-white shadow"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              Monthly
-            </button>
-            <button
-              onClick={() => setBillingPeriod("yearly")}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
-                billingPeriod === "yearly"
-                  ? "bg-slate-600 text-white shadow"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              Yearly
-              <Badge className="ml-2 bg-emerald-700 text-emerald-100 text-xs">
-                Save 20%
-              </Badge>
-            </button>
-          </div>
+    <DashboardPageShell
+      eyebrow="Your account"
+      title="Gig Worker Plans"
+      description="Tools built for gig economy workers — shift tracking, IRS mileage deductions, AI-powered route optimization, and tax export. Pick the plan that matches your hustle."
+      actions={
+        <div
+          role="group"
+          aria-label="Billing period"
+          className="inline-flex flex-wrap items-center gap-1 p-1 rounded-lg bg-muted border border-border"
+        >
+          <button
+            aria-pressed={billingPeriod === "monthly"}
+            onClick={() => setBillingPeriod("monthly")}
+            className={`min-h-11 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              billingPeriod === "monthly"
+                ? "bg-background text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Monthly
+          </button>
+          <button
+            aria-pressed={billingPeriod === "yearly"}
+            onClick={() => setBillingPeriod("yearly")}
+            className={`min-h-11 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              billingPeriod === "yearly"
+                ? "bg-background text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Yearly
+            <Badge className="ml-2 bg-emerald-700 text-emerald-100 text-xs">
+              Save 20%
+            </Badge>
+          </button>
         </div>
-
+      }
+    >
+      <div className="mx-auto w-full max-w-6xl space-y-6">
         {/* Plan cards */}
         {plansLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -294,14 +295,14 @@ export default function GigWorkerPlans() {
 
         {/* AI usage summary */}
         {subscription && (
-          <div className="mt-8 p-4 rounded-xl border border-slate-700 bg-slate-800/40 flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
+          <div className="mt-8 p-4 rounded-xl border border-border bg-card flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
             <div className="flex items-center gap-3">
-              <Brain className="w-5 h-5 text-violet-400 shrink-0" />
+              <Brain className="w-5 h-5 text-primary shrink-0" />
               <div>
-                <p className="text-sm font-medium text-white">
+                <p className="text-sm font-medium text-foreground">
                   AI Credits This Month
                 </p>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-muted-foreground">
                   {subscription.aiUsage?.requestsUsed ?? 0} used ·{" "}
                   {subscription.aiCreditsRemaining} remaining ·{" "}
                   {subscription.plan?.monthlyAICredits ?? 25} monthly quota
@@ -320,7 +321,7 @@ export default function GigWorkerPlans() {
 
         {/* FAQ */}
         <div className="mt-12 space-y-4">
-          <h2 className="text-lg font-semibold text-white">
+          <h2 className="text-lg font-semibold text-foreground">
             Frequently Asked Questions
           </h2>
           {[
@@ -343,19 +344,21 @@ export default function GigWorkerPlans() {
           ].map(({ q, a }) => (
             <details
               key={q}
-              className="group p-4 rounded-lg border border-slate-700 bg-slate-800/30 cursor-pointer"
+              className="group p-4 rounded-lg border border-border bg-card cursor-pointer"
             >
-              <summary className="text-sm font-medium text-white list-none flex items-center justify-between">
+              <summary className="text-sm font-medium text-foreground list-none flex min-h-11 items-center justify-between gap-3">
                 {q}
-                <span className="text-slate-500 group-open:rotate-180 transition-transform">
+                <span className="text-muted-foreground group-open:rotate-180 transition-transform">
                   ▾
                 </span>
               </summary>
-              <p className="mt-2 text-sm text-slate-400 leading-relaxed">{a}</p>
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                {a}
+              </p>
             </details>
           ))}
         </div>
       </div>
-    </DashboardLayout>
+    </DashboardPageShell>
   );
 }

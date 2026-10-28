@@ -68,6 +68,7 @@ import { SubscriptionWidget } from "./SubscriptionWidget";
 import { NotificationCenter } from "./NotificationCenter";
 import { Button } from "./ui/button";
 import { useSignupTracker } from "@/hooks/useSignupTracker";
+import "./workspace.css";
 
 type NavItem = { icon: typeof LayoutDashboard; label: string; path: string };
 type NavSection = {
@@ -197,6 +198,17 @@ export default function DashboardLayout({
     }
   }, [sidebarWidth]);
 
+  useEffect(() => {
+    if (!user) return;
+    const root = document.documentElement;
+    const previous = root.getAttribute("data-workspace-brand");
+    root.setAttribute("data-workspace-brand", "unifyone");
+    return () => {
+      if (previous === null) root.removeAttribute("data-workspace-brand");
+      else root.setAttribute("data-workspace-brand", previous);
+    };
+  }, [user]);
+
   if (loading) {
     return <DashboardLayoutSkeleton />;
   }
@@ -230,6 +242,7 @@ export default function DashboardLayout({
 
   return (
     <SidebarProvider
+      className="workspace-shell"
       style={
         {
           "--sidebar-width": `${sidebarWidth}px`,
@@ -324,19 +337,21 @@ function DashboardLayoutContent({
           disableTransition={isResizing}
         >
           <SidebarHeader
-            className="h-16 justify-center"
-            style={{ borderBottom: "1px solid rgba(212,168,67,0.1)" }}
+            className={`h-16 justify-center ${isCollapsed ? "px-0" : ""}`}
+            style={{ borderBottom: "1px solid #343a3d" }}
           >
-            <div className="flex items-center gap-3 px-2 transition-all w-full">
+            <div
+              className={`flex items-center gap-2 transition-all w-full ${isCollapsed ? "justify-center" : "px-2"}`}
+            >
               <button
                 onClick={toggleSidebar}
-                className="h-8 w-8 flex items-center justify-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f39450] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111416] shrink-0 hover:opacity-70"
+                className="h-11 w-11 rounded-lg hover:bg-accent flex items-center justify-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f39450] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111416] shrink-0 hover:opacity-70"
                 aria-label="Toggle navigation"
               >
                 {isCollapsed ? (
                   <BrandMark size={28} />
                 ) : (
-                  <PanelLeft className="h-4 w-4" style={{ color: "#B8B8B8" }} />
+                  <PanelLeft className="h-4 w-4" style={{ color: "#b5bab7" }} />
                 )}
               </button>
               {!isCollapsed ? (
@@ -357,22 +372,22 @@ function DashboardLayoutContent({
               <Link
                 href="/settings"
                 aria-label={`Open settings for ${tenantName}`}
-                className="w-full flex items-center gap-2 px-2 py-1.5 transition-colors text-left hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                style={{ borderBottom: "1px solid rgba(212,168,67,0.08)" }}
+                className="w-full min-h-11 rounded-lg flex items-center gap-2 px-2 py-1.5 transition-colors text-left hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                style={{ borderBottom: "1px solid #343a3d" }}
               >
                 <Building2
                   className="w-3 h-3 shrink-0"
-                  style={{ color: "rgba(212,168,67,0.72)" }}
+                  style={{ color: "#f39450" }}
                 />
                 <span
-                  className="font-cinzel text-xs truncate flex-1"
-                  style={{ color: "#D7D7D7", letterSpacing: "0.1em" }}
+                  className="text-sm font-medium truncate flex-1"
+                  style={{ color: "#f4f2ed" }}
                 >
                   {tenantName}
                 </span>
                 <ChevronDown
                   className="w-3 h-3 shrink-0"
-                  style={{ color: "#A7A7A7" }}
+                  style={{ color: "#b5bab7" }}
                 />
               </Link>
             </div>
@@ -402,13 +417,13 @@ function DashboardLayoutContent({
                       style={
                         sIdx === 0
                           ? undefined
-                          : { borderTop: "1px solid rgba(212,168,67,0.1)" }
+                          : { borderTop: "1px solid #343a3d" }
                       }
                     >
                       {muted ? (
                         <button
                           type="button"
-                          className="flex min-h-10 w-full items-center justify-between text-left text-xs font-semibold text-slate-400 hover:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                          className="flex min-h-11 w-full items-center justify-between text-left text-xs font-semibold text-[#b5bab7] hover:text-[#f4f2ed] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                           aria-expanded={expanded}
                           aria-controls={`nav-${section.key}`}
                           onClick={() =>
@@ -425,7 +440,7 @@ function DashboardLayoutContent({
                           />
                         </button>
                       ) : (
-                        <span className="block text-xs font-semibold uppercase tracking-wider text-slate-400">
+                        <span className="block text-xs font-semibold uppercase tracking-wider text-[#b5bab7]">
                           {section.label}
                         </span>
                       )}
@@ -453,10 +468,9 @@ function DashboardLayoutContent({
                             style={
                               isActive
                                 ? {
-                                    backgroundColor: "rgba(212,168,67,0.06)",
-                                    borderLeft: "2px solid #D4A843",
-                                    borderBottom:
-                                      "1px solid rgba(212,168,67,0.08)",
+                                    backgroundColor: "rgba(243,148,80,0.14)",
+                                    borderLeft: "2px solid #f39450",
+                                    borderBottom: "1px solid #343a3d",
                                   }
                                 : {
                                     borderLeft: "2px solid transparent",
@@ -473,20 +487,20 @@ function DashboardLayoutContent({
                                 className="h-4 w-4"
                                 style={{
                                   color: isActive
-                                    ? "#D4A843"
+                                    ? "#f39450"
                                     : muted
-                                      ? "#9A9A9A"
-                                      : "#BCBCBC",
+                                      ? "#b5bab7"
+                                      : "#b5bab7",
                                 }}
                               />
                               <span
                                 className="font-medium"
                                 style={{
                                   color: isActive
-                                    ? "#D4A843"
+                                    ? "#f39450"
                                     : muted
-                                      ? "#A8A8A8"
-                                      : "#D2D2D2",
+                                      ? "#a2aaa7"
+                                      : "#f4f2ed",
                                   fontSize: "0.875rem",
                                   letterSpacing: "0",
                                 }}
@@ -510,10 +524,10 @@ function DashboardLayoutContent({
             </div>
           )}
 
-          <SidebarFooter className="p-3">
+          <SidebarFooter className={isCollapsed ? "p-1" : "p-3"}>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-accent/50 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <button className="flex min-h-11 items-center gap-3 rounded-lg px-1 py-1 hover:bg-accent/50 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                   <Avatar className="h-9 w-9 border shrink-0">
                     <AvatarFallback className="text-xs font-medium">
                       {user?.name?.charAt(0).toUpperCase()}
@@ -532,7 +546,7 @@ function DashboardLayoutContent({
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem
                   onClick={logout}
-                  className="cursor-pointer text-destructive focus:text-destructive"
+                  className="min-h-11 cursor-pointer text-destructive focus:text-destructive"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Sign out</span>
@@ -557,17 +571,17 @@ function DashboardLayoutContent({
             className="flex h-14 items-center justify-between px-2 sticky top-0 z-40"
             style={{
               borderBottom: "1px solid rgba(255,255,255,0.14)",
-              backgroundColor: "rgba(16,16,18,0.96)",
+              backgroundColor: "rgba(17,20,22,0.96)",
             }}
           >
             <div className="flex items-center gap-2">
               <SidebarTrigger
-                className="h-9 w-9"
-                style={{ color: "#D0D0D0" }}
+                className="h-11 w-11"
+                style={{ color: "#b5bab7" }}
               />
               <span
                 className="text-sm font-medium tracking-wide"
-                style={{ color: "#D4D4D4" }}
+                style={{ color: "#f4f2ed" }}
               >
                 {activeMenuItem?.label ?? "Menu"}
               </span>
@@ -580,7 +594,7 @@ function DashboardLayoutContent({
         <main
           id="main-content"
           tabIndex={-1}
-          className={`${!isCommerceFirst ? "pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-28" : "pb-6 md:pb-28"} min-h-screen min-w-0 flex-1 bg-[radial-gradient(circle_at_top_right,rgba(212,168,67,0.08),transparent_32%),linear-gradient(180deg,rgba(10,10,10,0.35),transparent_340px)]`}
+          className={`${!isCommerceFirst ? "pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-28" : "pb-6 md:pb-28"} min-h-screen min-w-0 flex-1 bg-background`}
         >
           {children}
         </main>
@@ -588,7 +602,7 @@ function DashboardLayoutContent({
       {!isCommerceFirst && (
         <nav
           aria-label="Primary worker navigation"
-          className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-white/10 bg-[#101012]/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+          className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-white/10 bg-[#111416]/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
         >
           {gigCoreItems.slice(0, 4).map(item => (
             <Link
@@ -596,7 +610,7 @@ function DashboardLayoutContent({
               href={item.path}
               aria-current={location === item.path ? "page" : undefined}
               onClick={() => setOpenMobile(false)}
-              className={`flex min-h-16 min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-1 text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${location === item.path ? "text-[#E8C25A]" : "text-slate-400 hover:text-slate-100"}`}
+              className={`flex min-h-16 min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-1 text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${location === item.path ? "bg-[#f39450]/10 text-[#f39450]" : "text-[#b5bab7] hover:bg-white/5 hover:text-[#f4f2ed]"}`}
             >
               <item.icon className="h-5 w-5" aria-hidden="true" />
               <span>
@@ -683,11 +697,11 @@ function FloatingAIWidget() {
       {/* Chat panel */}
       {open && (
         <div
-          className="w-[calc(100vw-2rem)] max-w-96 flex flex-col overflow-hidden shadow-2xl"
+          className="w-[calc(100vw-2rem)] max-w-96 rounded-xl flex flex-col overflow-hidden shadow-xl"
           style={{
             height: "min(480px, calc(100dvh - 13rem))",
-            border: "1px solid rgba(201,168,76,0.25)",
-            backgroundColor: "#0F0F11",
+            border: "1px solid #414b50",
+            backgroundColor: "#1c2022",
           }}
         >
           {/* Widget header */}
@@ -695,28 +709,28 @@ function FloatingAIWidget() {
             className="flex items-center gap-2 px-4 py-3 shrink-0"
             style={{
               borderBottom: "1px solid rgba(255,255,255,0.14)",
-              backgroundColor: "#131316",
+              backgroundColor: "#252c2f",
             }}
           >
-            <Sparkles className="h-4 w-4" style={{ color: "#C9A84C" }} />
+            <Sparkles className="h-4 w-4" style={{ color: "#f39450" }} />
             <span
-              className="font-semibold text-sm flex-1 font-serif-display"
-              style={{ color: "#C9A84C" }}
+              className="font-semibold text-sm flex-1 font-[Inter,Arial,sans-serif]"
+              style={{ color: "#f39450" }}
             >
               Kai
             </span>
             <span
-              className="text-xs capitalize uppercase tracking-widest"
-              style={{ color: "#BEBEBE" }}
+              className="min-w-0 truncate text-xs capitalize tracking-wide"
+              style={{ color: "#b5bab7" }}
             >
               {contextLabel}
             </span>
             <button
               onClick={() => setOpen(false)}
-              className="ml-2 transition-opacity hover:opacity-100 opacity-50"
+              className="ml-2 flex h-11 w-11 items-center justify-center rounded-lg transition-colors hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               aria-label="Close AI chat"
             >
-              <X className="h-4 w-4" style={{ color: "#9A9A9A" }} />
+              <X className="h-4 w-4" style={{ color: "#b5bab7" }} />
             </button>
           </div>
           {/* Chat box */}
@@ -735,50 +749,29 @@ function FloatingAIWidget() {
         </div>
       )}
 
-      {/* Floating button — Cathedral cross medallion */}
+      {/* Floating assistant button */}
       <button
         onClick={open ? () => setOpen(false) : handleOpen}
-        className="relative h-11 w-11 shadow-lg hover:opacity-90 transition-all flex items-center justify-center"
-        style={{ backgroundColor: "#D4A843", border: "1px solid #F0D080" }}
+        className="relative h-11 w-11 rounded-xl shadow-sm hover:opacity-90 transition-colors flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        style={{ backgroundColor: "#f39450", border: "1px solid #ffad74" }}
         aria-label="Open AI Assistant"
       >
         {open ? (
-          <X className="h-4 w-4" style={{ color: "#020202" }} />
+          <X className="h-4 w-4" style={{ color: "#111416" }} />
         ) : (
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <line
-              x1="8"
-              y1="1"
-              x2="8"
-              y2="15"
-              stroke="#020202"
-              strokeWidth="1.5"
-            />
-            <line
-              x1="1"
-              y1="6"
-              x2="15"
-              y2="6"
-              stroke="#020202"
-              strokeWidth="1.5"
-            />
-            <rect
-              x="0.5"
-              y="0.5"
-              width="15"
-              height="15"
-              stroke="rgba(2,2,2,0.3)"
-              strokeWidth="0.5"
-            />
-          </svg>
+          <Sparkles
+            className="h-5 w-5"
+            style={{ color: "#111416" }}
+            aria-hidden="true"
+          />
         )}
         {!open && unread > 0 && (
           <span
-            className="absolute -top-1.5 -right-1.5 h-4 w-4 text-xs flex items-center justify-center font-bold font-cinzel"
+            className="absolute -top-1.5 -right-1.5 h-4 min-w-4 rounded-full px-0.5 text-xs flex items-center justify-center font-bold"
             style={{
-              backgroundColor: "#020202",
-              color: "#D4A843",
-              border: "1px solid #D4A843",
+              backgroundColor: "#111416",
+              color: "#f39450",
+              border: "1px solid #f39450",
               fontSize: "0.5rem",
             }}
           >

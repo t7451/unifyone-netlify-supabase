@@ -215,14 +215,14 @@ export default function Customers() {
       actions={<AddCustomerDialog />}
       meta={
         <>
-          <Badge variant="outline" className="border-white/10 bg-white/5">
+          <Badge variant="outline" className="border-border bg-muted/40">
             {totalCustomers} customer{totalCustomers !== 1 ? "s" : ""}
           </Badge>
           <RealtimeStatus />
           {search ? (
             <Badge
               variant="outline"
-              className="border-[#D4A843]/30 bg-[#D4A843]/10 text-[#E8C25A]"
+              className="border-primary/30 bg-primary/10 text-primary"
             >
               Search active
             </Badge>
@@ -272,7 +272,7 @@ export default function Customers() {
             setPage(1);
           }}
           placeholder="Search by email..."
-          className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-gray-500"
+          className="pl-10 bg-muted/40 border-border text-foreground placeholder:text-gray-500"
         />
       </div>
 
@@ -280,7 +280,7 @@ export default function Customers() {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px]">
             <thead>
-              <tr className="border-b border-border bg-white/2">
+              <tr className="border-b border-border bg-muted/40">
                 {[
                   "Customer",
                   "Email",
@@ -306,7 +306,7 @@ export default function Customers() {
                   <tr key={i} className="border-b border-border">
                     {[...Array(8)].map((_, j) => (
                       <td key={j} className="px-4 py-3">
-                        <div className="h-4 bg-white/5 rounded animate-pulse" />
+                        <div className="h-4 bg-muted/40 rounded animate-pulse" />
                       </td>
                     ))}
                   </tr>
@@ -342,7 +342,7 @@ export default function Customers() {
                 customerList.map(c => (
                   <tr
                     key={c.id}
-                    className="border-b border-border hover:bg-white/2 transition-colors cursor-pointer"
+                    className="border-b border-border hover:bg-muted/40 transition-colors cursor-pointer"
                     onClick={() => openProfile(c)}
                     role="button"
                     tabIndex={0}
@@ -351,14 +351,14 @@ export default function Customers() {
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D4A843]/20 to-[#6A1B9A]/20 border border-white/10 flex items-center justify-center text-xs font-bold text-[#D4A843]">
+                        <div className="w-8 h-8 rounded-full border border-border flex items-center justify-center text-xs font-bold text-primary bg-muted/40">
                           {(
                             c.firstName?.[0] ??
                             c.email?.[0] ??
                             "?"
                           ).toUpperCase()}
                         </div>
-                        <span className="text-white font-medium text-sm">
+                        <span className="text-foreground font-medium text-sm">
                           {fullName(c)}
                         </span>
                       </div>
@@ -372,12 +372,12 @@ export default function Customers() {
                     <td className="px-4 py-3">
                       <Badge
                         variant="outline"
-                        className="border-[#D4A843]/30 text-[#D4A843] text-xs"
+                        className="border-primary/30 text-primary text-xs"
                       >
                         {c.totalOrders ?? 0}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3 text-white font-semibold text-sm">
+                    <td className="px-4 py-3 text-foreground font-semibold text-sm">
                       ${Number(c.totalSpent ?? 0).toFixed(2)}
                     </td>
                     <td className="px-4 py-3">
@@ -405,7 +405,7 @@ export default function Customers() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-7 w-7 p-0 text-gray-400 hover:text-white"
+                        className="h-7 w-7 p-0 text-gray-400 hover:text-foreground"
                         aria-label={`Edit ${fullName(c)}`}
                         onClick={e => {
                           e.stopPropagation();
@@ -441,10 +441,10 @@ export default function Customers() {
 
       {/* Profile Modal */}
       <Dialog open={showProfile} onOpenChange={setShowProfile}>
-        <DialogContent className="max-w-2xl bg-[#0F172A] border-white/10 text-white max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl bg-card border-border text-foreground max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#D4A843]/20 to-[#6A1B9A]/20 border border-white/10 flex items-center justify-center text-sm font-bold text-[#D4A843]">
+              <div className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-sm font-bold text-primary bg-muted/40">
                 {(
                   selectedCustomer?.firstName?.[0] ??
                   selectedCustomer?.email?.[0] ??
@@ -452,7 +452,7 @@ export default function Customers() {
                 ).toUpperCase()}
               </div>
               <div>
-                <div className="text-white font-semibold">
+                <div className="text-foreground font-semibold">
                   {fullName(selectedCustomer ?? {})}
                 </div>
                 <div className="text-gray-400 text-sm font-normal">
@@ -488,16 +488,16 @@ export default function Customers() {
                 ].map(s => (
                   <div
                     key={s.label}
-                    className="bg-white/5 rounded-lg p-3 border border-white/5"
+                    className="bg-muted/40 rounded-lg p-3 border border-border"
                   >
                     <div className="flex items-center gap-2 mb-1">
                       <s.icon
                         className="w-3.5 h-3.5"
-                        style={{ color: s.color }}
+                        style={{ color: "var(--primary)" }}
                       />
                       <span className="text-gray-400 text-xs">{s.label}</span>
                     </div>
-                    <div className="text-white font-bold text-lg">
+                    <div className="text-foreground font-bold text-lg">
                       {s.value}
                     </div>
                   </div>
@@ -507,7 +507,7 @@ export default function Customers() {
                 <h4 className="text-gray-400 text-xs font-medium uppercase tracking-wider">
                   Contact
                 </h4>
-                <div className="bg-white/5 rounded-lg p-3 border border-white/5 space-y-2">
+                <div className="bg-muted/40 rounded-lg p-3 border border-border space-y-2">
                   <div className="flex items-center gap-2 text-sm">
                     <Mail className="w-4 h-4 text-gray-500" />
                     <span className="text-gray-300">
@@ -557,7 +557,7 @@ export default function Customers() {
                   </div>
                 </div>
               )}
-              <Separator className="bg-white/10" />
+              <Separator className="bg-muted/40" />
               <div className="space-y-2">
                 <h4 className="text-gray-400 text-xs font-medium uppercase tracking-wider">
                   Order History
@@ -582,12 +582,12 @@ export default function Customers() {
                     {customerOrderList.map(o => (
                       <div
                         key={o.id}
-                        className="flex items-center justify-between bg-white/5 rounded-lg p-3 border border-white/5"
+                        className="flex items-center justify-between bg-muted/40 rounded-lg p-3 border border-border"
                       >
                         <div className="flex items-center gap-3">
                           <ChevronRight className="w-4 h-4 text-gray-500" />
                           <div>
-                            <div className="text-white text-sm font-medium">
+                            <div className="text-foreground text-sm font-medium">
                               {o.orderNumber}
                             </div>
                             <div className="text-gray-400 text-xs">
@@ -610,7 +610,7 @@ export default function Customers() {
                           >
                             {o.status}
                           </Badge>
-                          <span className="text-white font-semibold text-sm">
+                          <span className="text-foreground font-semibold text-sm">
                             ${Number(o.total).toFixed(2)}
                           </span>
                         </div>
@@ -625,7 +625,7 @@ export default function Customers() {
             <Button
               variant="outline"
               onClick={() => setShowProfile(false)}
-              className="border-white/10 text-gray-300"
+              className="border-border text-gray-300"
             >
               Close
             </Button>
@@ -635,7 +635,7 @@ export default function Customers() {
                 setShowProfile(false);
                 openEdit(selectedCustomer);
               }}
-              className="bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-semibold"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
             >
               <Edit2 className="w-4 h-4 mr-2" /> Edit Profile
             </Button>
@@ -645,7 +645,7 @@ export default function Customers() {
 
       {/* Edit Modal */}
       <Dialog open={showEdit} onOpenChange={setShowEdit}>
-        <DialogContent className="max-w-lg bg-[#0F172A] border-white/10 text-white max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-lg bg-card border-border text-foreground max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Customer</DialogTitle>
           </DialogHeader>
@@ -656,7 +656,7 @@ export default function Customers() {
                 <Input
                   value={firstName}
                   onChange={e => setFirstName(e.target.value)}
-                  className="bg-white/5 border-white/10 text-white"
+                  className="bg-muted/40 border-border text-foreground"
                   placeholder="First name"
                 />
               </div>
@@ -665,7 +665,7 @@ export default function Customers() {
                 <Input
                   value={lastName}
                   onChange={e => setLastName(e.target.value)}
-                  className="bg-white/5 border-white/10 text-white"
+                  className="bg-muted/40 border-border text-foreground"
                   placeholder="Last name"
                 />
               </div>
@@ -675,47 +675,47 @@ export default function Customers() {
               <Input
                 value={phone}
                 onChange={e => setPhone(e.target.value)}
-                className="bg-white/5 border-white/10 text-white"
+                className="bg-muted/40 border-border text-foreground"
                 placeholder="+1 (555) 000-0000"
               />
             </div>
-            <Separator className="bg-white/10" />
+            <Separator className="bg-muted/40" />
             <div className="space-y-2">
               <Label className="text-gray-300 text-sm">Address</Label>
               <Input
                 value={addrLine1}
                 onChange={e => setAddrLine1(e.target.value)}
-                className="bg-white/5 border-white/10 text-white"
+                className="bg-muted/40 border-border text-foreground"
                 placeholder="Street address"
               />
               <div className="grid grid-cols-3 gap-2">
                 <Input
                   value={addrCity}
                   onChange={e => setAddrCity(e.target.value)}
-                  className="bg-white/5 border-white/10 text-white"
+                  className="bg-muted/40 border-border text-foreground"
                   placeholder="City"
                 />
                 <Input
                   value={addrState}
                   onChange={e => setAddrState(e.target.value)}
-                  className="bg-white/5 border-white/10 text-white"
+                  className="bg-muted/40 border-border text-foreground"
                   placeholder="State"
                 />
                 <Input
                   value={addrZip}
                   onChange={e => setAddrZip(e.target.value)}
-                  className="bg-white/5 border-white/10 text-white"
+                  className="bg-muted/40 border-border text-foreground"
                   placeholder="ZIP"
                 />
               </div>
               <Input
                 value={addrCountry}
                 onChange={e => setAddrCountry(e.target.value)}
-                className="bg-white/5 border-white/10 text-white"
+                className="bg-muted/40 border-border text-foreground"
                 placeholder="Country (e.g. US)"
               />
             </div>
-            <Separator className="bg-white/10" />
+            <Separator className="bg-muted/40" />
             <div className="space-y-2">
               <Label className="text-gray-300 text-sm">Tags</Label>
               <div className="flex gap-2">
@@ -725,7 +725,7 @@ export default function Customers() {
                   onKeyDown={e =>
                     e.key === "Enter" && (e.preventDefault(), addTag())
                   }
-                  className="bg-white/5 border-white/10 text-white flex-1"
+                  className="bg-muted/40 border-border text-foreground flex-1"
                   placeholder="Add a tag and press Enter"
                 />
                 <Button
@@ -733,7 +733,7 @@ export default function Customers() {
                   variant="outline"
                   size="sm"
                   onClick={addTag}
-                  className="border-white/10 text-gray-300 hover:text-white"
+                  className="border-border text-gray-300 hover:text-foreground"
                 >
                   <Plus className="w-4 h-4" />
                 </Button>
@@ -749,7 +749,7 @@ export default function Customers() {
                       {t}
                       <button
                         onClick={() => removeTag(t)}
-                        className="ml-1 hover:text-white"
+                        className="ml-1 hover:text-foreground"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -763,14 +763,14 @@ export default function Customers() {
             <Button
               variant="outline"
               onClick={() => setShowEdit(false)}
-              className="border-white/10 text-gray-300"
+              className="border-border text-gray-300"
             >
               Cancel
             </Button>
             <Button
               onClick={handleSave}
               disabled={updateCustomer.isPending}
-              className="bg-[#D4A843] text-[#020202] hover:bg-[#D4A843]/90 font-semibold"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
             >
               {updateCustomer.isPending && (
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />

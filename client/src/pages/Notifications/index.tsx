@@ -1,3 +1,4 @@
+import { DashboardPageShell } from "@/components/DashboardPageShell";
 import { useAuth } from "@/_core/hooks/useAuth";
 import {
   AnnouncementBanner,
@@ -72,17 +73,17 @@ function NotificationList() {
       {/* Header with prominent Mark All Read button */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
-          <Bell className="h-5 w-5 text-cyan-400" />
-          <h3 className="font-semibold text-white">Your Notifications</h3>
+          <Bell className="h-5 w-5 text-primary" />
+          <h3 className="font-semibold text-foreground">Your Notifications</h3>
           {(unread?.count ?? 0) > 0 && (
-            <Badge className="border-cyan-500/30 bg-cyan-500/20 text-xs text-cyan-400">
+            <Badge className="border-primary/30 bg-primary/20 text-xs text-primary">
               {unread?.count} unread
             </Badge>
           )}
         </div>
         <Button
           size="sm"
-          className="h-9 bg-cyan-500 px-4 text-xs font-semibold text-black hover:bg-cyan-400 disabled:bg-cyan-500/40 disabled:text-black/70"
+          className="min-h-11 bg-primary px-4 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:bg-primary/40 disabled:text-primary-foreground/70"
           onClick={() => markAllRead.mutate()}
           disabled={markAllRead.isPending || (unread?.count ?? 0) === 0}
         >
@@ -102,7 +103,7 @@ function NotificationList() {
               {Array.from({ length: 2 }).map((_, index) => (
                 <div
                   key={`${group}-${index}`}
-                  className="flex gap-3 rounded-xl border border-white/10 bg-white/5 p-4"
+                  className="flex gap-3 rounded-xl border border-border bg-muted/40 p-4"
                 >
                   <Skeleton className="h-10 w-10 rounded-full" />
                   <div className="flex-1 space-y-2">
@@ -116,12 +117,14 @@ function NotificationList() {
           ))}
         </div>
       ) : notifs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/5 px-6 py-16 text-center">
-          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-cyan-500/10 ring-1 ring-cyan-500/20">
-            <Bell className="h-7 w-7 text-cyan-300" />
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/40 px-6 py-16 text-center">
+          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 ring-1 ring-primary/20">
+            <Bell className="h-7 w-7 text-primary" />
           </div>
-          <p className="text-lg font-semibold text-white">All caught up!</p>
-          <p className="mt-2 max-w-sm text-sm text-slate-400">
+          <p className="text-lg font-semibold text-foreground">
+            All caught up!
+          </p>
+          <p className="mt-2 max-w-sm text-sm text-muted-foreground">
             You&apos;ll see order updates, payment alerts, and team activity
             here.
           </p>
@@ -135,10 +138,10 @@ function NotificationList() {
               <div key={group} className="space-y-1">
                 {/* Date separator header */}
                 <div className="flex items-center gap-3 mb-2">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     {group}
                   </span>
-                  <div className="flex-1 h-px bg-white/5" />
+                  <div className="flex-1 h-px bg-muted/40" />
                 </div>
 
                 {items.map(n => {
@@ -156,8 +159,8 @@ function NotificationList() {
                       className={cn(
                         "group flex gap-3 rounded-xl border p-4 transition-colors",
                         n.read
-                          ? "border-white/5 bg-white/[0.03] hover:bg-white/[0.05]"
-                          : "border-cyan-500/20 bg-cyan-500/[0.06] hover:bg-cyan-500/[0.1]"
+                          ? "border-border/70 bg-white/[0.03] hover:bg-white/[0.05]"
+                          : "border-primary/20 bg-primary/[0.06] hover:bg-primary/[0.1]"
                       )}
                     >
                       <div
@@ -174,18 +177,18 @@ function NotificationList() {
                             className={cn(
                               "text-sm leading-tight",
                               n.read
-                                ? "text-slate-300"
-                                : "text-white font-medium"
+                                ? "text-muted-foreground"
+                                : "text-foreground font-medium"
                             )}
                           >
                             {n.title}
                           </p>
                           {!n.read && (
-                            <span className="flex-shrink-0 h-2 w-2 rounded-full bg-cyan-400 mt-1.5" />
+                            <span className="flex-shrink-0 h-2 w-2 rounded-full bg-primary mt-1.5" />
                           )}
                         </div>
                         {n.body && (
-                          <p className="text-xs text-slate-500 mt-0.5">
+                          <p className="text-xs text-muted-foreground mt-0.5">
                             {n.body}
                           </p>
                         )}
@@ -198,7 +201,7 @@ function NotificationList() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-slate-500 hover:text-cyan-400"
+                            className="h-11 w-11 text-muted-foreground hover:text-primary"
                             onClick={() => markRead.mutate({ id: n.id })}
                             title="Mark as read"
                           >
@@ -208,7 +211,7 @@ function NotificationList() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7 text-slate-500 hover:text-red-400"
+                          className="h-11 w-11 text-muted-foreground hover:text-red-400"
                           onClick={() => deleteNotif.mutate({ id: n.id })}
                           title="Delete"
                         >
@@ -242,7 +245,7 @@ function AdminBroadcast() {
   return (
     <div className="space-y-6">
       {/* Send to specific user */}
-      <Card className="border-white/10 bg-white/5">
+      <Card className="border-border bg-muted/40">
         <CardHeader className="pb-4">
           <div className="flex items-center gap-2">
             <Users className="h-5 w-5 text-indigo-400" />
@@ -326,7 +329,7 @@ function AdminBroadcast() {
               });
             }}
             disabled={sendToUser.isPending}
-            className="bg-indigo-500 hover:bg-indigo-600 text-white"
+            className="bg-indigo-500 hover:bg-indigo-600 text-foreground"
           >
             <Bell className="h-4 w-4 mr-2" />
             {sendToUser.isPending ? "Sending…" : "Send Notification"}
@@ -335,10 +338,10 @@ function AdminBroadcast() {
       </Card>
 
       {/* Broadcast to all tenant users */}
-      <Card className="border-white/10 bg-white/5">
+      <Card className="border-border bg-muted/40">
         <CardHeader className="pb-4">
           <div className="flex items-center gap-2">
-            <Megaphone className="h-5 w-5 text-cyan-400" />
+            <Megaphone className="h-5 w-5 text-primary" />
             <CardTitle className="text-base">
               Broadcast to All Tenant Users
             </CardTitle>
@@ -411,7 +414,7 @@ function AdminBroadcast() {
               });
             }}
             disabled={broadcast.isPending}
-            className="bg-cyan-500 hover:bg-cyan-600 text-black font-semibold"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
           >
             <Megaphone className="h-4 w-4 mr-2" />
             {broadcast.isPending ? "Broadcasting…" : "Broadcast to All Users"}
@@ -437,7 +440,7 @@ function TriggerConfig() {
 
   if (!tenantId) {
     return (
-      <div className="text-center py-12 text-slate-500">
+      <div className="text-center py-12 text-muted-foreground">
         <p>No active tenant. Please complete onboarding first.</p>
       </div>
     );
@@ -446,12 +449,12 @@ function TriggerConfig() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-2">
-        <Webhook className="h-5 w-5 text-cyan-400" />
-        <h3 className="font-semibold text-white">
+        <Webhook className="h-5 w-5 text-primary" />
+        <h3 className="font-semibold text-foreground">
           Event Trigger Configuration
         </h3>
       </div>
-      <p className="text-sm text-slate-500 mb-4">
+      <p className="text-sm text-muted-foreground mb-4">
         Configure which channels receive notifications when each platform event
         fires. Changes are saved per-event.
       </p>
@@ -459,7 +462,10 @@ function TriggerConfig() {
       {isLoading ? (
         <div className="space-y-3">
           {[1, 2, 3].map(i => (
-            <div key={i} className="h-24 rounded-lg bg-white/5 animate-pulse" />
+            <div
+              key={i}
+              className="h-24 rounded-lg bg-muted/40 animate-pulse"
+            />
           ))}
         </div>
       ) : (
@@ -469,7 +475,7 @@ function TriggerConfig() {
             const existingTrigger = triggers.find(t => t.event === event);
 
             return (
-              <Card key={event} className="border-white/10 bg-white/5">
+              <Card key={event} className="border-border bg-muted/40">
                 <CardContent className="pt-4 pb-4">
                   <div className="flex items-start gap-3">
                     <div className={cn("mt-0.5 flex-shrink-0", color)}>
@@ -478,11 +484,11 @@ function TriggerConfig() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-3">
                         <div>
-                          <p className="text-sm font-medium text-white">
+                          <p className="text-sm font-medium text-foreground">
                             {label}
                           </p>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <p className="text-xs text-slate-500 font-mono">
+                            <p className="text-xs text-muted-foreground font-mono">
                               {event}
                             </p>
                             {(() => {
@@ -495,7 +501,7 @@ function TriggerConfig() {
                                 cfg.emailEnabled && "Email",
                               ].filter(Boolean);
                               return active.length > 0 ? (
-                                <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/20 text-[10px] px-1.5 py-0">
+                                <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px] px-1.5 py-0">
                                   {active.length} channel
                                   {active.length !== 1 ? "s" : ""} active
                                 </Badge>
@@ -508,7 +514,7 @@ function TriggerConfig() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-7 w-7 text-slate-500 hover:text-red-400"
+                              className="h-11 w-11 text-muted-foreground hover:text-red-400"
                               onClick={() =>
                                 deleteTrigger.mutate({ id: existingTrigger.id })
                               }
@@ -519,7 +525,7 @@ function TriggerConfig() {
                           )}
                           <Button
                             size="sm"
-                            className="h-7 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30"
+                            className="min-h-11 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30"
                             onClick={() => handleSave(event)}
                             disabled={upsert.isPending}
                           >
@@ -543,8 +549,8 @@ function TriggerConfig() {
                             }
                           />
                           <div className="flex items-center gap-1.5">
-                            <Bell className="h-3.5 w-3.5 text-cyan-400" />
-                            <span className="text-xs text-slate-300">
+                            <Bell className="h-3.5 w-3.5 text-primary" />
+                            <span className="text-xs text-muted-foreground">
                               In-app
                             </span>
                           </div>
@@ -563,7 +569,7 @@ function TriggerConfig() {
                           />
                           <div className="flex items-center gap-1.5">
                             <Zap className="h-3.5 w-3.5 text-orange-400" />
-                            <span className="text-xs text-slate-300">
+                            <span className="text-xs text-muted-foreground">
                               n8n webhook
                             </span>
                           </div>
@@ -582,7 +588,7 @@ function TriggerConfig() {
                           />
                           <div className="flex items-center gap-1.5">
                             <Zap className="h-3.5 w-3.5 text-amber-400" />
-                            <span className="text-xs text-slate-300">
+                            <span className="text-xs text-muted-foreground">
                               Zapier
                             </span>
                           </div>
@@ -601,7 +607,7 @@ function TriggerConfig() {
                           />
                           <div className="flex items-center gap-1.5">
                             <Mail className="h-3.5 w-3.5 text-yellow-400" />
-                            <span className="text-xs text-slate-300">
+                            <span className="text-xs text-muted-foreground">
                               Mailchimp
                             </span>
                           </div>
@@ -620,7 +626,7 @@ function TriggerConfig() {
                           />
                           <div className="flex items-center gap-1.5">
                             <Slack className="h-3.5 w-3.5 text-purple-400" />
-                            <span className="text-xs text-slate-300">
+                            <span className="text-xs text-muted-foreground">
                               Slack
                             </span>
                           </div>
@@ -639,7 +645,7 @@ function TriggerConfig() {
                           />
                           <div className="flex items-center gap-1.5">
                             <Mail className="h-3.5 w-3.5 text-blue-400" />
-                            <span className="text-xs text-slate-300">
+                            <span className="text-xs text-muted-foreground">
                               Email alerts
                             </span>
                           </div>
@@ -649,7 +655,7 @@ function TriggerConfig() {
                       {/* Conditional inputs */}
                       {cfg.n8nEnabled && (
                         <div className="mt-3 space-y-1.5">
-                          <Label className="text-xs text-slate-400">
+                          <Label className="text-xs text-muted-foreground">
                             n8n Webhook URL
                           </Label>
                           <Input
@@ -664,13 +670,13 @@ function TriggerConfig() {
                                 },
                               }))
                             }
-                            className="h-8 text-xs"
+                            className="min-h-11 text-xs"
                           />
                         </div>
                       )}
                       {cfg.slackEnabled && (
                         <div className="mt-3 space-y-1.5">
-                          <Label className="text-xs text-slate-400">
+                          <Label className="text-xs text-muted-foreground">
                             Slack Webhook URL
                           </Label>
                           <Input
@@ -685,13 +691,13 @@ function TriggerConfig() {
                                 },
                               }))
                             }
-                            className="h-8 text-xs"
+                            className="min-h-11 text-xs"
                           />
                         </div>
                       )}
                       {cfg.emailEnabled && (
                         <div className="mt-3 space-y-1.5">
-                          <Label className="text-xs text-slate-400">
+                          <Label className="text-xs text-muted-foreground">
                             Email Recipients (comma-separated)
                           </Label>
                           <Input
@@ -706,7 +712,7 @@ function TriggerConfig() {
                                 },
                               }))
                             }
-                            className="h-8 text-xs"
+                            className="min-h-11 text-xs"
                           />
                         </div>
                       )}
@@ -728,25 +734,20 @@ export default function Notifications() {
   const isAdmin = user?.role === "admin";
 
   return (
-    <div className="max-w-3xl mx-auto p-6 space-y-6">
-      {/* Page header */}
-      <div>
-        <h1 className="text-2xl font-bold text-white">Notification Center</h1>
-        <p className="text-gray-400 text-sm mt-1">
-          Manage your in-app alerts, admin broadcasts, announcements, and
-          event-driven webhook triggers.
-        </p>
-      </div>
-
+    <DashboardPageShell
+      eyebrow="Your account"
+      title="Notification Center"
+      description="Manage your in-app alerts, admin broadcasts, announcements, and event-driven webhook triggers."
+    >
       {/* Active announcement banners */}
       <AnnouncementBanner />
 
       {/* Tabs */}
       <Tabs defaultValue="inbox">
-        <TabsList className="bg-white/5 border border-white/10">
+        <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1 border border-border bg-muted p-1">
           <TabsTrigger
             value="inbox"
-            className="data-[state=active]:bg-white/10"
+            className="min-h-11 data-[state=active]:bg-background data-[state=active]:text-foreground"
           >
             <Bell className="h-3.5 w-3.5 mr-1.5" />
             Inbox
@@ -755,14 +756,14 @@ export default function Notifications() {
             <>
               <TabsTrigger
                 value="broadcast"
-                className="data-[state=active]:bg-white/10"
+                className="min-h-11 data-[state=active]:bg-background data-[state=active]:text-foreground"
               >
                 <Megaphone className="h-3.5 w-3.5 mr-1.5" />
                 Broadcast
               </TabsTrigger>
               <TabsTrigger
                 value="announcements"
-                className="data-[state=active]:bg-white/10"
+                className="min-h-11 data-[state=active]:bg-background data-[state=active]:text-foreground"
               >
                 <Megaphone className="h-3.5 w-3.5 mr-1.5" />
                 Announcements
@@ -771,7 +772,7 @@ export default function Notifications() {
           )}
           <TabsTrigger
             value="triggers"
-            className="data-[state=active]:bg-white/10"
+            className="min-h-11 data-[state=active]:bg-background data-[state=active]:text-foreground"
           >
             <Webhook className="h-3.5 w-3.5 mr-1.5" />
             Triggers
@@ -797,6 +798,6 @@ export default function Notifications() {
           <TriggerConfig />
         </TabsContent>
       </Tabs>
-    </div>
+    </DashboardPageShell>
   );
 }
