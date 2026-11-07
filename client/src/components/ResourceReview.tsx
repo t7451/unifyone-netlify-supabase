@@ -23,7 +23,7 @@ export default function ResourceReview({
         Reviewed{" "}
         <time dateTime={RESOURCE_REVIEW_DATE}>{RESOURCE_REVIEW_LABEL}</time>.{" "}
         {tax
-          ? "U.S. federal guidance; state and local rules may differ."
+          ? "U.S. guidance. Tax-year and source limitations are explained below; state and local rules can differ."
           : "Sources and scope are listed in this guide."}
       </p>
       {slug === "gig-worker-emergency-fund" && (

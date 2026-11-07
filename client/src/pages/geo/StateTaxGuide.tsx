@@ -1,3 +1,5 @@
+import ResourceReview from "@/components/ResourceReview";
+import { TAX_REVIEW } from "@/content/resourceReview";
 import ReadingLayout from "@/components/ReadingLayout";
 import { Link } from "wouter";
 import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
@@ -24,7 +26,7 @@ const RELATED_TOOLS = [
   {
     label: "Self-Employment Tax Calculator",
     href: "/tools/se-tax-calculator",
-    desc: "Estimate the 15.3% SE tax on net earnings",
+    desc: "Estimate federal self-employment tax",
   },
   {
     label: "IRS Mileage Deduction Calculator",
@@ -130,6 +132,8 @@ export default function StateTaxGuide({ slug }: { slug: string }) {
           </Link>
         </header>
 
+        <ResourceReview slug={guide.slug} tax />
+
         <section className="rounded-xl border bg-card p-6 mb-10 space-y-4">
           <h2 className="text-xl font-semibold">
             How gig taxes work for {guide.stateAdjective} workers
@@ -157,9 +161,9 @@ export default function StateTaxGuide({ slug }: { slug: string }) {
             ))}
           </div>
           <p className="text-sm text-muted-foreground mt-4">
-            {guide.hasStateIncomeTax
-              ? `Remember: the 15.3% self-employment tax is federal and the same in every state — ${guide.state}'s income tax is an additional layer on top.`
-              : `Remember: no ${guide.state} income tax does not mean no taxes — the 15.3% federal self-employment tax and federal income tax still apply in full.`}
+            Federal income tax and self-employment tax are separate from the
+            state and local obligations described above. Filing does not always
+            mean tax is due.
           </p>
         </section>
 
@@ -176,10 +180,10 @@ export default function StateTaxGuide({ slug }: { slug: string }) {
             ))}
           </div>
           <p className="text-xs text-muted-foreground mt-4">
-            You can deduct the IRS standard mileage rate <em>or</em> your actual
-            vehicle expenses — not both. For most drivers the standard mileage
-            rate is simpler and larger. Keep a contemporaneous mileage log
-            either way.
+            Use the standard mileage method only when eligible, or calculate the
+            business-use share of actual vehicle expenses. Do not add fuel,
+            depreciation or vehicle insurance already covered by standard
+            mileage. Keep a trip log and receipts.
           </p>
         </section>
 
@@ -188,20 +192,13 @@ export default function StateTaxGuide({ slug }: { slug: string }) {
             Quarterly estimated taxes
           </h2>
           <div className="space-y-4 text-muted-foreground leading-relaxed">
+            <p>{TAX_REVIEW.estimates}</p>
+            <p>{TAX_REVIEW.dates}</p>
             <p>
-              Because no tax is withheld from your payouts, the IRS expects you
-              to pay as you go through quarterly estimated payments rather than
-              one lump sum in April. If you expect to owe $1,000 or more in
-              federal tax for the year, paying quarterly avoids an underpayment
-              penalty.
-            </p>
-            <p>
-              Federal estimated payments are generally due around April 15, June
-              15, September 15, and January 15 of the following year. You file
-              your annual federal return by April 15.
-              {guide.hasStateIncomeTax
-                ? ` ${guide.state} expects its own state estimated payments on a comparable schedule — see the state resources below for the exact form and due dates.`
-                : ` ${guide.state} has no personal income tax, so there are no separate state estimated payments to make.`}
+              State and local payment thresholds, schedules and exceptions
+              differ. Use the specific guidance and official sources above;
+              federal installments do not satisfy a separate jurisdiction's
+              obligation.
             </p>
           </div>
         </section>
@@ -283,9 +280,9 @@ export default function StateTaxGuide({ slug }: { slug: string }) {
             Stop guessing what you owe
           </h2>
           <p className="text-muted-foreground text-sm mb-4">
-            UnifyOne tracks your gig earnings, mileage, and tax set-aside
-            automatically — so quarterly taxes in {guide.state} are never a
-            surprise.
+            Keep earnings, expenses, mileage and reserve assumptions together in
+            UnifyOne. Use official worksheets or a qualified preparer to
+            determine the payments actually due.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
