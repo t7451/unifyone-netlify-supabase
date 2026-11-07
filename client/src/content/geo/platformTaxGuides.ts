@@ -1,3 +1,4 @@
+import { TAX_REVIEW } from "../resourceReview";
 /**
  * platformTaxGuides.ts — content for the platform-specific gig tax guide
  * cluster (/doordash-taxes, /uber-driver-taxes, /instacart-taxes).
@@ -67,7 +68,7 @@ export interface PlatformTaxGuide {
 export const SHARED_DEDUCTIONS: { label: string; desc: string }[] = [
   {
     label: "Business mileage",
-    desc: "Every mile driven while online or on a delivery, at the IRS standard mileage rate. Usually the single largest deduction.",
+    desc: "Eligible business miles supported by a trip log; personal travel and ordinary commuting are excluded. Being online alone does not establish deductibility.",
   },
   {
     label: "Phone & data",
@@ -75,7 +76,7 @@ export const SHARED_DEDUCTIONS: { label: string; desc: string }[] = [
   },
   {
     label: "Tolls & parking",
-    desc: "Tolls and parking paid while working are fully deductible (commuting tolls are not).",
+    desc: "Eligible business tolls and parking may be deducted separately from standard mileage. Personal and commuting costs do not qualify.",
   },
   {
     label: "Hot bags & equipment",
@@ -83,9 +84,8 @@ export const SHARED_DEDUCTIONS: { label: string; desc: string }[] = [
   },
 ];
 
-/** How much to set aside — evergreen rule of thumb, used across all guides. */
-export const SET_ASIDE_ANSWER =
-  "A common rule of thumb is to set aside 25–30% of your net earnings (what's left after mileage and other deductions) to cover self-employment tax (15.3%) plus federal and state income tax. Your exact rate depends on your total household income and state. Use the Tax Set-Aside calculator to get a number for your situation.";
+/** Planning reserve limitations, used across platform guides. */
+export const SET_ASIDE_ANSWER = TAX_REVIEW.reserve;
 
 export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
   {
@@ -99,10 +99,10 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
       "How DoorDash taxes work for Dashers: the 1099-NEC, self-employment tax, what to set aside, mileage deductions, and quarterly payments. Not tax advice.",
     h1: "DoorDash Taxes: What Every Dasher Needs to Know",
     intro:
-      "DoorDash doesn't withhold taxes from your pay. As a Dasher you're an independent contractor, which means you're responsible for your own federal, state, and self-employment taxes. The good news: mileage and other deductions can dramatically cut what you owe — if you track them. Here's how DoorDash taxes actually work.",
+      "This guide covers U.S. Dashers working as independent contractors. Keep earnings, tip, expense and mileage records, and use the rules for the year the income was earned. Puerto Rico and non-U.S. reporting differ.",
     formsHeading: "Do you get a 1099 from DoorDash?",
     formsBody: [
-      "If you earned $600 or more on DoorDash in a year, you'll receive a 1099-NEC (issued through Stripe) reporting your nonemployee compensation. DoorDash emails an invite to set up a Stripe Express account where you retrieve the form.",
+      "DoorDash uses Form 1099-NEC for eligible U.S. Dashers. Check Earnings → View payout details → Tax documents in the Dasher app. The help page still describes the 2025 $600 threshold; use the IRS 2026 rule below for 2026 payments and confirm year-specific delivery details with DoorDash.",
       "If you earned under the reporting threshold you may not get a form — but you still legally have to report the income. The IRS expects you to report all earnings whether or not a 1099 was issued.",
     ],
     extraDeductions: [
@@ -114,7 +114,7 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     faqs: [
       {
         q: "Does DoorDash take out taxes for me?",
-        a: "No. DoorDash pays Dashers as independent contractors and withholds nothing. You're responsible for setting aside and paying your own income tax and the 15.3% self-employment tax.",
+        a: "DoorDash generally does not withhold tax for independent contractors, although backup withholding can apply. Check your payment statements and any withholding shown on your tax form.",
       },
       {
         q: "How much should I set aside for DoorDash taxes?",
@@ -122,15 +122,15 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
       },
       {
         q: "Do I get a 1099 from DoorDash?",
-        a: "If you earned $600 or more, DoorDash issues a 1099-NEC through Stripe. Below that you may not receive a form, but you must still report the income to the IRS.",
+        a: "The general federal 1099-NEC threshold is $2,000 for 2026 payments ($600 for 2025). Check tax documents in the Dasher app. Report all earnings even without a form; backup withholding and other reporting rules can produce forms below the threshold.",
       },
       {
         q: "What can Dashers deduct?",
-        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while dashing. You can also deduct the business-use share of your phone, hot bags and equipment, tolls, and parking. Track miles and expenses all year — you can't reconstruct them in April.",
+        a: "Eligible business mileage or eligible actual vehicle expenses may be deductible under IRS rules. Keep a trip log and exclude personal and commuting miles. Business-use phone costs, supplies, tolls and parking may also qualify.",
       },
       {
         q: "When are DoorDash taxes due?",
-        a: "Self-employed earners generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Paying quarterly avoids an IRS underpayment penalty.",
+        a: TAX_REVIEW.estimates,
       },
     ],
   },
@@ -145,11 +145,11 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
       "Uber driver taxes explained: the 1099-K vs 1099-NEC, your Tax Summary, self-employment tax, mileage deductions, and quarterly estimates. Not tax advice.",
     h1: "Uber Driver Taxes: The Complete Breakdown",
     intro:
-      "Uber treats drivers as independent contractors and withholds no taxes. Whether you drive UberX, Uber Eats, or both, you're responsible for your own income and self-employment taxes — and you'll likely get more than one tax form. Here's how to read them and keep your bill as low as legally possible.",
+      "This guide covers U.S. Uber drivers working as independent contractors. Reconcile gross fares, incentives, tips and fees before estimating profit; bank deposits alone do not show all income and expenses.",
     formsHeading: "1099-K vs 1099-NEC: which one does Uber send?",
     formsBody: [
       "Uber may issue two forms. A 1099-K reports the gross amount riders and Uber Eats customers paid for your trips and deliveries (processed through Uber as a third-party platform). A 1099-NEC reports other income like incentives, referrals, and bonuses.",
-      "Form thresholds change from year to year, so you might not receive a 1099-K in a low-volume year. Either way, your Uber Tax Summary lists your full gross earnings, Uber's fees, and online miles — and you must report all of it regardless of which forms arrive.",
+      "Download the Uber Tax Summary and available forms from the driver dashboard Tax Information section or the driver app. Compare gross amounts and fees with your own records. Do not add deposits to income already recorded from the same trips.",
     ],
     extraDeductions: [
       {
@@ -164,7 +164,7 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     faqs: [
       {
         q: "Does Uber withhold taxes from my pay?",
-        a: "No. Uber drivers are independent contractors, so no tax is withheld. You set aside and pay your own income tax plus the 15.3% self-employment tax.",
+        a: "Uber generally does not withhold tax for U.S. independent contractors, although backup withholding can apply. Check your statements and tax forms for any withholding.",
       },
       {
         q: "What's the difference between the 1099-K and 1099-NEC from Uber?",
@@ -176,11 +176,11 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
       },
       {
         q: "What can Uber drivers deduct?",
-        a: "Business mileage at the IRS standard mileage rate is usually the largest deduction — and Uber only reports your online miles, so your real deductible mileage (including miles between trips) is often higher. You can also deduct Uber's service fees, the business-use share of your phone, tolls, parking, and rider amenities.",
+        a: "Use your own trip log to establish eligible business miles. Uber online-mile totals are supporting information, not proof that every mile is deductible. Eligible platform fees, business-use phone costs, parking and supplies may also qualify.",
       },
       {
         q: "Do Uber drivers have to pay quarterly taxes?",
-        a: "If you expect to owe $1,000 or more for the year, the IRS generally expects quarterly estimated payments — around April 15, June 15, September 15, and January 15 — to avoid an underpayment penalty.",
+        a: TAX_REVIEW.estimates,
       },
     ],
   },

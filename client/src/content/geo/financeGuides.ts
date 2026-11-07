@@ -71,10 +71,6 @@ const HEALTHCARE_GOV = {
   label: "HealthCare.gov: Coverage for self-employed people",
   href: "https://www.healthcare.gov/self-employed/coverage/",
 };
-const IRS_RECORDKEEPING = {
-  label: "IRS: Recordkeeping for businesses",
-  href: "https://www.irs.gov/businesses/small-businesses-self-employed/recordkeeping",
-};
 const IRS_SCHEDULE_C = {
   label: "IRS: Schedule C (Profit or Loss From Business)",
   href: "https://www.irs.gov/forms-pubs/about-schedule-c-form-1040",
@@ -82,10 +78,6 @@ const IRS_SCHEDULE_C = {
 const CFPB_BUDGET = {
   label: "CFPB: Budgeting with an irregular income",
   href: "https://www.consumerfinance.gov/about-us/blog/budgeting-when-you-have-an-irregular-income/",
-};
-const CFPB_EMERGENCY = {
-  label: "CFPB: Start Small, Save Up (emergency savings)",
-  href: "https://www.consumerfinance.gov/start-small-save-up/",
 };
 const FTC_DEBT = {
   label: "FTC: Getting out of debt",
@@ -144,88 +136,78 @@ export const FINANCE_GUIDES: FinanceGuide[] = [
     slug: "gig-worker-retirement",
     eyebrow: "Gig Finance Guide",
     navLabel: "Retirement accounts",
-    title: "Retirement Accounts for Gig Workers: SEP-IRA, Solo 401(k) & IRAs",
+    title: "Retirement Accounts for Independent Workers",
     metaDescription:
-      "Retirement options for self-employed gig workers: SEP-IRA, Solo 401(k), and Traditional vs Roth IRAs — how each works and how to choose. Not advice.",
-    h1: "Retirement Accounts for Gig Workers",
+      "Compare SEP-IRAs, one-participant 401(k)s and personal IRAs. Eligibility, earnings, other plans and tax treatment determine what you can contribute.",
+    h1: "Retirement Accounts for Independent Workers",
     intro:
-      "Gig platforms don't offer a 401(k) match — as an independent contractor, your retirement is entirely on you. The upside: the self-employed have access to some of the most generous tax-advantaged accounts available, often letting you save far more than an employee can. Here are the main options and how to pick one.",
-    keyPoints: [
-      {
-        label: "SEP-IRA",
-        desc: "Simplest to open; contribute a percentage of net self-employment income.",
-      },
-      {
-        label: "Solo 401(k)",
-        desc: "Highest potential contributions; lets you save as both 'employee' and 'employer'.",
-      },
-      {
-        label: "Traditional IRA",
-        desc: "Pre-tax contributions that may lower this year's taxable income.",
-      },
-      {
-        label: "Roth IRA",
-        desc: "After-tax contributions that grow and withdraw tax-free in retirement.",
-      },
-    ],
+      "Compare SEP-IRAs, one-participant 401(k)s and personal IRAs. Eligibility, earnings, other plans and tax treatment determine what you can contribute.",
     sections: [
       {
-        heading: "The SEP-IRA",
+        heading: "SEP-IRA",
         body: [
-          "A SEP-IRA (Simplified Employee Pension) is the easiest self-employed retirement account to set up — most brokerages open one for free in minutes. You contribute a percentage of your net self-employment earnings, up to an annual IRS cap, and contributions are generally tax-deductible, lowering your taxable income.",
-          "It's a strong fit for solo gig workers who want simplicity and flexible, year-to-year contributions (you can skip a lean year). Because the limit is tied to a percentage of net earnings, confirm the current cap and percentage with the IRS before contributing.",
+          "A SEP generally uses employer contributions. For self-employed owners, the contribution calculation adjusts net earnings; do not simply multiply gross receipts by 25%. If you have eligible employees, employer contributions generally must include them under the plan rules.",
+          "Traditional SEP contributions can be deductible. Roth SEP contributions are possible where the arrangement supports them, with different tax treatment. Check provider availability and IRS rules.",
         ],
       },
       {
-        heading: "The Solo 401(k)",
+        heading: "One-participant 401(k)",
         body: [
-          "A Solo 401(k) (also called an individual 401(k)) is for self-employed people with no employees. It usually allows the largest total contribution because you contribute both as the 'employee' (an elective deferral) and as the 'employer' (a profit-sharing contribution) — and many providers offer a Roth option for the employee portion.",
-          "It takes a bit more paperwork than a SEP-IRA and has an annual deadline to establish it, but for higher-earning gig workers it can shelter substantially more income. Confirm current contribution limits and deadlines with the IRS or your plan provider.",
+          "An owner-only plan can cover a business owner and spouse. Hiring eligible common-law employees changes the requirements. Employee deferrals and employer contributions have different limits, and deferrals to another employer’s 401(k) share your individual annual deferral limit.",
+          "Compare fees, filing requirements and adoption, election and funding deadlines. Do not assume every contribution must be arranged by the same date; first-year sole-proprietor rules can differ.",
         ],
       },
       {
-        heading: "Traditional vs Roth IRAs",
+        heading: "Traditional and Roth IRAs",
         body: [
-          "Anyone with earned income can also use a Traditional or Roth IRA, on their own or alongside a SEP/Solo 401(k). A Traditional IRA may give you a deduction now and is taxed on withdrawal; a Roth IRA is funded with after-tax dollars and grows tax-free, with qualified withdrawals tax-free in retirement.",
-          "IRAs have lower annual limits than SEP-IRAs or Solo 401(k)s, and Roth IRAs have income eligibility limits. They're a good starting point if you're newer to gig work or saving smaller amounts. Check current limits and income phase-outs with the IRS.",
+          "IRA contributions require eligible compensation and are limited in total across your traditional and Roth IRAs. Roth contribution eligibility depends on income and filing status. Traditional IRA deductibility can be limited by income and workplace-plan coverage for you or your spouse.",
+          "Roth contributions are not deductible; qualified distributions are tax-free. Traditional contributions may be deductible and distributions are generally taxable. A contribution for yourself generally does not reduce Schedule C profit or self-employment tax.",
         ],
       },
       {
-        heading: "How to choose",
+        heading: "Use the correct contribution year",
         body: [
-          "If you want maximum simplicity, a SEP-IRA is hard to beat. If you're earning more and want to shelter the most income (or want a Roth option), a Solo 401(k) usually wins. If you're just getting started, a Roth IRA is a flexible first account. Many gig workers combine an IRA with a SEP or Solo 401(k).",
-          "Whatever you choose, contributing even a small, steady percentage of each payout — alongside your tax set-aside — builds the retirement an employer would otherwise help fund. A tax professional or fee-only advisor can help you pick based on your numbers.",
+          "For 2026, the basic IRA contribution limit is $7,500 and the basic 401(k) elective-deferral limit is $24,500. Catch-up rules, compensation limits and plan rules can change your maximum. These are ceilings, not amounts every gig worker can contribute.",
+          "Use the IRS limits and worksheets for the contribution year, including any employer contribution. Compare the resulting amount with your cash needs and tax reserve before funding an account.",
         ],
       },
     ],
-    resources: [IRS_RETIREMENT, IRS_SE_CENTER],
-    tools: [
-      { label: "Tax Set-Aside Calculator", href: "/tools/tax-set-aside" },
+    resources: [
       {
-        label: "Self-Employment Tax Calculator",
-        href: "/tools/se-tax-calculator",
+        label: "IRS: Self-employed retirement plans",
+        href: "https://www.irs.gov/retirement-plans/retirement-plans-for-self-employed-people",
+      },
+      {
+        label: "IRS: One-participant 401(k) rules",
+        href: "https://www.irs.gov/retirement-plans/one-participant-401k-plans",
+      },
+      {
+        label: "IRS: 2026 retirement limits",
+        href: "https://www.irs.gov/newsroom/401k-limit-increases-to-24500-for-2026-ira-limit-increases-to-7500",
+      },
+      {
+        label: "IRS: IRA contribution limits",
+        href: "https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-ira-contribution-limits",
+      },
+      {
+        label: "IRS: Publication 560 — calculations and deadlines",
+        href: "https://www.irs.gov/publications/p560",
+      },
+    ],
+    tools: [
+      {
+        label: "Budget with your own numbers",
+        href: "/tools/gig-hourly-rate",
       },
     ],
     faqs: [
       {
-        q: "Can gig workers open a 401(k)?",
-        a: "Yes — a Solo 401(k) (individual 401(k)) is designed for self-employed people with no employees. You contribute as both employee and employer, which usually allows the largest total contribution of any self-employed plan. Confirm current limits with the IRS or your plan provider.",
+        q: "Is a Solo 401(k) always better than a SEP?",
+        a: "No. Compare earnings, contribution goals, other employer plans, employee eligibility, fees and administration. A Solo 401(k) is not automatically the highest-limit or lowest-cost choice.",
       },
       {
-        q: "SEP-IRA or Solo 401(k) — which is better for gig workers?",
-        a: "A SEP-IRA is simpler and great for flexible, occasional contributions. A Solo 401(k) usually allows higher total contributions and often a Roth option, but involves more paperwork. Higher earners who want to shelter the most income often prefer the Solo 401(k); confirm limits with the IRS.",
-      },
-      {
-        q: "How much can a gig worker contribute to retirement?",
-        a: "Limits depend on the account type and your net self-employment earnings, and the IRS adjusts them annually. SEP-IRAs and Solo 401(k)s allow much more than IRAs. Always check the current year's limits on IRS.gov rather than relying on an older figure.",
-      },
-      {
-        q: "Do retirement contributions lower my gig taxes?",
-        a: "Often, yes. Contributions to a SEP-IRA, Traditional IRA, or the pre-tax portion of a Solo 401(k) are generally deductible and can lower your taxable income. Roth contributions are not deductible but grow tax-free. The deduction doesn't reduce the 15.3% self-employment tax, only income tax.",
-      },
-      {
-        q: "When do I have to set up a gig-worker retirement account?",
-        a: "Deadlines vary by account: SEP-IRAs can often be opened and funded up to your tax-filing deadline (including extensions), while a Solo 401(k) generally must be established by year-end to defer that year's income. Confirm the current deadlines with the IRS or your provider.",
+        q: "Can I contribute to both an IRA and a self-employed plan?",
+        a: "Often, if you meet the separate eligibility rules. IRA deductibility, Roth income limits, compensation and the limits shared with other plans still matter.",
       },
     ],
   },
@@ -316,91 +298,74 @@ export const FINANCE_GUIDES: FinanceGuide[] = [
     slug: "gig-worker-bookkeeping",
     eyebrow: "Gig Finance Guide",
     navLabel: "Bookkeeping",
-    title: "Bookkeeping for Gig Workers: Track Income, Expenses & Mileage",
+    title: "Bookkeeping for Gig Workers",
     metaDescription:
-      "Simple bookkeeping for gig workers: separate accounts, tracking all income and expenses, mileage logs, and records that survive an audit. Not advice.",
+      "Keep a usable record of gross earnings, fees, expenses and business travel. Reconcile it to statements and tax forms before relying on totals.",
     h1: "Bookkeeping for Gig Workers",
     intro:
-      "Good records are what turn a stressful tax season into a quick one — and they're what protect your deductions if the IRS ever asks. As a 1099 contractor you're running a small business, and a few simple bookkeeping habits will save you money and hours. Here's a practical system.",
-    keyPoints: [
-      {
-        label: "Separate account",
-        desc: "Run gig income and expenses through a dedicated bank account.",
-      },
-      {
-        label: "Track all income",
-        desc: "Record every dollar, even from platforms that send no 1099.",
-      },
-      {
-        label: "Log mileage",
-        desc: "A contemporaneous mileage log is your biggest, most-audited deduction.",
-      },
-      {
-        label: "Keep receipts",
-        desc: "Save proof for every expense you deduct.",
-      },
-    ],
+      "Keep a usable record of gross earnings, fees, expenses and business travel. Reconcile it to statements and tax forms before relying on totals.",
     sections: [
       {
-        heading: "Separate your business money",
+        heading: "Separate and reconcile",
         body: [
-          "Open a dedicated bank account (and ideally a card) just for gig work. Route every payout in and pay every work expense out of it. This single habit makes your bookkeeping almost automatic — your statement becomes your ledger — and cleanly separates business from personal in case of an audit.",
-          "You don't need an LLC or a business account to do this; a separate personal checking account works fine when you're starting out.",
+          "Use a dedicated account that permits your type of business activity. An LLC is not required to keep books, but a personal account’s terms may prohibit business use.",
+          "A bank statement is supporting evidence, not a complete ledger: deposits can be net of fees, include reimbursements or repeat income already recorded elsewhere. Keep dated entries showing the source, gross income, fees and adjustments.",
         ],
       },
       {
-        heading: "Track every dollar of income",
+        heading: "Keep the evidence behind each entry",
         body: [
-          "Record income from every platform, including any that don't send you a 1099 (you're required to report all of it). Most apps provide weekly summaries and a year-end earnings statement — save them. A simple spreadsheet or a gig-focused app that connects to your account is enough for most people.",
-          "Reconcile monthly so nothing slips through, and so you always know your true net for quarterly estimated taxes.",
+          "Save platform statements, receipts, invoices and tax forms. Record cash tips and other income even when no form arrives. Check duplicate imports and match totals monthly; a spreadsheet can be sufficient when maintained accurately.",
+          "For expenses, record the date, amount, business purpose and business-use share. Store readable digital copies with backups and a way to retrieve them.",
         ],
       },
       {
-        heading: "Track expenses and mileage",
+        heading: "Keep a trip log, not just a mileage estimate",
         body: [
-          "Capture every deductible expense — phone, supplies, tolls, parking, equipment, platform fees — and keep the receipt. A photo in a dedicated folder or an expense app is fine; the key is having proof tied to a date and purpose.",
-          "Mileage is usually a gig worker's largest deduction, and it's also the most scrutinized, so keep a contemporaneous log: the date, miles, and business purpose of each trip, captured at the time (an auto-tracking mileage app makes this painless). Reconstructed, estimated mileage is what gets disallowed.",
+          "Record business trip dates, destinations, purpose and miles near the time of travel, along with total vehicle-use records. Review automated logs for personal travel and commuting. Platform online-mile estimates are supporting records, not proof of deductibility.",
+          "Choose an eligible vehicle-expense method. Standard mileage already accounts for costs such as fuel and maintenance; do not deduct those again for the same vehicle use. Rates depend on when the miles were driven.",
         ],
       },
       {
-        heading: "Keep records long enough",
+        heading: "Retention depends on the record",
         body: [
-          "Hold onto your income records, expense receipts, and mileage logs for at least several years — the IRS generally recommends keeping business records for three years, longer in some situations. Digital copies are acceptable.",
-          "With clean books, filing your Schedule C and calculating quarterly estimates becomes a matter of reading totals you already have, instead of a year-end scramble.",
+          "Many federal income-tax records follow a three-year limitations period, but exceptions can require six years, seven years or indefinite retention. Property records can be needed through disposal and the applicable period afterward.",
+          "Use the IRS retention guide and any state, insurance or contract requirements before deleting records. A blanket three-year deletion policy is not appropriate.",
         ],
       },
     ],
-    resources: [IRS_RECORDKEEPING, IRS_SCHEDULE_C],
-    tools: [
+    resources: [
       {
-        label: "Mileage Deduction Calculator",
-        href: "/tools/mileage-deduction-calculator",
+        label: "IRS: Recordkeeping",
+        href: "https://www.irs.gov/businesses/small-businesses-self-employed/recordkeeping",
       },
       {
-        label: "Earnings Consolidator",
+        label: "IRS: Record-retention periods",
+        href: "https://www.irs.gov/businesses/small-businesses-self-employed/how-long-should-i-keep-records",
+      },
+      {
+        label: "IRS: Publication 463 — travel records",
+        href: "https://www.irs.gov/publications/p463",
+      },
+      {
+        label: "IRS: Business use of a car",
+        href: "https://www.irs.gov/taxtopics/tc510",
+      },
+    ],
+    tools: [
+      {
+        label: "Compare earnings",
         href: "/tools/earnings-consolidator",
       },
     ],
     faqs: [
       {
-        q: "Do gig workers need to do bookkeeping?",
-        a: "Yes. As a 1099 contractor you're running a business, and you must report all income and substantiate every deduction. Simple bookkeeping — a separate account, tracked income and expenses, and a mileage log — saves money at tax time and protects your deductions if you're audited.",
+        q: "Do I need paid bookkeeping software?",
+        a: "No particular software is required. Choose a system you can keep complete, reconcile and back up; retain source documents alongside totals.",
       },
       {
-        q: "What's the best way to track gig income and expenses?",
-        a: "Run everything through a dedicated bank account so your statement doubles as a ledger, then record income and expenses in a spreadsheet or a gig-focused app and reconcile monthly. Save year-end earnings summaries from each platform and keep receipts for deductions.",
-      },
-      {
-        q: "How should gig workers track mileage?",
-        a: "Keep a contemporaneous log with the date, miles, and business purpose of each trip — ideally via an auto-tracking mileage app. Mileage is usually the biggest deduction and the most audited, and estimated or reconstructed mileage is what tends to get disallowed.",
-      },
-      {
-        q: "Do I need an LLC or business bank account to do gig bookkeeping?",
-        a: "No. You can keep clean books with an ordinary separate personal checking account. An LLC or formal business account can help as you grow, but it isn't required to track income, expenses, and mileage or to deduct business costs on Schedule C.",
-      },
-      {
-        q: "How long should gig workers keep tax records?",
-        a: "Generally at least three years, and longer in certain situations — the IRS publishes the specifics. Digital copies of income records, receipts, and mileage logs are acceptable, so a well-organized folder system is enough.",
+        q: "Can I add my deposits and 1099 amounts together?",
+        a: "Not when they describe the same payments. Reconcile gross income, fees and deposits so each receipt and expense is counted once.",
       },
     ],
   },
@@ -408,63 +373,57 @@ export const FINANCE_GUIDES: FinanceGuide[] = [
     slug: "gig-worker-budgeting",
     eyebrow: "Gig Finance Guide",
     navLabel: "Budgeting irregular income",
-    title: "Budgeting on Irregular Gig Income: Smooth Pay & Build a Buffer",
+    title: "Budgeting on Irregular Gig Income",
     metaDescription:
-      "How to budget on irregular gig income: pay yourself a steady amount, budget from a low baseline, separate your tax set-aside, and build a buffer. Not advice.",
-    h1: "Budgeting on an Irregular Gig Income",
+      "Plan around payment dates and essential costs. Use conservative income assumptions, a separate tax reserve and a buffer that fits your circumstances.",
+    h1: "Budgeting on Irregular Gig Income",
     intro:
-      "The hardest part of gig work often isn't earning — it's that the money arrives unevenly. A great week and a slow week need to fund the same rent. The fix is a system that smooths the bumps so a slow stretch doesn't become a crisis. Here's how gig workers budget irregular income.",
-    keyPoints: [
-      {
-        label: "Pay yourself",
-        desc: "Move a steady 'salary' to checking; let earnings pool in a buffer.",
-      },
-      {
-        label: "Budget from a low month",
-        desc: "Base your essentials on a conservative baseline, not a great week.",
-      },
-      {
-        label: "Separate taxes",
-        desc: "Move your tax set-aside out the moment you're paid.",
-      },
-      {
-        label: "Build a buffer",
-        desc: "A one-month cushion turns slow weeks into non-events.",
-      },
-    ],
+      "Plan around payment dates and essential costs. Use conservative income assumptions, a separate tax reserve and a buffer that fits your circumstances.",
     sections: [
       {
-        heading: "Pay yourself a steady amount",
+        heading: "Start with cash available to spend",
         body: [
-          "Instead of spending whatever lands each week, let your earnings pool in a holding account and transfer yourself a fixed, modest 'paycheck' to your spending account on a set schedule. Good weeks build the holding account; slow weeks draw from it. You get the stability of a salary on top of variable income.",
-          "Set the paycheck amount based on what your essentials actually require, not your best week.",
+          "Compare several months of income after business costs. Choose a conservative baseline and list essential bills with their due dates. Gross platform pay is not all available for household spending.",
+          "If your baseline does not cover essentials, identify the gap explicitly. A transfer schedule cannot create missing income; adjust costs, earnings plans or payment arrangements.",
         ],
       },
       {
-        heading: "Budget from a conservative baseline",
+        heading: "Plan transfers around real balances",
         body: [
-          "Look back over several months and find a low-but-typical month — budget your needs (housing, food, utilities, minimum debt payments) against that figure. When you earn more, the extra goes to taxes, your buffer, retirement, and goals rather than lifestyle creep.",
-          "This 'budget low, save the surplus' approach is the core of managing irregular income, and it's exactly what the CFPB recommends for variable earners.",
+          "A regular transfer to spending can help smooth variable receipts if the holding account has enough money. Start small and adjust when work changes. Check the balance before automated transfers to avoid overdrafts.",
+          "Treat an owner transfer as movement of money, not a second business expense or a payroll salary merely because you call it a paycheck.",
         ],
       },
       {
-        heading: "Separate taxes before you spend",
+        heading: "Keep taxes and predictable costs separate",
         body: [
-          "Because nothing is withheld from gig pay, the fastest way to avoid a tax-time shock is to move your set-aside (commonly 25–30% of net, depending on your situation) into a separate account the moment you're paid. Treat it as money that was never yours.",
-          "That account funds your quarterly estimated payments, so they never compete with rent. Use the Tax Set-Aside calculator to dial in your percentage.",
+          "Estimate your tax reserve from household income, withholding, credits and expenses. A percentage such as 25% is only an initial assumption and may be too low or too high.",
+          "Set aside money for predictable repairs, annual insurance and other scheduled costs. These planned funds serve a different purpose from emergency savings.",
         ],
       },
       {
-        heading: "Build a buffer, then goals",
+        heading: "Review weekly and after changes",
         body: [
-          "Aim first for a small starter buffer, then work toward roughly a month of expenses in your holding account — enough that a slow week or a vehicle repair is an inconvenience, not an emergency. After that, direct surplus to a larger emergency fund, retirement, and your goals.",
-          "A buffer is what lets you decline a bad-paying shift or take a day off without panic — the practical freedom gig work is supposed to provide.",
+          "Review upcoming bills, expected payouts and your remaining buffer. Direct affordable surplus to savings, debt or longer-term goals. A one-month buffer can be a useful milestone but is not a guarantee against missed bills.",
+          "Recalculate when your platforms, hours, household income or expenses change. The goal is an understandable plan you can revise, not a fixed percentage for everyone.",
         ],
       },
     ],
-    resources: [CFPB_BUDGET, IRS_SE_CENTER],
+    resources: [
+      {
+        label: "CFPB: Cash-flow budgeting toolkit",
+        href: "https://www.consumerfinance.gov/consumer-tools/educator-tools/your-money-your-goals/toolkit/",
+      },
+      {
+        label: "CFPB: Emergency savings and cash flow",
+        href: "https://www.consumerfinance.gov/an-essential-guide-to-building-an-emergency-fund/",
+      },
+      {
+        label: "IRS: Estimated taxes",
+        href: "https://www.irs.gov/businesses/small-businesses-self-employed/estimated-taxes",
+      },
+    ],
     tools: [
-      { label: "Tax Set-Aside Calculator", href: "/tools/tax-set-aside" },
       {
         label: "Payout & Cash-Flow Tracker",
         href: "/tools/cashflow-tracker",
@@ -472,24 +431,12 @@ export const FINANCE_GUIDES: FinanceGuide[] = [
     ],
     faqs: [
       {
-        q: "How do you budget with an irregular gig income?",
-        a: "Let earnings pool in a holding account and pay yourself a steady, modest amount on a set schedule. Budget your essentials against a conservative (low-but-typical) month, move your tax set-aside out immediately, and send any surplus to a buffer, retirement, and goals.",
+        q: "How much should I transfer to spending?",
+        a: "Use essential costs, conservative net receipts and available cash. Reduce or pause transfers when the account cannot support them.",
       },
       {
-        q: "How much should gig workers keep as a buffer?",
-        a: "A common target is a small starter cushion first, then about one month of expenses in your holding account, and eventually a larger emergency fund. The buffer is what smooths slow weeks and unexpected costs so they don't derail your essentials.",
-      },
-      {
-        q: "How do I handle taxes when budgeting gig income?",
-        a: "Move your tax set-aside — often around 25–30% of net earnings, depending on your situation — into a separate account the moment you're paid, and use it for quarterly estimated payments. Treating tax money as never-yours keeps it from competing with rent. The Tax Set-Aside calculator helps set your rate.",
-      },
-      {
-        q: "Should gig workers pay themselves a salary?",
-        a: "Effectively, yes. Routing earnings through a holding account and transferring yourself a fixed amount on a schedule gives you salary-like stability on top of variable pay — good weeks build the account, slow weeks draw from it.",
-      },
-      {
-        q: "How do I deal with slow gig weeks?",
-        a: "Plan for them in advance: budget from a low baseline, keep a buffer of about a month of expenses, and avoid scaling up fixed costs after a great week. With a cushion in place, a slow week draws from savings instead of becoming an emergency.",
+        q: "Is my tax reserve the tax I owe?",
+        a: "No. It is money held for a projected bill. Calculate and update your estimated payments using the applicable tax rules.",
       },
     ],
   },
@@ -497,64 +444,57 @@ export const FINANCE_GUIDES: FinanceGuide[] = [
     slug: "gig-worker-emergency-fund",
     eyebrow: "Gig Finance Guide",
     navLabel: "Emergency fund",
-    title: "Emergency Funds for Gig Workers: How Much to Save & Where",
+    title: "Emergency Funds for Gig Workers",
     metaDescription:
-      "Why gig workers need a bigger emergency fund, how much to save on irregular income, where to keep it, and how to build one fast. Not advice.",
+      "Build accessible savings for unexpected costs or loss of income. Choose a target based on essential expenses, income stability and your other support.",
     h1: "Emergency Funds for Gig Workers",
     intro:
-      "Without an employer's paid sick leave, severance, or steady paycheck, gig workers feel emergencies harder — a car repair can take out both your transportation and your income at once. That's exactly why an emergency fund matters more for the self-employed, and why it pays to build one a little bigger than the standard advice. Here's how.",
-    keyPoints: [
-      {
-        label: "Aim higher",
-        desc: "3–6 months is the usual rule; variable income often warrants the higher end.",
-      },
-      {
-        label: "Buffer first",
-        desc: "Build a one-month income buffer before the full fund.",
-      },
-      {
-        label: "Keep it liquid",
-        desc: "A separate high-yield savings account — safe, accessible, not invested.",
-      },
-      {
-        label: "Don't raid taxes",
-        desc: "Your tax set-aside is not your emergency fund — keep them separate.",
-      },
-    ],
+      "Build accessible savings for unexpected costs or loss of income. Choose a target based on essential expenses, income stability and your other support.",
     sections: [
       {
-        heading: "Why gig workers need a bigger cushion",
+        heading: "Start with a realistic milestone",
         body: [
-          "Employees often have a paycheck through a short illness, plus unemployment if they're laid off. As an independent contractor you usually have neither — if you can't work, the income simply stops. On top of that, your tools of the trade (often a vehicle) can be the very thing that breaks.",
-          "Because a single event can hit your income and your expenses simultaneously, most gig workers benefit from targeting the higher end of the usual emergency-fund range rather than the minimum.",
+          "A car failure or illness can interrupt gig income at the same time it raises expenses. Identify the unexpected costs that would hurt your household most, then choose an achievable first savings goal.",
+          "Several months of essential expenses is a planning benchmark, not a required minimum or a guarantee. A smaller fund can still help. Dependents, debt, insurance and other household earnings affect the target.",
         ],
       },
       {
-        heading: "How much should you save?",
+        heading: "Keep funds accessible",
         body: [
-          "The common rule of thumb is three to six months of essential expenses. For irregular income, lean toward the larger end — closer to six months — especially if you rely on one platform, drive a high-mileage vehicle, or support a family on your gig income.",
-          "Base the target on your essential expenses (housing, food, utilities, insurance, minimum debt payments), not your total spending. Knowing that number is also the foundation of budgeting on irregular income.",
+          "Look for a place where you can reach the money when needed without substantial loss or penalties. An insured bank or credit-union savings account may fit; compare fees, transfer delays and withdrawal conditions.",
+          "Verify the institution and applicable deposit-insurance coverage. Stocks, crypto and investment funds can lose value. A high advertised yield does not by itself establish safety or immediate access.",
         ],
       },
       {
-        heading: "Where to keep it",
+        heading: "Separate emergency savings from planned bills",
         body: [
-          "An emergency fund should be safe and liquid, not invested for growth. A separate high-yield savings account — ideally at a different bank from your daily checking, so it's a little harder to dip into — is the standard home for it. You want it accessible within a day or two, without market risk.",
-          "Keep it distinct from both your spending account and your tax set-aside account. Mixing them is how 'emergencies' quietly become quarterly tax payments you forgot to plan for.",
+          "Keep taxes and predictable costs such as annual insurance or routine maintenance in their own budget categories. You can track categories without opening multiple accounts if that is easier.",
+          "Define what counts as an emergency and how you will replenish the fund after using it. Do not rely on money earmarked for estimated taxes as available emergency savings.",
         ],
       },
       {
-        heading: "How to build it without a steady paycheck",
-        sponsoredMention: CHIME_PLACEMENT,
+        heading: "Save at a pace your cash flow supports",
         body: [
-          "Start with a small, concrete milestone — a few hundred dollars — then a one-month income buffer, then the full fund. On variable income, the most reliable method is to save a percentage of every payout rather than a fixed monthly amount, so good weeks contribute more.",
-          "Funnel windfalls (a strong week, a tax refund, a referral bonus) straight to the fund, and once it's full, redirect that same percentage toward retirement or other goals. Automating a transfer the day you're paid keeps it from competing with spending.",
+          "Make small transfers after checking that essential bills are covered. Strong weeks or a one-time payment can help, but there is no fixed saving percentage everyone can afford.",
+          "If you automate transfers, monitor balances and change the schedule as income changes. Review the target after a move, new dependent or change in work.",
         ],
       },
     ],
-    resources: [CFPB_EMERGENCY, IRS_SE_CENTER],
+    resources: [
+      {
+        label: "CFPB: Building an emergency fund",
+        href: "https://www.consumerfinance.gov/an-essential-guide-to-building-an-emergency-fund/",
+      },
+      {
+        label: "FDIC: Deposit insurance",
+        href: "https://www.fdic.gov/resources/deposit-insurance/",
+      },
+      {
+        label: "NCUA: Share insurance",
+        href: "https://ncua.gov/consumers/share-insurance-coverage",
+      },
+    ],
     tools: [
-      { label: "Tax Set-Aside Calculator", href: "/tools/tax-set-aside" },
       {
         label: "Payout & Cash-Flow Tracker",
         href: "/tools/cashflow-tracker",
@@ -562,24 +502,12 @@ export const FINANCE_GUIDES: FinanceGuide[] = [
     ],
     faqs: [
       {
-        q: "How much emergency fund should a gig worker have?",
-        a: "Most guidance says three to six months of essential expenses; gig workers with variable income often aim for the higher end (closer to six months), especially if they rely on one platform or a single vehicle. Base the target on essentials — housing, food, utilities, insurance, minimum debt payments — not total spending.",
+        q: "Do I need six months saved before starting?",
+        a: "No. Start with an achievable amount. Increase it as your cash flow permits, using your essential expenses and income risks to set a longer-term target.",
       },
       {
-        q: "Why do gig workers need a bigger emergency fund than employees?",
-        a: "Independent contractors usually have no paid sick leave, severance, or unemployment cushion, and their income stops entirely if they can't work. A single event — like a car breakdown — can knock out both your earning ability and your budget at once, so a larger cushion is prudent.",
-      },
-      {
-        q: "Where should I keep my emergency fund?",
-        a: "In a safe, liquid place — typically a separate high-yield savings account, ideally at a different bank from your checking so it's harder to dip into. Keep it out of investments (no market risk) and separate from your tax set-aside account.",
-      },
-      {
-        q: "Is my tax set-aside the same as an emergency fund?",
-        a: "No. Your tax set-aside is money you already owe the IRS and state for quarterly estimates — it isn't savings. Keep it in its own account, separate from your emergency fund, so a real emergency doesn't accidentally spend money earmarked for taxes.",
-      },
-      {
-        q: "How do I build an emergency fund on irregular income?",
-        a: "Save a percentage of every payout rather than a fixed monthly amount, so strong weeks contribute more. Start with a small milestone, then a one-month buffer, then the full fund, and route windfalls straight in. Automating the transfer on payday keeps it from competing with spending.",
+        q: "Can I keep savings in a payment app?",
+        a: "Check the actual institution, access terms and insurance arrangements. Do not assume a payment app balance has the same protection as an insured deposit account.",
       },
     ],
   },

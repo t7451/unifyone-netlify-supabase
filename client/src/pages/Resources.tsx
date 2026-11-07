@@ -4,6 +4,10 @@ import { ArrowUpRight, BookOpen, Search } from "lucide-react";
 import PageHead from "@/components/PageHead";
 import PublicLayout from "@/components/PublicLayout";
 import { SITE_URL } from "@/lib/siteConfig";
+import {
+  RESOURCE_REVIEW_DATE,
+  RESOURCE_REVIEW_LABEL,
+} from "@/content/resourceReview";
 
 const GUIDES = [
   {
@@ -124,6 +128,12 @@ export default function Resources() {
             Practical reading on earnings, mileage, taxes, and the money
             decisions between paydays.
           </p>
+          <p className="marketing-library-note">
+            All 10 guides reviewed{" "}
+            <time dateTime={RESOURCE_REVIEW_DATE}>{RESOURCE_REVIEW_LABEL}</time>
+            . Tax guidance covers U.S. federal rules, with tax years identified.
+            Each guide links to sources or explains its product scope.
+          </p>
         </header>
         <section
           className="marketing-library marketing-container"
@@ -197,6 +207,7 @@ export default function Resources() {
                   </span>
                   <h2>{guide.title}</h2>
                   <p>{guide.text}</p>
+                  <small>Reviewed {RESOURCE_REVIEW_LABEL}</small>
                   <span>
                     Read guide <ArrowUpRight size={16} aria-hidden="true" />
                   </span>

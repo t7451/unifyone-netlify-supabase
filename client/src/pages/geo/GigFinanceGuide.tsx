@@ -1,3 +1,4 @@
+import ResourceReview from "@/components/ResourceReview";
 import ReadingLayout from "@/components/ReadingLayout";
 import { Link } from "wouter";
 import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
@@ -87,6 +88,7 @@ export default function GigFinanceGuide({ slug }: { slug: string }) {
             </Link>
           </p>
         </header>
+        <ResourceReview slug={guide.slug} />
 
         {guide.keyPoints && guide.keyPoints.length > 0 && (
           <section className="mb-10">
@@ -118,9 +120,11 @@ export default function GigFinanceGuide({ slug }: { slug: string }) {
                   {section.sponsoredMention.label}
                 </p>
                 <div className="space-y-4 text-muted-foreground leading-relaxed">
-                  {section.sponsoredMention.paragraphs.map((paragraph, index) => (
-                    <p key={index}>{paragraph}</p>
-                  ))}
+                  {section.sponsoredMention.paragraphs.map(
+                    (paragraph, index) => (
+                      <p key={index}>{paragraph}</p>
+                    )
+                  )}
                 </div>
                 <p className="mt-4 text-xs text-muted-foreground">
                   {section.sponsoredMention.source}
@@ -203,9 +207,9 @@ export default function GigFinanceGuide({ slug }: { slug: string }) {
             Run your whole gig business in one place
           </h2>
           <p className="text-muted-foreground text-sm mb-4">
-            UnifyOne tracks your earnings, expenses, mileage, and tax set-aside
-            across every platform — so taxes, budgeting, and planning all work
-            from one set of numbers.
+            Use entered work sessions, reviewed CSV imports and expense records
+            to plan in UnifyOne. Reconcile overlapping records and treat tax
+            reserves as estimates, not a completed tax calculation.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
