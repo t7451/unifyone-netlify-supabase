@@ -24,6 +24,16 @@ The library and reviewed guides carry a fixed editorial review date. Finance
 and platform prerender summaries derive from their content data to reduce drift.
 No automatic future-date or annual freshness claim is made.
 
+### Drew's Chime placement — preserved by request
+
+The original `CHIME_PLACEMENT` object is unchanged: the same two supplied
+paragraphs, “Sponsored mention” disclosure, `Chime.com | Sourced on Oct-23, 2026`
+source line and zero links. The entire “How to build it without a steady paycheck”
+section is retained exactly, with the placement after its original editorial
+paragraphs. The static SEO summary includes the same disclosure, paragraphs and
+source line. The new review date covers editorial guidance and does not claim to
+reverify sponsored product terms.
+
 ## Official sources checked
 
 - [IRS NEC FAQ](https://www.irs.gov/faqs/small-business-self-employed-other-business/form-1099-nec-and-independent-contractors): $600 for 2025; $2,000 for 2026 payments. [Information-return guidance](https://www.irs.gov/businesses/small-businesses-self-employed/am-i-required-to-file-a-form-1099-or-other-information-return) explains backup-withholding reporting.

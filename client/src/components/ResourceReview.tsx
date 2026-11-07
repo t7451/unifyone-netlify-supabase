@@ -26,6 +26,13 @@ export default function ResourceReview({
           ? "U.S. federal guidance; state and local rules may differ."
           : "Sources and scope are listed in this guide."}
       </p>
+      {slug === "gig-worker-emergency-fund" && (
+        <p className="mt-2">
+          This review covers the editorial guidance. The sponsored mention is
+          retained as supplied and keeps its original source date; its product
+          terms are not reverified by this review.
+        </p>
+      )}
       {tax && (
         <>
           <h2 className="font-semibold mt-4">2026 tax-year notes</h2>

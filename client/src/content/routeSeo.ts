@@ -19,7 +19,6 @@ import { HOME_TITLE, HOME_DESCRIPTION } from "./marketing";
  *
  * Keep every `description` ≤158 characters (Ahrefs/Google snippet limit).
  */
-import { CHIME_PLACEMENT } from "./geo/chimePlacement";
 
 export interface RouteSeo {
   path: string;
@@ -998,7 +997,16 @@ export const ROUTE_SEO: RouteSeo[] = [
     body: [
       `Reviewed ${RESOURCE_REVIEW_LABEL}.`,
       guide.intro,
-      ...guide.sections.flatMap(section => section.body),
+      ...guide.sections.flatMap(section => [
+        ...section.body,
+        ...(section.sponsoredMention
+          ? [
+              section.sponsoredMention.label,
+              ...section.sponsoredMention.paragraphs,
+              section.sponsoredMention.source,
+            ]
+          : []),
+      ]),
     ],
     externalLinks: guide.resources.map(({ label, href }) => ({
       label,

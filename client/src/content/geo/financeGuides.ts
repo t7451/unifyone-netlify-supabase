@@ -473,10 +473,11 @@ export const FINANCE_GUIDES: FinanceGuide[] = [
         ],
       },
       {
-        heading: "Save at a pace your cash flow supports",
+        heading: "How to build it without a steady paycheck",
+        sponsoredMention: CHIME_PLACEMENT,
         body: [
-          "Make small transfers after checking that essential bills are covered. Strong weeks or a one-time payment can help, but there is no fixed saving percentage everyone can afford.",
-          "If you automate transfers, monitor balances and change the schedule as income changes. Review the target after a move, new dependent or change in work.",
+          "Start with a small, concrete milestone — a few hundred dollars — then a one-month income buffer, then the full fund. On variable income, the most reliable method is to save a percentage of every payout rather than a fixed monthly amount, so good weeks contribute more.",
+          "Funnel windfalls (a strong week, a tax refund, a referral bonus) straight to the fund, and once it's full, redirect that same percentage toward retirement or other goals. Automating a transfer the day you're paid keeps it from competing with spending.",
         ],
       },
     ],
