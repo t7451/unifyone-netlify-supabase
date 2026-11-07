@@ -1,3 +1,10 @@
+import { FINANCE_GUIDES } from "./geo/financeGuides";
+import { PLATFORM_TAX_GUIDES } from "./geo/platformTaxGuides";
+import {
+  TAX_REVIEW,
+  TAX_REVIEW_SOURCES,
+  RESOURCE_REVIEW_LABEL,
+} from "./resourceReview";
 import { HOME_TITLE, HOME_DESCRIPTION } from "./marketing";
 /**
  * routeSeo.ts — per-route SEO metadata for non-SEO-landing routes.
@@ -12,7 +19,6 @@ import { HOME_TITLE, HOME_DESCRIPTION } from "./marketing";
  *
  * Keep every `description` ≤158 characters (Ahrefs/Google snippet limit).
  */
-import { CHIME_PLACEMENT } from "./geo/chimePlacement";
 
 export interface RouteSeo {
   path: string;
@@ -60,18 +66,6 @@ const PLATFORMS = [
 
 // Authoritative resources for the platform-specific tax guides: the IRS
 // self-employed center + estimated taxes, plus the relevant platform site.
-const DOORDASH_TAX_LINKS = [
-  IRS.selfEmployedCenter,
-  IRS.estimated,
-  IRS.mileage,
-  { label: "DoorDash", url: "https://www.doordash.com" },
-];
-const UBER_TAX_LINKS = [
-  IRS.selfEmployedCenter,
-  IRS.estimated,
-  IRS.mileage,
-  { label: "Uber", url: "https://www.uber.com" },
-];
 const INSTACART_TAX_LINKS = [
   IRS.selfEmployedCenter,
   IRS.estimated,
@@ -921,38 +915,10 @@ const WAG_START_LINKS = [
 ];
 
 // Gig finance cluster (money topics beyond taxes): IRS / HealthCare.gov / CFPB.
-const RETIREMENT_LINKS = [
-  {
-    label: "IRS: Retirement plans for the self-employed",
-    url: "https://www.irs.gov/retirement-plans/retirement-plans-for-self-employed-people",
-  },
-  IRS.selfEmployedCenter,
-];
 const HEALTH_LINKS = [
   {
     label: "HealthCare.gov: Coverage for self-employed people",
     url: "https://www.healthcare.gov/self-employed/coverage/",
-  },
-  IRS.selfEmployedCenter,
-];
-const BOOKKEEPING_LINKS = [
-  {
-    label: "IRS: Recordkeeping for businesses",
-    url: "https://www.irs.gov/businesses/small-businesses-self-employed/recordkeeping",
-  },
-  IRS.selfEmployedCenter,
-];
-const BUDGETING_LINKS = [
-  {
-    label: "CFPB: Budgeting with an irregular income",
-    url: "https://www.consumerfinance.gov/about-us/blog/budgeting-when-you-have-an-irregular-income/",
-  },
-  IRS.selfEmployedCenter,
-];
-const EMERGENCY_FUND_LINKS = [
-  {
-    label: "CFPB: Start Small, Save Up (emergency savings)",
-    url: "https://www.consumerfinance.gov/start-small-save-up/",
   },
   IRS.selfEmployedCenter,
 ];
@@ -1016,6 +982,61 @@ const ROTH_IRA_LINKS = [
 ];
 
 export const ROUTE_SEO: RouteSeo[] = [
+  // Derive reviewed summaries from the same content shown in the guides.
+  ...FINANCE_GUIDES.filter(guide =>
+    [
+      "gig-worker-retirement",
+      "gig-worker-bookkeeping",
+      "gig-worker-budgeting",
+      "gig-worker-emergency-fund",
+    ].includes(guide.slug)
+  ).map(guide => ({
+    path: `/${guide.slug}`,
+    title: `${guide.title} | UnifyOne`,
+    description: guide.metaDescription,
+    body: [
+      `Reviewed ${RESOURCE_REVIEW_LABEL}.`,
+      guide.intro,
+      ...guide.sections.flatMap(section => [
+        ...section.body,
+        ...(section.sponsoredMention
+          ? [
+              section.sponsoredMention.label,
+              ...section.sponsoredMention.paragraphs,
+              section.sponsoredMention.source,
+            ]
+          : []),
+      ]),
+    ],
+    externalLinks: guide.resources.map(({ label, href }) => ({
+      label,
+      url: href,
+    })),
+  })),
+  ...PLATFORM_TAX_GUIDES.filter(guide =>
+    ["doordash-taxes", "uber-driver-taxes"].includes(guide.slug)
+  ).map(guide => ({
+    path: `/${guide.slug}`,
+    title: `${guide.title} | UnifyOne`,
+    description: guide.metaDescription,
+    body: [
+      `Reviewed ${RESOURCE_REVIEW_LABEL}. U.S. federal guidance.`,
+      guide.intro,
+      ...guide.formsBody,
+      TAX_REVIEW.nec,
+      TAX_REVIEW.k,
+      TAX_REVIEW.mileage,
+      TAX_REVIEW.dates,
+      TAX_REVIEW.tips,
+      TAX_REVIEW.se,
+      TAX_REVIEW.estimates,
+    ],
+    externalLinks: TAX_REVIEW_SOURCES.map(({ label, href }) => ({
+      label,
+      url: href,
+    })),
+  })),
+
   {
     path: "/",
     title: HOME_TITLE,
@@ -1027,20 +1048,7 @@ export const ROUTE_SEO: RouteSeo[] = [
       "Explore the free calculators without an account, or read the guide library for help with income records, budgeting, and tax planning.",
     ],
   },
-  {
-    path: "/gig-worker-retirement",
-    externalLinks: RETIREMENT_LINKS,
-    title:
-      "Retirement Accounts for Gig Workers: SEP-IRA, Solo 401(k) & IRAs | UnifyOne",
-    description:
-      "Retirement options for self-employed gig workers: SEP-IRA, Solo 401(k), and Traditional vs Roth IRAs — how each works and how to choose. Not advice.",
-    body: [
-      "Gig platforms don't offer a 401(k) match, so as an independent contractor your retirement is up to you — but the self-employed get access to some of the most generous tax-advantaged accounts available.",
-      "A SEP-IRA is the simplest to open and lets you contribute a percentage of net self-employment earnings, generally tax-deductible. A Solo 401(k) usually allows the largest total contribution because you save as both employee and employer, often with a Roth option.",
-      "Traditional and Roth IRAs work alongside these at lower limits, with Roth growing tax-free. Contribution limits change yearly, so confirm the current figures with the IRS before contributing.",
-      "Contributing a steady percentage of each payout — alongside your tax set-aside — builds the retirement an employer would otherwise help fund. This is educational information, not financial advice.",
-    ],
-  },
+
   {
     path: "/gig-worker-health-insurance",
     externalLinks: HEALTH_LINKS,
@@ -1055,51 +1063,7 @@ export const ROUTE_SEO: RouteSeo[] = [
       "Confirm current subsidy and deduction rules with HealthCare.gov and the IRS. This is educational information, not financial or tax advice.",
     ],
   },
-  {
-    path: "/gig-worker-bookkeeping",
-    externalLinks: BOOKKEEPING_LINKS,
-    title:
-      "Bookkeeping for Gig Workers: Track Income, Expenses & Mileage | UnifyOne",
-    description:
-      "Simple bookkeeping for gig workers: separate accounts, tracking all income and expenses, mileage logs, and records that hold up in an audit. Not advice.",
-    body: [
-      "As a 1099 contractor you're running a small business, and a few bookkeeping habits turn tax season into a quick task while protecting your deductions if the IRS ever asks.",
-      "Run gig income and expenses through a dedicated bank account so your statement doubles as a ledger, record income from every platform (even those that send no 1099), and reconcile monthly so you always know your true net for quarterly taxes.",
-      "Capture every deductible expense with a receipt, and keep a contemporaneous mileage log — date, miles, and purpose of each trip — since mileage is usually the biggest deduction and the most audited. Estimated, reconstructed mileage is what gets disallowed.",
-      "Keep records for at least several years (the IRS publishes specifics); digital copies are fine. This is educational information, not tax advice.",
-    ],
-  },
-  {
-    path: "/gig-worker-budgeting",
-    externalLinks: BUDGETING_LINKS,
-    title:
-      "Budgeting on Irregular Gig Income: Smooth Pay & Build a Buffer | UnifyOne",
-    description:
-      "How to budget on irregular gig income: pay yourself a steady amount, budget from a low baseline, separate your tax set-aside, and build a buffer. Not advice.",
-    body: [
-      "The hardest part of gig work is often that money arrives unevenly — a great week and a slow week fund the same rent. A simple system smooths the bumps so a slow stretch never becomes a crisis.",
-      "Let earnings pool in a holding account and pay yourself a fixed, modest amount on a set schedule; good weeks build the account and slow weeks draw from it. Budget your essentials against a conservative, low-but-typical month rather than your best week.",
-      "Because nothing is withheld, move your tax set-aside (commonly 25–30% of net) into a separate account the moment you're paid so quarterly estimates never compete with rent. Send surplus to a buffer, then retirement and goals.",
-      "Aim for roughly a month of expenses as a buffer so a slow week or a repair is an inconvenience, not an emergency. This is educational information, not financial advice.",
-    ],
-  },
-  {
-    path: "/gig-worker-emergency-fund",
-    externalLinks: EMERGENCY_FUND_LINKS,
-    title:
-      "Emergency Funds for Gig Workers: How Much to Save & Where | UnifyOne",
-    description:
-      "Why gig workers need a bigger emergency fund, how much to save on irregular income, where to keep it, and how to build one fast. Not advice.",
-    body: [
-      "Independent contractors usually have no paid sick leave, severance, or unemployment cushion, so if you can't work, the income stops — and a single event like a car repair can knock out both your earning ability and your budget at once.",
-      "That's why gig workers often target the higher end of the usual three-to-six-months-of-expenses range. Base the figure on essentials — housing, food, utilities, insurance, minimum debt payments — not total spending.",
-      "Keep the fund safe and liquid in a separate high-yield savings account, distinct from both your spending money and your tax set-aside (which is money you already owe, not savings). On variable income, save a percentage of every payout rather than a fixed monthly amount, and route windfalls straight in.",
-      "Start with a small milestone, then a one-month buffer, then the full fund. This is educational information, not financial advice.",
-      CHIME_PLACEMENT.label,
-      ...CHIME_PLACEMENT.paragraphs,
-      CHIME_PLACEMENT.source,
-    ],
-  },
+
   {
     path: "/gig-worker-debt-payoff",
     externalLinks: DEBT_PAYOFF_LINKS,
@@ -2494,16 +2458,19 @@ export const ROUTE_SEO: RouteSeo[] = [
   },
   {
     path: "/1099-nec-vs-1099-k",
-    externalLinks: [IRS.selfEmployedCenter, IRS.estimated],
     title: "1099-NEC vs 1099-K: What Gig Workers Need to Know | UnifyOne",
     description:
       "1099-NEC vs 1099-K for gig workers: what each form is, who issues which, why thresholds change yearly, and how both flow onto Schedule C. Not tax advice.",
     body: [
-      "Gig workers can receive a 1099-NEC, a 1099-K, both, or neither. A 1099-NEC reports nonemployee compensation — money a business paid you directly for your services, such as DoorDash or Instacart delivery earnings. A 1099-K reports the gross amount of payments settled through a third-party platform or card processor, like the fares riders pay through Uber or Lyft. The forms describe how money reached you, not whether it is taxable.",
-      "Which form you get depends on how the platform pays you. DoorDash and Instacart generally issue a 1099-NEC; Uber and Lyft often send a 1099-K for gross fares plus a 1099-NEC for incentives and referrals. Their annual tax summaries reconcile the two so you can report each dollar once without double-counting overlapping amounts.",
-      "The IRS reporting thresholds that decide whether a platform must issue a form change from year to year, especially for the 1099-K — so confirm the current figures on IRS.gov rather than relying on a number you read online. Critically, a threshold only governs whether a form is sent; it never changes whether income is taxable. If no form arrives, you still owe income tax and the 15.3% self-employment tax on your net profit.",
-      "Both forms flow to the same place: gross income goes on Schedule C, where you subtract business expenses like the standard mileage deduction to reach net profit. That net profit carries to Schedule SE for self-employment tax and to Form 1040 for income tax. This page is educational, not tax advice — verify your situation with the IRS or a qualified professional.",
+      `Reviewed ${RESOURCE_REVIEW_LABEL}. U.S. federal reporting rules.`,
+      TAX_REVIEW.nec,
+      TAX_REVIEW.k,
+      "Reconcile tax forms, statements and your ledger so each payment is counted once. Sole proprietors generally report gig business income and expenses on Schedule C; personal transfers and other non-business transactions need separate analysis.",
     ],
+    externalLinks: TAX_REVIEW_SOURCES.map(({ label, href }) => ({
+      label,
+      url: href,
+    })),
   },
   {
     path: "/how-to-file-gig-worker-taxes",
@@ -2553,9 +2520,9 @@ export const ROUTE_SEO: RouteSeo[] = [
   },
   {
     path: "/the-system",
-    title: "How UnifyOne works | Earnings, mileage & tax planning",
+    title: "How UnifyOne works | Work sessions, statements & expenses",
     description:
-      "See how UnifyOne helps independent workers log shifts, understand earnings after expenses, record mileage, and plan for taxes.",
+      "Record a work session, import an earnings statement, log expenses, and compare what you kept per hour. See how UnifyOne handles your gig-work records.",
     body: [
       "Log shifts and jobs, include earnings and expenses, and record mileage to build a useful picture of your working week.",
       "Use the public calculators without an account, then create a free account when you want to track your work over time.",
@@ -2756,11 +2723,15 @@ export const ROUTE_SEO: RouteSeo[] = [
   },
   {
     path: "/gig-income-aggregator",
-    externalLinks: PLATFORMS,
-    title:
-      "Gig Income Aggregator — Consolidate DoorDash, Uber, Instacart Earnings | UnifyOne",
+    title: "Compare Gig Income: Earnings, Costs & Hours | UnifyOne",
     description:
-      "Consolidate DoorDash, Uber Eats, Instacart, Stripe, PayPal, and Square income in one dashboard. See true net earnings after expenses and true hourly rate.",
+      "Combine gig-work records, reconcile CSV imports, and compare earnings after costs. Understand the difference between cash flow and tax deductions.",
+    body: [
+      `Reviewed ${RESOURCE_REVIEW_LABEL}.`,
+      "Record work sessions manually or with the timer, review earnings CSV imports, and save expenses. Naming a platform does not connect an account or establish automatic synchronization.",
+      "Reconcile overlapping sessions, imports and deposits. Include working hours and count costs once. A vehicle-cost estimate is different from a tax mileage deduction, and a chosen tax reserve is not a calculated tax bill.",
+    ],
+    externalLinks: [IRS.selfEmployedCenter, IRS.mileage],
   },
   {
     path: "/1099-tax-management",
@@ -2805,45 +2776,25 @@ export const ROUTE_SEO: RouteSeo[] = [
   },
   {
     path: "/gig-taxes",
-    externalLinks: [IRS.selfEmployedCenter, IRS.estimated, IRS.seTax],
     title: "Gig Worker Taxes: The Complete Guide for 1099 Earners | UnifyOne",
     description:
       "How gig worker taxes work: self-employment tax, 1099-NEC vs 1099-K, deductions, and quarterly payments — plus guides for DoorDash, Uber & Instacart.",
     body: [
-      "Driving for DoorDash, Uber, or Instacart makes you an independent contractor — nobody withholds taxes for you. You owe federal and state income tax plus the 15.3% self-employment tax (12.4% Social Security + 2.9% Medicare) on your net earnings, and you pay it yourself as you go.",
-      "You're taxed on profit, not gross payouts. Deductions — business mileage at the IRS standard mileage rate, phone use, hot bags, tolls, and platform fees — lower the income you're taxed on, so tracking them all year is the single biggest way to cut your bill.",
-      "A common rule of thumb is to set aside 25–30% of net earnings for taxes. If you expect to owe $1,000 or more, the IRS expects quarterly estimated payments around April 15, June 15, September 15, and January 15 to avoid an underpayment penalty.",
-      "A 1099-NEC reports direct pay for your services; a 1099-K reports payments processed through a platform (like Uber's gross fares). You must report all income whether or not a form arrives. See the platform-specific guides for DoorDash, Uber, and Instacart.",
+      `Reviewed ${RESOURCE_REVIEW_LABEL}. U.S. federal guidance for independent contractors.`,
+      TAX_REVIEW.se,
+      TAX_REVIEW.nec,
+      TAX_REVIEW.k,
+      TAX_REVIEW.mileage,
+      TAX_REVIEW.estimates,
+      TAX_REVIEW.reserve,
+      TAX_REVIEW.tips,
     ],
+    externalLinks: TAX_REVIEW_SOURCES.map(({ label, href }) => ({
+      label,
+      url: href,
+    })),
   },
-  {
-    path: "/doordash-taxes",
-    externalLinks: DOORDASH_TAX_LINKS,
-    title:
-      "DoorDash Taxes: A Dasher's Guide to 1099 Filing & Deductions | UnifyOne",
-    description:
-      "How DoorDash taxes work for Dashers: the 1099-NEC, self-employment tax, what to set aside, mileage deductions, and quarterly payments. Not tax advice.",
-    body: [
-      "DoorDash doesn't withhold taxes from your pay. As a Dasher you're an independent contractor, so you owe federal and state income tax plus the 15.3% self-employment tax on your net earnings.",
-      "If you earned $600 or more, DoorDash issues a 1099-NEC through Stripe. Below that you may not get a form — but you still have to report all income to the IRS.",
-      "Your largest deduction is business mileage at the IRS standard mileage rate for every mile driven while dashing. Phone use, hot bags, tolls, and parking are deductible too. A common rule of thumb is to set aside 25–30% of net earnings for taxes.",
-      "Independent contractors generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — to avoid an IRS underpayment penalty.",
-    ],
-  },
-  {
-    path: "/uber-driver-taxes",
-    externalLinks: UBER_TAX_LINKS,
-    title:
-      "Uber Driver Taxes: 1099-K vs 1099-NEC, Deductions & Estimates | UnifyOne",
-    description:
-      "Uber driver taxes explained: the 1099-K vs 1099-NEC, your Tax Summary, self-employment tax, mileage deductions, and quarterly estimates. Not tax advice.",
-    body: [
-      "Uber treats drivers as independent contractors and withholds no taxes. You owe income tax plus the 15.3% self-employment tax on your net earnings, whether you drive UberX, Uber Eats, or both.",
-      "Uber may send two forms: a 1099-K for the gross fares riders and customers paid, and a 1099-NEC for incentives, referrals, and bonuses. Your Uber Tax Summary reconciles both — and you must report all earnings regardless of which forms arrive.",
-      "Business mileage at the IRS standard mileage rate is usually the biggest deduction, and because Uber only reports online miles, your real deductible mileage is often higher. Service fees, phone use, tolls, and rider amenities are deductible too.",
-      "If you expect to owe $1,000 or more for the year, the IRS generally expects quarterly estimated payments — around April 15, June 15, September 15, and January 15.",
-    ],
-  },
+
   {
     path: "/instacart-taxes",
     externalLinks: INSTACART_TAX_LINKS,
@@ -3090,7 +3041,7 @@ export const ROUTE_SEO: RouteSeo[] = [
       "Practical guides for gig and freelance work: income records, mileage, tax planning, budgeting, and getting started with UnifyOne.",
     body: [
       "Browse practical guides about gig worker taxes, income records, budgeting on irregular income, emergency funds, and getting started.",
-      "Read the guides online, search the library by topic, and try the public calculators with your own numbers.",
+      `All 10 library guides reviewed ${RESOURCE_REVIEW_LABEL}. U.S. federal tax guidance identifies the applicable tax year; sources and product scope appear in the guides.`,
     ],
   },
   {

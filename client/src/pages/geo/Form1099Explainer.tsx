@@ -1,3 +1,5 @@
+import ResourceReview from "@/components/ResourceReview";
+import { TAX_REVIEW } from "@/content/resourceReview";
 import ReadingLayout from "@/components/ReadingLayout";
 import { Link } from "wouter";
 import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
@@ -19,15 +21,15 @@ const FAQS = [
   },
   {
     q: "What if the reporting threshold means I don't get a form?",
-    a: "You still owe tax on your net income. The IRS reporting thresholds that decide whether a platform must send you a 1099-NEC or 1099-K change from year to year, and they only determine whether a form is issued — not whether the income is taxable. Even with no form at all, you are required to report all of your gig earnings and pay income tax plus self-employment tax on your net profit.",
+    a: "Report all business income even if no form arrives. Form-reporting thresholds do not determine taxable income or whether you must file a return. Your net profit, total household income and filing rules determine the tax due.",
   },
   {
     q: "What do I do if I receive both a 1099-NEC and a 1099-K from the same platform?",
-    a: "Report your income without double-counting it. When a platform sends both forms, the amounts can overlap — for example, Uber's 1099-K covers gross fares while its 1099-NEC covers separate incentive pay. Use the platform's annual tax summary to reconcile the totals so each dollar is counted once, then report the income and your expenses on Schedule C.",
+    a: "Reconcile forms to statements and your ledger. Uber gross fares and separate incentives are different income categories; deposits can repeat amounts already reported on forms. Request corrections for errors and count each payment once.",
   },
   {
     q: "How do 1099-NEC and 1099-K income flow onto my tax return?",
-    a: "Both go on Schedule C (Profit or Loss From Business), where you list gross gig income and subtract business expenses like the standard mileage deduction. The net profit carries to Schedule SE to calculate the 15.3% self-employment tax, and to your Form 1040 for income tax. The form type does not change where the income lands — net profit drives the tax either way.",
+    a: "For a sole proprietor, gig business receipts generally belong on Schedule C with allowable business expenses. Schedule SE determines self-employment tax when required; Form 1040 determines income tax. Personal transfers and non-business transactions on a 1099-K need separate analysis.",
   },
 ];
 
@@ -67,8 +69,8 @@ const COMPARISON = [
   },
   {
     label: "Reporting threshold",
-    nec: "Set by the IRS and subject to change year to year — confirm the current figure on IRS.gov.",
-    k: "Set by the IRS and has changed repeatedly in recent years — confirm the current figure on IRS.gov.",
+    nec: TAX_REVIEW.nec,
+    k: TAX_REVIEW.k,
   },
   {
     label: "Where it lands on your return",
@@ -147,7 +149,8 @@ export default function Form1099Explainer() {
             everyone. The two forms describe how money reached you, not whether
             you owe tax on it. Here is what each form means, who sends which,
             why the reporting thresholds keep changing, and how all of it lands
-            on the same Schedule C.
+            on Schedule C for the same sole-proprietor business. Separate
+            businesses may need separate schedules.
           </p>
           <p className="mt-4 text-sm">
             <Link
@@ -158,6 +161,7 @@ export default function Form1099Explainer() {
             </Link>
           </p>
         </header>
+        <ResourceReview slug="1099-nec-vs-1099-k" tax />
 
         <section className="mb-10">
           <h2 className="text-xl font-semibold mb-4">
@@ -294,8 +298,8 @@ export default function Form1099Explainer() {
               <span className="font-semibold text-foreground">
                 If you receive both:
               </span>{" "}
-              the amounts can overlap (for example, Uber's 1099-K covers gross
-              fares while its 1099-NEC covers separate incentive pay). Use your
+              gross fares and separate incentive pay are distinct categories.
+              Deposits may repeat income already on those forms. Use your
               platform's annual tax summary to reconcile the totals so you
               report each dollar once and never double-count.
             </p>
@@ -309,9 +313,9 @@ export default function Form1099Explainer() {
               earnings whether or not a form arrives.
             </p>
             <p className="font-medium text-foreground">
-              The bottom line: you owe income tax and the 15.3% self-employment
-              tax on your net profit regardless of which forms show up in your
-              inbox.
+              Tax forms report payments; your business profit and filing
+              circumstances determine the income tax and self-employment tax
+              due.
             </p>
           </div>
         </section>
@@ -321,8 +325,8 @@ export default function Form1099Explainer() {
             How both forms flow onto Schedule C
           </h2>
           <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-            No matter which form reports your income, it ends up in the same
-            place on your return:
+            For a sole proprietor reporting gig business income, the usual
+            sequence is:
           </p>
           <div className="space-y-4">
             {[
@@ -339,7 +343,7 @@ export default function Form1099Explainer() {
               {
                 step: "3",
                 title: "Carry net profit to Schedule SE",
-                body: "Your Schedule C net profit flows to Schedule SE, which calculates the 15.3% self-employment tax covering Social Security and Medicare.",
+                body: TAX_REVIEW.se,
               },
               {
                 step: "4",
@@ -415,12 +419,12 @@ export default function Form1099Explainer() {
 
         <section className="rounded-xl border bg-muted/30 p-6 text-center mb-10">
           <h2 className="text-lg font-semibold mb-2">
-            Stop sorting forms by hand
+            Keep the records behind your forms
           </h2>
           <p className="text-muted-foreground text-sm mb-4">
-            UnifyOne consolidates earnings across every gig platform and
-            calculates your net income and tax position in real time — so it
-            does not matter which 1099 shows up. Free to start.
+            Use UnifyOne to organize entered work records, CSV imports and
+            expenses. Reconcile those records against your platform statements
+            and tax forms before filing.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link

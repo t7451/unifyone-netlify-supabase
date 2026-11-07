@@ -1,3 +1,5 @@
+import ResourceReview from "@/components/ResourceReview";
+import { TAX_REVIEW } from "@/content/resourceReview";
 import ReadingLayout from "@/components/ReadingLayout";
 import { Link } from "wouter";
 import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
@@ -25,11 +27,11 @@ const CANONICAL = `${SITE_URL}/gig-taxes`;
 const FAQS = [
   {
     q: "Do gig workers have to pay taxes?",
-    a: "Yes. Gig platforms pay you as an independent contractor and withhold nothing, so you're responsible for federal and state income tax plus the 15.3% self-employment tax on your net earnings. You must report all income even if you don't receive a 1099.",
+    a: "For U.S. independent contractors, business profit can be subject to income tax and self-employment tax. Report all gig income, including cash tips, even without a 1099. Employee roles and backup withholding are exceptions to the usual no-withholding arrangement.",
   },
   {
     q: "How much should gig workers set aside for taxes?",
-    a: "A common rule of thumb is 25–30% of your net earnings (after deductions like mileage), covering self-employment tax plus federal and state income tax. Your exact rate depends on total household income and your state. The Tax Set-Aside calculator gives a personalized number.",
+    a: TAX_REVIEW.reserve,
   },
   {
     q: "What's the difference between a 1099-NEC and a 1099-K?",
@@ -37,11 +39,11 @@ const FAQS = [
   },
   {
     q: "Do gig workers have to pay quarterly taxes?",
-    a: "If you expect to owe $1,000 or more for the year, the IRS generally expects estimated payments four times a year — around April 15, June 15, September 15, and January 15. Paying quarterly avoids an underpayment penalty at filing time.",
+    a: TAX_REVIEW.estimates,
   },
   {
     q: "What can gig workers deduct?",
-    a: "The largest deduction for most drivers is business mileage at the IRS standard mileage rate. You can also deduct the business-use share of your phone, hot bags and equipment, tolls, parking, and platform service fees. Track expenses all year — you can't reconstruct them in April.",
+    a: "Deduct ordinary and necessary business expenses, with records supporting business use. Eligible vehicle costs use either standard mileage or actual expenses under IRS rules; personal driving and commuting generally do not qualify. A deduction reduces taxable income, not tax dollar-for-dollar.",
   },
   {
     q: "What tax forms do gig workers file?",
@@ -71,7 +73,7 @@ const jsonLd = [
 const PILLARS = [
   {
     title: "Self-employment tax (15.3%)",
-    body: "On top of income tax, you owe 12.4% Social Security + 2.9% Medicare on your net earnings. Employees split this with an employer — you cover both halves, though half is deductible.",
+    body: TAX_REVIEW.se,
   },
   {
     title: "Income tax on net profit",
@@ -79,7 +81,7 @@ const PILLARS = [
   },
   {
     title: "Quarterly estimated payments",
-    body: "There's no withholding, so the IRS expects you to pay as you earn — four times a year. Skipping quarterly payments can mean an underpayment penalty.",
+    body: TAX_REVIEW.estimates,
   },
 ];
 
@@ -132,17 +134,17 @@ export default function GigTaxesHub() {
             Gig Worker Taxes: The Complete Guide
           </h1>
           <p className="text-lg text-muted-foreground leading-relaxed">
-            Driving for DoorDash, Uber, or Instacart makes you an independent
-            contractor — nobody withholds taxes for you. That means you owe
-            income tax plus self-employment tax, and you pay it yourself, as you
-            go. Here's how gig taxes actually work, what you can deduct, and
-            where to go deeper for your platform.
+            This guide covers U.S. gig work performed as an independent
+            contractor. Keep records of income and business expenses, check
+            whether estimated payments apply, and distinguish your tax-year
+            rules from the year you file the return.
           </p>
         </header>
+        <ResourceReview slug="gig-taxes" tax />
 
         <section className="rounded-xl border bg-card p-6 mb-10 space-y-4">
           <h2 className="text-xl font-semibold">
-            The three things every gig worker owes
+            Three tax concepts to understand
           </h2>
           <div className="space-y-4">
             {PILLARS.map(({ title, body }, i) => (
@@ -358,9 +360,9 @@ export default function GigTaxesHub() {
             Stop guessing what you owe
           </h2>
           <p className="text-muted-foreground text-sm mb-4">
-            UnifyOne tracks your earnings, mileage, and tax set-aside across
-            every platform automatically — so quarterly taxes are never a
-            surprise.
+            Record work sessions, review CSV statement imports, and log expenses
+            in UnifyOne. Calculators provide planning estimates; reconcile your
+            records and review your filing obligations separately.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link

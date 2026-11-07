@@ -1,79 +1,47 @@
 import ReadingLayout from "@/components/ReadingLayout";
+import ResourceReview from "@/components/ResourceReview";
 import { Link } from "wouter";
 import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
 import { SITE_URL } from "@/lib/siteConfig";
 
 const CANONICAL = `${SITE_URL}/gig-income-aggregator`;
-
-const jsonLd = [
-  ...buildWebPageJsonLd({
-    canonical: CANONICAL,
-    name: "Gig Income Aggregator — Consolidate DoorDash, Uber, Instacart Earnings | UnifyOne",
-    description:
-      "UnifyOne aggregates income from every gig platform — DoorDash, Uber Eats, Instacart, Stripe, PayPal, Square — into one dashboard. See your true net earnings after fuel, mileage, and fees in real time.",
-    breadcrumbs: [{ name: "Gig Income Aggregator", item: CANONICAL }],
-  }),
+const TITLE = "Compare Gig Income: Earnings, Costs & Hours | UnifyOne";
+const DESCRIPTION =
+  "Combine gig-work records, reconcile CSV imports, and compare earnings after costs. Understand the difference between cash flow and tax deductions.";
+const FAQS = [
   {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: [
-      {
-        "@type": "Question",
-        name: "What is a gig income aggregator?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "A gig income aggregator connects to multiple gig platforms (DoorDash, Uber Eats, Instacart, etc.) and consolidates all earnings into a single view. It shows total gross income, net income after expenses, and true hourly rate across every platform simultaneously.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "How does UnifyOne aggregate gig income?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "UnifyOne connects to your gig platform accounts via API and pulls real earnings data automatically. All income flows into a single ledger. Kai, UnifyOne's AI, calculates your net earnings after fuel costs, IRS mileage deductions, and platform fees — giving you a true picture of what you actually earned.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "Which gig platforms does UnifyOne support?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "UnifyOne connects to DoorDash, Uber Eats, Instacart, Stripe, PayPal, and Square. Earnings from all connected platforms are aggregated automatically without manual data entry.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "How is UnifyOne different from Everlance or Empower?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Everlance focuses on mileage tracking; Empower is a personal finance app for employees. UnifyOne is purpose-built for gig workers who earn from multiple platforms simultaneously. It aggregates income, tracks mileage automatically, forecasts quarterly taxes, and uses AI (Kai) to identify which platforms and shifts generate the highest net pay after expenses.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "Do I owe taxes on income from multiple gig apps?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Yes. Income from every gig platform is combined on one tax return — the IRS taxes your total net self-employment earnings regardless of how many apps you worked. There is no separate exemption per platform, so $8,000 from DoorDash plus $5,000 from Uber Eats is treated as $13,000 of self-employment income. This is educational information, not tax advice; consult a tax professional for your situation.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "How do I track income from several platforms at once?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "The reliable approach is to consolidate every payout into a single running ledger rather than checking each app's dashboard separately. UnifyOne does this automatically — it pulls earnings from each connected platform into one combined income view so your year-to-date total is always accurate without manual exports or spreadsheets.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "What if one platform doesn't send a 1099?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "You are still required to report that income. Platforms generally only issue a 1099-NEC or 1099-K once you cross a reporting threshold, but the IRS expects you to report all earnings even when no form arrives. Keeping your own complete record of every payout — which UnifyOne maintains automatically — ensures you can report accurately whether or not a 1099 shows up. This is educational information, not tax advice.",
-        },
-      },
-    ],
+    q: "Does naming a platform connect my account?",
+    a: "No. Choose a source label for manual work records or upload an earnings CSV and review its preview. A platform name in your records does not establish an API connection or automatic synchronization.",
+  },
+  {
+    q: "Can imported statements duplicate my work sessions?",
+    a: "Yes. An imported payout can describe the same earnings as a session you entered. Compare source dates and amounts before adding them together. Statement imports do not provide reliable working hours, so do not infer an hourly rate from payout totals alone.",
+  },
+  {
+    q: "Is a mileage deduction a cash expense?",
+    a: "No. The IRS mileage method is a tax calculation, not a measurement of cash spent. For planning, choose a vehicle-cost estimate or recorded vehicle costs. Do not subtract fuel again if it is already included in your estimate, and do not subtract both actual vehicle expenses and standard mileage for the same tax deduction.",
+  },
+  {
+    q: "Does the result tell me exactly what tax I owe?",
+    a: "No. A selected reserve percentage is a planning assumption. Taxable profit and final tax depend on eligibility rules, household income, credits, withholding and other factors. Keep records for tax preparation even if a platform sends no 1099.",
+  },
+];
+const STEPS = [
+  {
+    heading: "Gather comparable records",
+    body: "Choose the same date range for each source. Record gross pay, tips, bonuses, fees, work time and business miles. Save statements so you can explain differences between gross earnings and bank deposits.",
+  },
+  {
+    heading: "Review imports and overlaps",
+    body: "In UnifyOne, record a timed or completed work session, or preview an earnings CSV before saving it. Imports retain their source labels. Reconcile overlapping sessions, statements and deposits rather than treating each record as new income.",
+  },
+  {
+    heading: "Separate cash planning from tax deductions",
+    body: "Work Insights uses your chosen costs and reserve to estimate what remains. A per-mile vehicle-cost estimate is not automatically the IRS rate. Keep tax deductions separate from actual spending; neither a deduction nor a reserve is a tax payment.",
+  },
+  {
+    heading: "Include the time the work took",
+    body: "Record relevant waiting, travel between jobs and administration alongside paid work. Missing hours can inflate an hourly result. Compare similar periods and review unusual bonuses or costs before drawing conclusions about which work pays better.",
   },
 ];
 
@@ -81,144 +49,65 @@ export default function GigIncomeAggregator() {
   return (
     <ReadingLayout kind="article">
       <PageHead
-        title="Gig Income Aggregator — Consolidate DoorDash, Uber, Instacart Earnings | UnifyOne"
-        description="Consolidate DoorDash, Uber Eats, Instacart, Stripe, PayPal, and Square income in one dashboard. See true net earnings after expenses and true hourly rate."
+        title={TITLE}
+        description={DESCRIPTION}
         canonical={CANONICAL}
-        jsonLd={jsonLd}
+        jsonLd={[
+          ...buildWebPageJsonLd({
+            canonical: CANONICAL,
+            name: TITLE,
+            description: DESCRIPTION,
+            breadcrumbs: [{ name: "Compare gig income", item: CANONICAL }],
+          }),
+          {
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: FAQS.map(({ q, a }) => ({
+              "@type": "Question",
+              name: q,
+              acceptedAnswer: { "@type": "Answer", text: a },
+            })),
+          },
+        ]}
       />
-
       <div className="reading-content">
         <header className="mb-10">
           <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">
-            Income Aggregation
+            Income records
           </p>
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
-            Aggregate All Your Gig Income in One Place
+            Compare your gig income, costs and hours
           </h1>
           <p className="text-lg text-muted-foreground leading-relaxed">
-            If you work DoorDash, Uber Eats, Instacart, or multiple gig
-            platforms simultaneously, you already know the problem: each app
-            shows you its own earnings in isolation. You have no unified view of
-            what you actually earned, what it cost to earn it, or which platform
-            is worth your time. UnifyOne fixes that.
+            A useful comparison starts with complete records from the same
+            period. Bring earnings together, account for costs once, and include
+            the time you actually worked.
           </p>
         </header>
-
-        <section className="rounded-xl border bg-card p-6 mb-10 space-y-4">
-          <h2 className="text-xl font-semibold">
-            How UnifyOne aggregates your gig income
-          </h2>
-          <div className="space-y-4">
-            {[
-              {
-                step: "1",
-                title: "Connect your platforms",
-                body: "Link DoorDash, Uber Eats, Instacart, Stripe, PayPal, and Square in minutes. No developer required — UnifyOne handles every integration.",
-              },
-              {
-                step: "2",
-                title: "All earnings flow to one ledger",
-                body: "Every payout, from every platform, is pulled automatically and consolidated into a single income view. No manual exports, no spreadsheets.",
-              },
-              {
-                step: "3",
-                title: "Kai calculates your true net earnings",
-                body: "Gross earnings from gig platforms overstate what you actually earned. Kai subtracts IRS mileage deductions, estimated fuel costs, and platform fees to show your real net income and true hourly rate.",
-              },
-              {
-                step: "4",
-                title: "See which platforms actually pay more",
-                body: "With all platforms in one view, you can see directly whether DoorDash or Uber Eats generates more per hour after expenses — not just which one pays more gross.",
-              },
-            ].map(({ step, title, body }) => (
-              <div key={step} className="flex gap-4">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
-                  {step}
-                </div>
-                <div>
-                  <p className="font-semibold mb-1">{title}</p>
-                  <p className="text-sm text-muted-foreground">{body}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
+        <ResourceReview slug="gig-income-aggregator" />
+        {STEPS.map(({ heading, body }) => (
+          <section className="mb-8" key={heading}>
+            <h2 className="text-xl font-semibold mb-3">{heading}</h2>
+            <p className="text-muted-foreground leading-relaxed">{body}</p>
+          </section>
+        ))}
         <section className="mb-10">
           <h2 className="text-xl font-semibold mb-4">
-            What gig income aggregation tells you
+            An illustrative weekly comparison
           </h2>
-          <div className="grid sm:grid-cols-2 gap-4">
-            {[
-              {
-                label: "Total gross earnings",
-                desc: "All platforms combined, YTD and by period",
-              },
-              {
-                label: "Net after mileage deductions",
-                desc: "IRS $0.70/mile deducted automatically",
-              },
-              {
-                label: "True hourly rate per platform",
-                desc: "After expenses, not just platform gross",
-              },
-              {
-                label: "Quarterly tax position",
-                desc: "What you owe the IRS right now, not in April",
-              },
-              {
-                label: "Cross-platform comparison",
-                desc: "Which app generates the highest net/hr",
-              },
-              {
-                label: "YTD earnings projection",
-                desc: "On pace for how much by year end",
-              },
-            ].map(({ label, desc }) => (
-              <div key={label} className="rounded-lg border p-4">
-                <p className="font-semibold text-sm mb-1">{label}</p>
-                <p className="text-xs text-muted-foreground">{desc}</p>
-              </div>
-            ))}
-          </div>
+          <p className="text-muted-foreground leading-relaxed">
+            Suppose your records show $600 in earnings, $100 in vehicle costs
+            and $20 in other costs for 20 hours of work. That leaves $480 before
+            a tax reserve, or $24 per hour. If you choose a 25% reserve on that
+            $480, the planning amount left is $360, or $18 per hour. These are
+            example inputs, not typical earnings or a calculated tax rate.
+          </p>
         </section>
-
         <section className="mb-10">
-          <h2 className="text-xl font-semibold mb-4">
-            Frequently Asked Questions
-          </h2>
+          <h2 className="text-xl font-semibold mb-4">Common questions</h2>
           <div className="space-y-6">
-            {[
-              {
-                q: "What is a gig income aggregator?",
-                a: "A gig income aggregator connects to multiple gig platforms and consolidates all earnings into a single view — total gross, net after expenses, and true hourly rate across every platform simultaneously.",
-              },
-              {
-                q: "Which platforms does UnifyOne connect to?",
-                a: "DoorDash, Uber Eats, Instacart, Stripe, PayPal, and Square. All earnings are pulled automatically without manual data entry.",
-              },
-              {
-                q: "How is UnifyOne different from Everlance or Empower?",
-                a: "Everlance focuses on mileage tracking. Empower is a personal finance app for employees. UnifyOne is purpose-built for multi-platform gig workers — it aggregates income, tracks mileage, forecasts quarterly taxes, and uses AI to identify which platforms and shifts generate the highest net pay.",
-              },
-              {
-                q: "Does UnifyOne show earnings after expenses?",
-                a: "Yes. Kai calculates your net income after IRS mileage deductions and estimated fuel costs so you see what you actually earned — not just what the platform shows as gross.",
-              },
-              {
-                q: "Do I owe taxes on income from multiple gig apps?",
-                a: "Yes. The IRS taxes your total net self-employment earnings, so income from every app is combined on one return — $8,000 from DoorDash plus $5,000 from Uber Eats is treated as $13,000. There's no per-platform exemption. This is educational information, not tax advice.",
-              },
-              {
-                q: "How do I track income from several platforms at once?",
-                a: "Consolidate every payout into one running ledger instead of checking each app separately. UnifyOne does this automatically — pulling earnings from each connected platform into a single combined view so your year-to-date total stays accurate without spreadsheets.",
-              },
-              {
-                q: "What if one platform doesn't send a 1099?",
-                a: "You still have to report the income. Platforms usually issue a 1099 only after you cross a reporting threshold, but the IRS expects all earnings reported even without a form. Keeping your own complete payout record — which UnifyOne maintains automatically — lets you report accurately either way. Educational information, not tax advice.",
-              },
-            ].map(({ q, a }) => (
-              <div key={q} className="border-b pb-6 last:border-0">
+            {FAQS.map(({ q, a }) => (
+              <div key={q}>
                 <h3 className="font-semibold mb-2">{q}</h3>
                 <p className="text-muted-foreground text-sm leading-relaxed">
                   {a}
@@ -227,97 +116,64 @@ export default function GigIncomeAggregator() {
             ))}
           </div>
         </section>
-
         <section className="mb-10">
           <h2 className="text-xl font-semibold mb-4">
-            Authoritative resources for gig workers
+            Sources and product scope
           </h2>
-          <ul className="space-y-2">
-            {[
-              {
-                label: "IRS: Standard Mileage Rates",
-                href: "https://www.irs.gov/tax-professionals/standard-mileage-rates",
-              },
-              {
-                label:
-                  "IRS: Self-Employment Tax (Social Security and Medicare)",
-                href: "https://www.irs.gov/businesses/small-businesses-self-employed/self-employment-tax-social-security-and-medicare-taxes",
-              },
-              {
-                label: "IRS: Estimated Taxes",
-                href: "https://www.irs.gov/businesses/small-businesses-self-employed/estimated-taxes",
-              },
-            ].map(({ label, href }) => (
-              <li key={href}>
-                <a
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary hover:underline"
-                >
-                  {label} ↗
-                </a>
-              </li>
-            ))}
+          <p className="text-sm text-muted-foreground mb-4">
+            The workflow described here covers manual sessions, CSV imports and
+            recorded expenses. See the product walkthrough for account features
+            and limits.
+          </p>
+          <ul className="space-y-3">
+            <li>
+              <Link className="text-primary underline" href="/the-system">
+                How UnifyOne works
+              </Link>
+            </li>
+            <li>
+              <a
+                className="text-primary underline"
+                href="https://www.irs.gov/businesses/small-businesses-self-employed/recordkeeping"
+              >
+                IRS: Recordkeeping
+              </a>
+            </li>
+            <li>
+              <a
+                className="text-primary underline"
+                href="https://www.irs.gov/taxtopics/tc510"
+              >
+                IRS: Business use of a car
+              </a>
+            </li>
           </ul>
         </section>
-
-        <section className="mb-10">
-          <h2 className="text-xl font-semibold mb-4">
-            Related tools and guides
-          </h2>
-          <div className="grid sm:grid-cols-2 gap-3">
-            {[
-              {
-                label: "IRS Mileage Deduction Calculator",
-                href: "/tools/mileage-deduction-calculator",
-              },
-              {
-                label: "Quarterly Tax Estimator",
-                href: "/tools/quarterly-tax-estimator",
-              },
-              {
-                label: "1099 Tax Management Guide",
-                href: "/1099-tax-management",
-              },
-              {
-                label: "Gig Earnings Optimizer",
-                href: "/gig-earnings-optimizer",
-              },
-            ].map(({ label, href }) => (
-              <Link
-                key={href}
-                href={href}
-                className="rounded-lg border p-4 text-sm font-medium hover:bg-muted transition-colors block"
-              >
-                {label} →
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <section className="rounded-xl border bg-muted/30 p-6 text-center">
-          <h2 className="text-lg font-semibold mb-2">
-            See all your gig income in one place
-          </h2>
-          <p className="text-muted-foreground text-sm mb-4">
-            Connect your platforms in minutes. Free to start.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+        <section className="rounded-xl border bg-muted/30 p-6 mb-8">
+          <h2 className="text-lg font-semibold mb-3">Try your own numbers</h2>
+          <div className="flex flex-col gap-3">
             <Link
-              href="/register"
-              className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+              className="text-primary underline"
+              href="/tools/gig-hourly-rate"
             >
-              Connect your platforms →
+              Hourly earnings calculator
             </Link>
             <Link
-              href="/tools/quarterly-tax-estimator"
-              className="inline-flex items-center justify-center rounded-md border px-6 py-3 text-sm font-medium hover:bg-muted transition-colors"
+              className="text-primary underline"
+              href="/tools/earnings-consolidator"
             >
-              Try the tax estimator
+              Earnings consolidator
+            </Link>
+            <Link className="text-primary underline" href="/resources">
+              Back to the guide library
             </Link>
           </div>
         </section>
+        <p className="text-xs text-muted-foreground">
+          Educational information. Planning results depend on the completeness
+          of your records and chosen assumptions; they are not a tax return or
+          financial advice.
+        </p>
       </div>
     </ReadingLayout>
   );

@@ -6,6 +6,7 @@ import MarketingFaq from "@/components/MarketingFaq";
 import { MARKETING_FAQ } from "@/content/marketing";
 import { getSignupUrl } from "@/const";
 import { SITE_URL } from "@/lib/siteConfig";
+import ResourceReview from "@/components/ResourceReview";
 
 const DESCRIPTION =
   "Record a work session, import an earnings statement, log expenses, and compare what you kept per hour. See how UnifyOne handles your gig-work records.";
@@ -77,6 +78,7 @@ export default function TheSystem() {
             with a timer, a completed job or a CSV statement. You do not need a
             bank or gig-platform connection to begin.
           </p>
+          <ResourceReview slug="the-system" />
           <div className="marketing-actions">
             <a className="marketing-button" href={getSignupUrl()}>
               Create an account <ArrowUpRight size={17} aria-hidden="true" />

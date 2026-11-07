@@ -1,3 +1,5 @@
+import ResourceReview from "@/components/ResourceReview";
+import { TAX_REVIEW } from "@/content/resourceReview";
 import ReadingLayout from "@/components/ReadingLayout";
 import { Link } from "wouter";
 import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
@@ -44,11 +46,11 @@ const buildHowItWorks = (vehicleBased?: boolean, sellerFraming?: boolean) => [
       }
     : {
         title: "You're an independent contractor",
-        body: "No taxes are withheld from your pay. You owe federal and state income tax plus self-employment tax on your net earnings.",
+        body: "Independent contractors generally receive pay without withholding, except in cases such as backup withholding. Income tax and self-employment tax depend on profit and your circumstances.",
       },
   {
     title: "Self-employment tax is 15.3%",
-    body: "That's 12.4% Social Security + 2.9% Medicare on your net earnings — on top of regular income tax. It funds the benefits an employer would normally split with you.",
+    body: TAX_REVIEW.se,
   },
   {
     title: "Deductions lower your taxable income",
@@ -59,7 +61,7 @@ const buildHowItWorks = (vehicleBased?: boolean, sellerFraming?: boolean) => [
   },
   {
     title: "You pay as you go, quarterly",
-    body: "Instead of one April bill, the IRS expects estimated payments four times a year. Paying quarterly avoids an underpayment penalty.",
+    body: TAX_REVIEW.estimates,
   },
 ];
 
@@ -139,6 +141,7 @@ export default function PlatformTaxGuide({ slug }: { slug: string }) {
             </Link>
           </p>
         </header>
+        <ResourceReview slug={guide.slug} tax />
 
         <section className="rounded-xl border bg-card p-6 mb-10 space-y-4">
           <h2 className="text-xl font-semibold">
@@ -185,9 +188,10 @@ export default function PlatformTaxGuide({ slug }: { slug: string }) {
           {guide.vehicleBased !== false && (
             <p className="text-xs text-muted-foreground mt-4">
               You can deduct the IRS standard mileage rate <em>or</em> your
-              actual vehicle expenses — not both. For most drivers the standard
-              mileage rate is simpler and larger. Keep a contemporaneous mileage
-              log either way.
+              eligible actual vehicle expenses under IRS rules. Do not add fuel,
+              maintenance or depreciation again when using standard mileage.
+              Compare the methods and their eligibility rules; keep a mileage
+              log and supporting records.
             </p>
           )}
         </section>
@@ -269,9 +273,9 @@ export default function PlatformTaxGuide({ slug }: { slug: string }) {
             Stop guessing what you owe
           </h2>
           <p className="text-muted-foreground text-sm mb-4">
-            UnifyOne tracks your {guide.workType} earnings,{" "}
-            {guide.vehicleBased === false ? "expenses" : "mileage"}, and tax
-            set-aside automatically — so quarterly taxes are never a surprise.
+            Record your {guide.workType} earnings and expenses, review CSV
+            imports, and compare planning estimates in UnifyOne. Check your
+            records for missing entries and duplicates before tax preparation.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
