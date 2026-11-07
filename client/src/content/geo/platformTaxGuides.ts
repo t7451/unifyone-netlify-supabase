@@ -60,6 +60,8 @@ export interface PlatformTaxGuide {
    * than an independent contractor — accurate for marketplace sellers.
    */
   sellerFraming?: boolean;
+  /** Platform/processor sources reviewed for document access and reporting. */
+  resources?: { label: string; href: string }[];
   /** FAQ entries — power both the visible list and the FAQPage JSON-LD. */
   faqs: PlatformFaq[];
 }
@@ -118,7 +120,7 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
       },
       {
         q: "How much should I set aside for DoorDash taxes?",
-        a: SET_ASIDE_ANSWER,
+        a: "A tax reserve is a planning assumption, not your calculated tax bill. Use household income, withholding, credits, deductible expenses and state rules to estimate what to save; a fixed 25–30% can be too high or too low. Revisit the estimate as earnings change.",
       },
       {
         q: "Do I get a 1099 from DoorDash?",
@@ -130,7 +132,7 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
       },
       {
         q: "When are DoorDash taxes due?",
-        a: TAX_REVIEW.estimates,
+        a: "Estimated payments generally apply if you expect to owe at least $1,000 after withholding and refundable credits and do not meet a payment exception. Safe-harbor rules generally compare 90% of current-year tax with 100% of prior-year tax (110% for certain higher-income taxpayers). Timing matters; paying four times does not itself prevent a penalty. See Form 1040-ES for exceptions and uneven-income rules.",
       },
     ],
   },
@@ -172,7 +174,7 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
       },
       {
         q: "How much should I set aside for Uber taxes?",
-        a: SET_ASIDE_ANSWER,
+        a: "A tax reserve is a planning assumption, not your calculated tax bill. Use household income, withholding, credits, deductible expenses and state rules to estimate what to save; a fixed 25–30% can be too high or too low. Revisit the estimate as earnings change.",
       },
       {
         q: "What can Uber drivers deduct?",
@@ -180,7 +182,7 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
       },
       {
         q: "Do Uber drivers have to pay quarterly taxes?",
-        a: TAX_REVIEW.estimates,
+        a: "Estimated payments generally apply if you expect to owe at least $1,000 after withholding and refundable credits and do not meet a payment exception. Safe-harbor rules generally compare 90% of current-year tax with 100% of prior-year tax (110% for certain higher-income taxpayers). Timing matters; paying four times does not itself prevent a penalty. See Form 1040-ES for exceptions and uneven-income rules.",
       },
     ],
   },
@@ -192,14 +194,15 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     eyebrow: "Gig Tax Guide",
     title: "Instacart Taxes: A Shopper's Guide to 1099s & Deductions",
     metaDescription:
-      "Instacart taxes for full-service shoppers: the 1099-NEC, self-employment tax, mileage and supply deductions, and quarterly payments. Not tax advice.",
+      "Instacart tax guide: tax documents, income reconciliation, business deductions and 2026 federal rules. Reviewed November 7, 2026.",
     h1: "Instacart Taxes: A Shopper's Guide",
     intro:
-      "How you're taxed on Instacart depends on your role. Full-service shoppers — who shop and deliver — are independent contractors responsible for their own taxes, while in-store-only shoppers are part-time employees with taxes withheld. This guide is for full-service shoppers, who make up most of the platform.",
-    formsHeading: "Do Instacart shoppers get a 1099?",
+      "This guide covers U.S. independent-contractor work through Instacart. Reconcile earnings and expenses for the correct tax year; employee wages and non-U.S. accounts follow different rules.",
+    formsHeading: "Tax documents and income records for Instacart",
     formsBody: [
-      "Full-service shoppers who earned $600 or more receive a 1099-NEC reporting their nonemployee compensation. Instacart delivers these (typically through Stripe) by the end of January.",
-      "In-store shoppers are W-2 part-time employees — Instacart withholds their taxes and issues a W-2 instead. If you do both, you may receive both forms. As always, report all income even if a form doesn't arrive.",
+      "Instacart's tax-delivery guidance describes 1099 reporting for independent-contractor shoppers. Stripe's Instacart guide provides tax-document access and correction instructions, but delivery providers and account settings may differ by year. Follow the tax-document instructions in your Shopper account; do not assume an old Stripe invitation is the current delivery route.",
+      "The reviewed delivery guidance does not establish every 2026 account workflow. Employee wages, if any, belong on a W-2 and should not be treated as contractor receipts.",
+      "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
     ],
     extraDeductions: [
       {
@@ -209,24 +212,30 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     ],
     faqs: [
       {
-        q: "Are Instacart shoppers independent contractors?",
-        a: "Full-service shoppers are independent contractors and pay their own taxes. In-store-only shoppers are part-time W-2 employees with taxes withheld. This guide covers full-service shoppers.",
+        q: "Where do I find Instacart tax documents?",
+        a: "Instacart's tax-delivery guidance describes 1099 reporting for independent-contractor shoppers. Stripe's Instacart guide provides tax-document access and correction instructions, but delivery providers and account settings may differ by year. Follow the tax-document instructions in your Shopper account; do not assume an old Stripe invitation is the current delivery route.",
       },
       {
-        q: "Do I get a 1099 from Instacart?",
-        a: "Full-service shoppers who earned $600 or more get a 1099-NEC, usually delivered through Stripe by late January. Below that threshold you may not get a form but must still report the income.",
+        q: "Is the amount on a 1099 my taxable profit?",
+        a: "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
       },
       {
-        q: "How much should I set aside for Instacart taxes?",
-        a: SET_ASIDE_ANSWER,
+        q: "Which expenses can I claim?",
+        a: "Only eligible ordinary and necessary business expenses supported by records. Separate personal use, refunds and reimbursements. Inventory or equipment may require cost-of-goods-sold or depreciation treatment rather than an immediate deduction.",
       },
       {
-        q: "Can Instacart shoppers deduct mileage?",
-        a: "Yes. Full-service shoppers can deduct business mileage at the IRS standard mileage rate for miles driven while working — typically the largest deduction. Track every working mile, since Instacart doesn't report your mileage for you.",
+        q: "How much should I set aside?",
+        a: "A reserve should reflect household income, withholding, credits and deductible business costs, plus applicable state and local taxes. A fixed 25–30% is a planning assumption that may be too high or too low, not a calculated tax bill.",
       },
       {
-        q: "When do Instacart shoppers pay taxes?",
-        a: "Independent-contractor shoppers generally make quarterly estimated payments — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Quarterly payments avoid an IRS underpayment penalty.",
+        q: "Do I still report income without a 1099?",
+        a: "Yes, report taxable income even if no information return arrives. For third-party network payments, the general federal 1099-K threshold is more than $20,000 AND more than 200 transactions. The general 1099-NEC threshold is $2,000 for 2026 compensation, compared with $600 for 2025; state rules, withholding and other exceptions can result in a form below these amounts.",
+      },
+    ],
+    resources: [
+      {
+        label: "Instacart: official document guidance",
+        href: "https://support.stripe.com/express/questions/guide-to-1099-tax-forms-for-instacart-shopper?locale=en-US",
       },
     ],
   },
@@ -238,14 +247,15 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     eyebrow: "Gig Tax Guide",
     title: "Amazon Flex Taxes: A Driver's Guide to 1099 Filing & Deductions",
     metaDescription:
-      "How Amazon Flex taxes work: the 1099-NEC, self-employment tax, what to set aside, mileage deductions, and quarterly payments. Not tax advice.",
+      "Amazon Flex tax guide: tax documents, income reconciliation, business deductions and 2026 federal rules. Reviewed November 7, 2026.",
     h1: "Amazon Flex Taxes: What Every Driver Needs to Know",
     intro:
-      "Amazon Flex pays you as an independent contractor, so no taxes are withheld from your delivery blocks. You're responsible for your own federal, state, and self-employment taxes — but the miles you drive during a block, including between stops, are deductible if you track them. Here's how Amazon Flex taxes work.",
-    formsHeading: "Do you get a 1099 from Amazon Flex?",
+      "This guide covers U.S. independent-contractor work through Amazon Flex. Reconcile earnings and expenses for the correct tax year; employee wages and non-U.S. accounts follow different rules.",
+    formsHeading: "Tax documents and income records for Amazon Flex",
     formsBody: [
-      "If you earned $600 or more driving for Amazon Flex in a year, you'll receive a 1099-NEC reporting your nonemployee compensation, available through Amazon's tax-document portal.",
-      "If you earned less you may not get a form, but you still have to report the income. The IRS expects you to report all earnings whether or not a 1099 was issued.",
+      "Use Amazon Tax Central and the official Flex account support route to locate documents for your delivery earnings. Amazon's publicly readable tax-interview help is general, and the Flex FAQ could not be retrieved during this review; a current 2026 Flex-specific form type and delivery schedule were not independently confirmed.",
+      "Confirm the form and tax year shown in your account. Do not use Amazon seller 1099-K instructions as proof of how Flex delivery compensation is reported.",
+      "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
     ],
     extraDeductions: [
       {
@@ -255,24 +265,31 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     ],
     faqs: [
       {
-        q: "Does Amazon Flex take out taxes for me?",
-        a: "No. Amazon Flex pays drivers as independent contractors and withholds nothing. You're responsible for setting aside and paying your own income tax and the 15.3% self-employment tax.",
+        q: "Where do I find Amazon Flex tax documents?",
+        a: "Use Amazon Tax Central and the official Flex account support route to locate documents for your delivery earnings. Amazon's publicly readable tax-interview help is general, and the Flex FAQ could not be retrieved during this review; a current 2026 Flex-specific form type and delivery schedule were not independently confirmed.",
       },
       {
-        q: "How much should I set aside for Amazon Flex taxes?",
-        a: SET_ASIDE_ANSWER,
+        q: "Is the amount on a 1099 my taxable profit?",
+        a: "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
       },
       {
-        q: "Do I get a 1099 from Amazon Flex?",
-        a: "If you earned $600 or more, Amazon issues a 1099-NEC through its tax-document portal. Below that you may not receive a form, but you must still report the income.",
+        q: "Which expenses can I claim?",
+        a: "Only eligible ordinary and necessary business expenses supported by records. Separate personal use, refunds and reimbursements. Inventory or equipment may require cost-of-goods-sold or depreciation treatment rather than an immediate deduction.",
       },
       {
-        q: "What can Amazon Flex drivers deduct?",
-        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven during your delivery blocks, including between stops. You can also deduct the business-use share of your phone, tolls, parking, and supplies.",
+        q: "How much should I set aside?",
+        a: "A reserve should reflect household income, withholding, credits and deductible business costs, plus applicable state and local taxes. A fixed 25–30% is a planning assumption that may be too high or too low, not a calculated tax bill.",
       },
       {
-        q: "When are Amazon Flex taxes due?",
-        a: "Self-employed earners generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Paying quarterly avoids an IRS underpayment penalty.",
+        q: "Do I still report income without a 1099?",
+        a: "Yes, report taxable income even if no information return arrives. For third-party network payments, the general federal 1099-K threshold is more than $20,000 AND more than 200 transactions. The general 1099-NEC threshold is $2,000 for 2026 compensation, compared with $600 for 2025; state rules, withholding and other exceptions can result in a form below these amounts.",
+      },
+    ],
+    resources: [
+      {
+        label:
+          "Amazon Flex: official document guidance (review limitations explained above)",
+        href: "https://taxcentral.amazon.com/tax-interview/help?locale=en_US&nodeId=201588330",
       },
     ],
   },
@@ -284,14 +301,14 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     eyebrow: "Gig Tax Guide",
     title: "Grubhub Taxes: A Driver's Guide to 1099 Filing & Deductions",
     metaDescription:
-      "How Grubhub taxes work for drivers: the 1099-NEC, self-employment tax, what to set aside, mileage deductions, and quarterly payments. Not tax advice.",
+      "Grubhub tax guide: tax documents, income reconciliation, business deductions and 2026 federal rules. Reviewed November 7, 2026.",
     h1: "Grubhub Taxes: What Every Driver Needs to Know",
     intro:
-      "Grubhub pays you as an independent contractor, so nothing is withheld from your delivery pay. You owe your own federal, state, and self-employment taxes — and tracking your mileage is the single biggest way to lower what you owe. Here's how Grubhub taxes work.",
-    formsHeading: "Do you get a 1099 from Grubhub?",
+      "This guide covers U.S. independent-contractor work through Grubhub. Reconcile earnings and expenses for the correct tax year; employee wages and non-U.S. accounts follow different rules.",
+    formsHeading: "Tax documents and income records for Grubhub",
     formsBody: [
-      "If you earned $600 or more on Grubhub in a year, you'll receive a 1099-NEC (issued through Grubhub's payment processor) reporting your nonemployee compensation.",
-      "If you earned less you may not get a form, but you still have to report the income. The IRS expects you to report all earnings whether or not a 1099 was issued.",
+      "Grubhub's driver guidance identifies Form 1099-NEC for delivery compensation. That page still uses a $600 threshold, which matches the general 2025 rule; for 2026 nonemployee compensation use the federal $2,000 rule below. Confirm document availability in your driver account rather than assuming the restaurant merchant 1099-K process applies.",
+      "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
     ],
     extraDeductions: [
       {
@@ -301,24 +318,30 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     ],
     faqs: [
       {
-        q: "Does Grubhub take out taxes for me?",
-        a: "No. Grubhub pays drivers as independent contractors and withholds nothing. You're responsible for setting aside and paying your own income tax and the 15.3% self-employment tax.",
+        q: "Where do I find Grubhub tax documents?",
+        a: "Grubhub's driver guidance identifies Form 1099-NEC for delivery compensation. That page still uses a $600 threshold, which matches the general 2025 rule; for 2026 nonemployee compensation use the federal $2,000 rule below. Confirm document availability in your driver account rather than assuming the restaurant merchant 1099-K process applies.",
       },
       {
-        q: "How much should I set aside for Grubhub taxes?",
-        a: SET_ASIDE_ANSWER,
+        q: "Is the amount on a 1099 my taxable profit?",
+        a: "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
       },
       {
-        q: "Do I get a 1099 from Grubhub?",
-        a: "If you earned $600 or more, Grubhub issues a 1099-NEC through its payment processor. Below that you may not receive a form, but you must still report the income.",
+        q: "Which expenses can I claim?",
+        a: "Only eligible ordinary and necessary business expenses supported by records. Separate personal use, refunds and reimbursements. Inventory or equipment may require cost-of-goods-sold or depreciation treatment rather than an immediate deduction.",
       },
       {
-        q: "What can Grubhub drivers deduct?",
-        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while delivering. You can also deduct the business-use share of your phone, insulated bags, tolls, and parking.",
+        q: "How much should I set aside?",
+        a: "A reserve should reflect household income, withholding, credits and deductible business costs, plus applicable state and local taxes. A fixed 25–30% is a planning assumption that may be too high or too low, not a calculated tax bill.",
       },
       {
-        q: "When are Grubhub taxes due?",
-        a: "Self-employed earners generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Paying quarterly avoids an IRS underpayment penalty.",
+        q: "Do I still report income without a 1099?",
+        a: "Yes, report taxable income even if no information return arrives. For third-party network payments, the general federal 1099-K threshold is more than $20,000 AND more than 200 transactions. The general 1099-NEC threshold is $2,000 for 2026 compensation, compared with $600 for 2025; state rules, withholding and other exceptions can result in a form below these amounts.",
+      },
+    ],
+    resources: [
+      {
+        label: "Grubhub: official document guidance",
+        href: "https://driver.grubhub.com/blog/financial-tips-for-delivery-drivers/",
       },
     ],
   },
@@ -330,19 +353,20 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     eyebrow: "Gig Tax Guide",
     title: "Lyft Driver Taxes: 1099-K vs 1099-NEC, Deductions & Estimates",
     metaDescription:
-      "Lyft driver taxes explained: the 1099-K vs 1099-NEC, your Annual Summary, self-employment tax, mileage deductions, and quarterly estimates. Not tax advice.",
+      "Lyft tax guide: tax documents, income reconciliation, business deductions and 2026 federal rules. Reviewed November 7, 2026.",
     h1: "Lyft Driver Taxes: The Complete Breakdown",
     intro:
-      "Lyft treats drivers as independent contractors and withholds no taxes, so you're responsible for your own income and self-employment taxes — and you'll likely receive more than one tax form. Here's how to read them and keep your bill as low as legally possible.",
-    formsHeading: "1099-K vs 1099-NEC: which one does Lyft send?",
+      "This guide covers U.S. independent-contractor work through Lyft. Reconcile earnings and expenses for the correct tax year; employee wages and non-U.S. accounts follow different rules.",
+    formsHeading: "Tax documents and income records for Lyft",
     formsBody: [
-      "Lyft may issue two forms. A 1099-K reports the gross amount riders paid for your rides (processed through Lyft as a third-party platform). A 1099-NEC reports other income like bonuses, referrals, and incentives.",
-      "Form thresholds change from year to year, so you might not receive a 1099-K in a low-volume year. Either way, your Lyft Annual Summary lists your gross earnings, Lyft's fees, and online miles — and you must report all of it regardless of which forms arrive.",
+      "Lyft provides a Driver Annual Summary and, when applicable, a 1099-K for passenger payments and a 1099-NEC for non-ride earnings. Tax documents are in the Dashboard Tax Center. The reviewed help page describes the 2025 document cycle; confirm the 2026 cycle in your account.",
+      "The Annual Summary separates ride payments, non-ride earnings and expenses. Gross rider payments can include platform fees, taxes and toll reimbursements, so they may exceed bank deposits. Online miles are not automatically deductible business miles.",
+      "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
     ],
     extraDeductions: [
       {
         label: "Lyft service fees & commissions",
-        desc: "Fees Lyft deducts from each fare are a business expense — your Annual Summary breaks them out.",
+        desc: "Reconcile fees actually charged to your business and included in the income being reported; do not deduct customer-only charges or subtract the same fee twice.",
       },
       {
         label: "Water, mints & rider amenities",
@@ -351,24 +375,30 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     ],
     faqs: [
       {
-        q: "Does Lyft withhold taxes from my pay?",
-        a: "No. Lyft drivers are independent contractors, so no tax is withheld. You set aside and pay your own income tax plus the 15.3% self-employment tax.",
+        q: "Where do I find Lyft tax documents?",
+        a: "Lyft provides a Driver Annual Summary and, when applicable, a 1099-K for passenger payments and a 1099-NEC for non-ride earnings. Tax documents are in the Dashboard Tax Center. The reviewed help page describes the 2025 document cycle; confirm the 2026 cycle in your account.",
       },
       {
-        q: "What's the difference between the 1099-K and 1099-NEC from Lyft?",
-        a: "The 1099-K reports the gross fares riders paid for your rides. The 1099-NEC reports non-ride income such as bonuses, referrals, and incentives. Your Lyft Annual Summary reconciles both with your actual take-home.",
+        q: "Is the amount on a 1099 my taxable profit?",
+        a: "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
       },
       {
-        q: "How much should I set aside for Lyft taxes?",
-        a: SET_ASIDE_ANSWER,
+        q: "Which expenses can I claim?",
+        a: "Only eligible ordinary and necessary business expenses supported by records. Separate personal use, refunds and reimbursements. Inventory or equipment may require cost-of-goods-sold or depreciation treatment rather than an immediate deduction.",
       },
       {
-        q: "What can Lyft drivers deduct?",
-        a: "Business mileage at the IRS standard mileage rate is usually the largest deduction — and because Lyft reports only your online miles, your real deductible mileage (including miles between rides) is often higher. You can also deduct Lyft's service fees, the business-use share of your phone, tolls, parking, and rider amenities.",
+        q: "How much should I set aside?",
+        a: "A reserve should reflect household income, withholding, credits and deductible business costs, plus applicable state and local taxes. A fixed 25–30% is a planning assumption that may be too high or too low, not a calculated tax bill.",
       },
       {
-        q: "Do Lyft drivers have to pay quarterly taxes?",
-        a: "If you expect to owe $1,000 or more for the year, the IRS generally expects quarterly estimated payments — around April 15, June 15, September 15, and January 15 — to avoid an underpayment penalty.",
+        q: "Do I still report income without a 1099?",
+        a: "Yes, report taxable income even if no information return arrives. For third-party network payments, the general federal 1099-K threshold is more than $20,000 AND more than 200 transactions. The general 1099-NEC threshold is $2,000 for 2026 compensation, compared with $600 for 2025; state rules, withholding and other exceptions can result in a form below these amounts.",
+      },
+    ],
+    resources: [
+      {
+        label: "Lyft: official document guidance",
+        href: "https://help.lyft.com/hc/en-us/all/articles/115012926967",
       },
     ],
   },
@@ -380,14 +410,15 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     eyebrow: "Gig Tax Guide",
     title: "Spark Driver Taxes: A Guide to 1099 Filing & Deductions",
     metaDescription:
-      "How Walmart Spark driver taxes work: the 1099-NEC, self-employment tax, what to set aside, mileage deductions, and quarterly payments. Not tax advice.",
+      "Spark Driver tax guide: tax documents, income reconciliation, business deductions and 2026 federal rules. Reviewed November 7, 2026.",
     h1: "Spark Driver Taxes: What Every Driver Needs to Know",
     intro:
-      "The Walmart Spark Driver program pays you as an independent contractor, so no taxes are withheld from your deliveries. You owe your own federal, state, and self-employment taxes — and your mileage is usually your largest deduction. Here's how Spark Driver taxes work.",
-    formsHeading: "Do you get a 1099 from Spark Driver?",
+      "This guide covers U.S. independent-contractor work through Spark Driver. Reconcile earnings and expenses for the correct tax year; employee wages and non-U.S. accounts follow different rules.",
+    formsHeading: "Tax documents and income records for Spark Driver",
     formsBody: [
-      "If you earned $600 or more delivering through the Spark Driver app in a year, you'll receive a 1099-NEC reporting your nonemployee compensation, delivered through the app's payment partner.",
-      "If you earned less you may not get a form, but you still have to report the income. The IRS expects you to report all earnings whether or not a 1099 was issued.",
+      "Walmart's 2025 Driver Tax Documents page directs drivers to Account → Tax Documents in the Spark Driver app. It discusses Form 1099-NEC and includes tips in reported earnings. Its $600 eligibility figure concerns 2025; the general federal NEC threshold is $2,000 for 2026 payments.",
+      "Use the current app instructions for delivery preferences and corrections. Do not assume a bank or payout provider, rather than Walmart's documented tax workflow, supplies your Spark earnings form.",
+      "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
     ],
     extraDeductions: [
       {
@@ -397,24 +428,30 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     ],
     faqs: [
       {
-        q: "Does Spark Driver take out taxes for me?",
-        a: "No. The Spark Driver program pays drivers as independent contractors and withholds nothing. You're responsible for setting aside and paying your own income tax and the 15.3% self-employment tax.",
+        q: "Where do I find Spark Driver tax documents?",
+        a: "Walmart's 2025 Driver Tax Documents page directs drivers to Account → Tax Documents in the Spark Driver app. It discusses Form 1099-NEC and includes tips in reported earnings. Its $600 eligibility figure concerns 2025; the general federal NEC threshold is $2,000 for 2026 payments.",
       },
       {
-        q: "How much should I set aside for Spark Driver taxes?",
-        a: SET_ASIDE_ANSWER,
+        q: "Is the amount on a 1099 my taxable profit?",
+        a: "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
       },
       {
-        q: "Do I get a 1099 from Spark Driver?",
-        a: "If you earned $600 or more, the Spark Driver program issues a 1099-NEC through its payment partner. Below that you may not receive a form, but you must still report the income.",
+        q: "Which expenses can I claim?",
+        a: "Only eligible ordinary and necessary business expenses supported by records. Separate personal use, refunds and reimbursements. Inventory or equipment may require cost-of-goods-sold or depreciation treatment rather than an immediate deduction.",
       },
       {
-        q: "What can Spark drivers deduct?",
-        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while delivering. You can also deduct the business-use share of your phone, insulated bags, tolls, and parking.",
+        q: "How much should I set aside?",
+        a: "A reserve should reflect household income, withholding, credits and deductible business costs, plus applicable state and local taxes. A fixed 25–30% is a planning assumption that may be too high or too low, not a calculated tax bill.",
       },
       {
-        q: "When are Spark Driver taxes due?",
-        a: "Self-employed earners generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Paying quarterly avoids an IRS underpayment penalty.",
+        q: "Do I still report income without a 1099?",
+        a: "Yes, report taxable income even if no information return arrives. For third-party network payments, the general federal 1099-K threshold is more than $20,000 AND more than 200 transactions. The general 1099-NEC threshold is $2,000 for 2026 compensation, compared with $600 for 2025; state rules, withholding and other exceptions can result in a form below these amounts.",
+      },
+    ],
+    resources: [
+      {
+        label: "Spark Driver: official document guidance",
+        href: "https://sparkdriverapp-walmart.helpdocs.io/l/en/article/d8dorui0f0-2025-tax-filing-faqs-xog",
       },
     ],
   },
@@ -426,14 +463,14 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     eyebrow: "Gig Tax Guide",
     title: "Shipt Taxes: A Shopper's Guide to 1099s & Deductions",
     metaDescription:
-      "Shipt taxes for shoppers: the 1099-NEC, self-employment tax, mileage and supply deductions, and quarterly payments. Not tax advice.",
+      "Shipt tax guide: tax documents, income reconciliation, business deductions and 2026 federal rules. Reviewed November 7, 2026.",
     h1: "Shipt Taxes: A Shopper's Guide",
     intro:
-      "Shipt shoppers are independent contractors, so Shipt withholds no taxes from your pay. You owe your own federal, state, and self-employment taxes — and because you both shop and drive, tracking your working miles matters. Here's how Shipt taxes work.",
-    formsHeading: "Do Shipt shoppers get a 1099?",
+      "This guide covers U.S. independent-contractor work through Shipt. Reconcile earnings and expenses for the correct tax year; employee wages and non-U.S. accounts follow different rules.",
+    formsHeading: "Tax documents and income records for Shipt",
     formsBody: [
-      "Shipt shoppers who earned $600 or more in a year receive a 1099-NEC reporting their nonemployee compensation, typically delivered through Shipt's payment processor by the end of January.",
-      "If you earned less you may not get a form, but you still have to report the income. The IRS expects you to report all earnings whether or not a 1099 was issued.",
+      "Shipt's Stripe guide identifies Form 1099-NEC and explains Stripe Express access and corrections. Its $600 threshold and January dates describe older filing guidance; the general federal NEC threshold rises to $2,000 for 2026 payments. Confirm the current document cycle with Shipt.",
+      "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
     ],
     extraDeductions: [
       {
@@ -443,24 +480,30 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     ],
     faqs: [
       {
-        q: "Does Shipt take out taxes for me?",
-        a: "No. Shipt pays shoppers as independent contractors and withholds nothing. You're responsible for setting aside and paying your own income tax and the 15.3% self-employment tax.",
+        q: "Where do I find Shipt tax documents?",
+        a: "Shipt's Stripe guide identifies Form 1099-NEC and explains Stripe Express access and corrections. Its $600 threshold and January dates describe older filing guidance; the general federal NEC threshold rises to $2,000 for 2026 payments. Confirm the current document cycle with Shipt.",
       },
       {
-        q: "How much should I set aside for Shipt taxes?",
-        a: SET_ASIDE_ANSWER,
+        q: "Is the amount on a 1099 my taxable profit?",
+        a: "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
       },
       {
-        q: "Do I get a 1099 from Shipt?",
-        a: "Shipt shoppers who earned $600 or more get a 1099-NEC, usually delivered through Shipt's payment processor by late January. Below that threshold you may not get a form but must still report the income.",
+        q: "Which expenses can I claim?",
+        a: "Only eligible ordinary and necessary business expenses supported by records. Separate personal use, refunds and reimbursements. Inventory or equipment may require cost-of-goods-sold or depreciation treatment rather than an immediate deduction.",
       },
       {
-        q: "Can Shipt shoppers deduct mileage?",
-        a: "Yes. Shipt shoppers can deduct business mileage at the IRS standard mileage rate for miles driven while working — typically the largest deduction. Track every working mile, since Shipt doesn't report your mileage for you.",
+        q: "How much should I set aside?",
+        a: "A reserve should reflect household income, withholding, credits and deductible business costs, plus applicable state and local taxes. A fixed 25–30% is a planning assumption that may be too high or too low, not a calculated tax bill.",
       },
       {
-        q: "When do Shipt shoppers pay taxes?",
-        a: "Independent-contractor shoppers generally make quarterly estimated payments — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Quarterly payments avoid an IRS underpayment penalty.",
+        q: "Do I still report income without a 1099?",
+        a: "Yes, report taxable income even if no information return arrives. For third-party network payments, the general federal 1099-K threshold is more than $20,000 AND more than 200 transactions. The general 1099-NEC threshold is $2,000 for 2026 compensation, compared with $600 for 2025; state rules, withholding and other exceptions can result in a form below these amounts.",
+      },
+    ],
+    resources: [
+      {
+        label: "Shipt: official document guidance",
+        href: "https://support.stripe.com/express/questions/guide-to-1099-tax-forms-for-shipt-shoppers?locale=en-US",
       },
     ],
   },
@@ -472,14 +515,15 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     eyebrow: "Gig Tax Guide",
     title: "Roadie Taxes: A Driver's Guide to 1099 Filing & Deductions",
     metaDescription:
-      "How Roadie taxes work: the 1099, self-employment tax, what to set aside, mileage deductions, and quarterly payments. Not tax advice.",
+      "Roadie tax guide: tax documents, income reconciliation, business deductions and 2026 federal rules. Reviewed November 7, 2026.",
     h1: "Roadie Taxes: What Every Driver Needs to Know",
     intro:
-      "Roadie (a UPS company) pays its drivers as independent contractors, so no taxes are withheld from your deliveries. You owe your own federal, state, and self-employment taxes — and because you drive your own vehicle, mileage is usually your single largest deduction. Here's how Roadie taxes work.",
-    formsHeading: "Do you get a 1099 from Roadie?",
+      "This guide covers U.S. independent-contractor work through Roadie. Reconcile earnings and expenses for the correct tax year; employee wages and non-U.S. accounts follow different rules.",
+    formsHeading: "Tax documents and income records for Roadie",
     formsBody: [
-      "If you earned enough to meet the reporting threshold, Roadie issues a 1099 (typically a 1099-NEC) through its payment processor reporting your earnings. Roadie emails instructions for retrieving your tax documents.",
-      "If you earned below the threshold you may not get a form — but you still have to report the income. The IRS expects you to report all earnings whether or not a 1099 was issued.",
+      "Keep Roadie earnings statements and request the applicable-year tax documents through Roadie support. The reviewed Prop 22 page refers to different forms for adjustments and healthcare stipends and contains older $600 language. It does not establish a single verified 2026 form type for every Roadie payment.",
+      "Reconcile delivery pay, tips, reimbursements, adjustments and any stipends by category. An expense reimbursement appearing in reported gross income should be matched to its underlying business expense; do not deduct the same cost twice.",
+      "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
     ],
     extraDeductions: [
       {
@@ -489,24 +533,31 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     ],
     faqs: [
       {
-        q: "Does Roadie take out taxes for me?",
-        a: "No. Roadie pays drivers as independent contractors and withholds nothing. You're responsible for setting aside and paying your own income tax and the 15.3% self-employment tax.",
+        q: "Where do I find Roadie tax documents?",
+        a: "Keep Roadie earnings statements and request the applicable-year tax documents through Roadie support. The reviewed Prop 22 page refers to different forms for adjustments and healthcare stipends and contains older $600 language. It does not establish a single verified 2026 form type for every Roadie payment.",
       },
       {
-        q: "How much should I set aside for Roadie taxes?",
-        a: SET_ASIDE_ANSWER,
+        q: "Is the amount on a 1099 my taxable profit?",
+        a: "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
       },
       {
-        q: "Do I get a 1099 from Roadie?",
-        a: "If you meet the reporting threshold, Roadie issues a 1099 (typically a 1099-NEC) through its payment processor. Below that you may not receive a form, but you must still report the income to the IRS.",
+        q: "Which expenses can I claim?",
+        a: "Only eligible ordinary and necessary business expenses supported by records. Separate personal use, refunds and reimbursements. Inventory or equipment may require cost-of-goods-sold or depreciation treatment rather than an immediate deduction.",
       },
       {
-        q: "What can Roadie drivers deduct?",
-        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven to pick up and deliver gigs. You can also deduct the business-use share of your phone, hauling supplies, tolls, and parking.",
+        q: "How much should I set aside?",
+        a: "A reserve should reflect household income, withholding, credits and deductible business costs, plus applicable state and local taxes. A fixed 25–30% is a planning assumption that may be too high or too low, not a calculated tax bill.",
       },
       {
-        q: "When are Roadie taxes due?",
-        a: "Self-employed earners generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Paying quarterly avoids an IRS underpayment penalty.",
+        q: "Do I still report income without a 1099?",
+        a: "Yes, report taxable income even if no information return arrives. For third-party network payments, the general federal 1099-K threshold is more than $20,000 AND more than 200 transactions. The general 1099-NEC threshold is $2,000 for 2026 compensation, compared with $600 for 2025; state rules, withholding and other exceptions can result in a form below these amounts.",
+      },
+    ],
+    resources: [
+      {
+        label:
+          "Roadie: official document guidance (review limitations explained above)",
+        href: "https://support.roadie.com/support/article/California-Prop-22-What-You-Need-to-Know",
       },
     ],
   },
@@ -518,14 +569,15 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     eyebrow: "Gig Tax Guide",
     title: "Gopuff Taxes: A Driver's Guide to 1099 Filing & Deductions",
     metaDescription:
-      "How Gopuff driver taxes work: the 1099-NEC, self-employment tax, what to set aside, mileage deductions, and quarterly payments. Not tax advice.",
+      "Gopuff tax guide: tax documents, income reconciliation, business deductions and 2026 federal rules. Reviewed November 7, 2026.",
     h1: "Gopuff Taxes: What Every Driver Needs to Know",
     intro:
-      "Gopuff pays its delivery drivers as independent contractors, so no taxes are withheld from your pay. You owe your own federal, state, and self-employment taxes — and the miles you drive from the micro-fulfillment center to customers are deductible if you track them. Here's how Gopuff taxes work.",
-    formsHeading: "Do you get a 1099 from Gopuff?",
+      "This guide covers U.S. independent-contractor work through Gopuff. Reconcile earnings and expenses for the correct tax year; employee wages and non-U.S. accounts follow different rules.",
+    formsHeading: "Tax documents and income records for Gopuff",
     formsBody: [
-      "If you earned $600 or more delivering for Gopuff in a year, you'll receive a 1099-NEC reporting your nonemployee compensation, delivered through Gopuff's payment partner.",
-      "If you earned less you may not get a form, but you still have to report the income. The IRS expects you to report all earnings whether or not a 1099 was issued.",
+      "Gopuff's 1099 FAQ identifies Form 1099-NEC and delivery through Stripe Express or mail. The reviewed page explicitly covers 2025 earnings and 2026 delivery dates. Its $600 threshold is the older general NEC rule; use $2,000 for 2026 compensation and confirm the next delivery schedule in your account.",
+      "This guide concerns U.S. delivery-partner business income. Warehouse or other employee wages follow W-2 rules. Include base pay, tips, promotions and other compensation in your reconciliation.",
+      "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
     ],
     extraDeductions: [
       {
@@ -535,24 +587,31 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     ],
     faqs: [
       {
-        q: "Does Gopuff take out taxes for me?",
-        a: "No. Gopuff pays drivers as independent contractors and withholds nothing. You're responsible for setting aside and paying your own income tax and the 15.3% self-employment tax.",
+        q: "Where do I find Gopuff tax documents?",
+        a: "Gopuff's 1099 FAQ identifies Form 1099-NEC and delivery through Stripe Express or mail. The reviewed page explicitly covers 2025 earnings and 2026 delivery dates. Its $600 threshold is the older general NEC rule; use $2,000 for 2026 compensation and confirm the next delivery schedule in your account.",
       },
       {
-        q: "How much should I set aside for Gopuff taxes?",
-        a: SET_ASIDE_ANSWER,
+        q: "Is the amount on a 1099 my taxable profit?",
+        a: "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
       },
       {
-        q: "Do I get a 1099 from Gopuff?",
-        a: "If you earned $600 or more, Gopuff issues a 1099-NEC through its payment partner. Below that you may not receive a form, but you must still report the income.",
+        q: "Which expenses can I claim?",
+        a: "Only eligible ordinary and necessary business expenses supported by records. Separate personal use, refunds and reimbursements. Inventory or equipment may require cost-of-goods-sold or depreciation treatment rather than an immediate deduction.",
       },
       {
-        q: "What can Gopuff drivers deduct?",
-        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while delivering. You can also deduct the business-use share of your phone, insulated bags, tolls, and parking.",
+        q: "How much should I set aside?",
+        a: "A reserve should reflect household income, withholding, credits and deductible business costs, plus applicable state and local taxes. A fixed 25–30% is a planning assumption that may be too high or too low, not a calculated tax bill.",
       },
       {
-        q: "When are Gopuff taxes due?",
-        a: "Self-employed earners generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Paying quarterly avoids an IRS underpayment penalty.",
+        q: "Do I still report income without a 1099?",
+        a: "Yes, report taxable income even if no information return arrives. For third-party network payments, the general federal 1099-K threshold is more than $20,000 AND more than 200 transactions. The general 1099-NEC threshold is $2,000 for 2026 compensation, compared with $600 for 2025; state rules, withholding and other exceptions can result in a form below these amounts.",
+      },
+    ],
+    resources: [
+      {
+        label:
+          "Gopuff: official document guidance (review limitations explained above)",
+        href: "https://help.gopuff.com/articles/delivery-partner-pay/1099-tax-forms-faq/6772d5950de4af09be98ccb9",
       },
     ],
   },
@@ -564,14 +623,15 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     eyebrow: "Gig Tax Guide",
     title: "TaskRabbit Taxes: A Tasker's Guide to 1099-K & Deductions",
     metaDescription:
-      "How TaskRabbit taxes work for Taskers: the 1099-K, self-employment tax, tool and mileage deductions, and quarterly payments. Not tax advice.",
+      "TaskRabbit tax guide: tax documents, income reconciliation, business deductions and 2026 federal rules. Reviewed November 7, 2026.",
     h1: "TaskRabbit Taxes: What Every Tasker Needs to Know",
     intro:
-      "TaskRabbit treats Taskers as independent contractors, so no taxes are withheld from your earnings. You owe your own federal, state, and self-employment taxes on your net income — and the tools, supplies, and miles you use on the job are deductible. Here's how TaskRabbit taxes work.",
-    formsHeading: "Do Taskers get a 1099 from TaskRabbit?",
+      "This guide covers U.S. independent-contractor work through TaskRabbit. Reconcile earnings and expenses for the correct tax year; employee wages and non-U.S. accounts follow different rules.",
+    formsHeading: "Tax documents and income records for TaskRabbit",
     formsBody: [
-      "TaskRabbit processes client payments as a third-party platform, so it generally reports earnings on a Form 1099-K (rather than a 1099-NEC) when you meet the IRS reporting threshold for that year. The 1099-K shows your gross earnings before TaskRabbit's service fees.",
-      "Reporting thresholds for the 1099-K have changed in recent years, so you may not always receive a form. Either way, you must report all of your TaskRabbit income — and you deduct the platform's service fees as a business expense.",
+      "Taskrabbit identifies Form 1099-K issued through Stripe for eligible Taskers. Its 2025-cycle guide explains Stripe Express delivery. Reconcile the form with Transaction History: the reported amount includes task payouts, expenses, tips and incentives.",
+      "Do not assume every customer-facing Taskrabbit charge is your deductible fee. Match expenses and reimbursements to your own transaction records. The federal TPSO test is more than $20,000 AND more than 200 transactions; forms may still be issued below it.",
+      "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
     ],
     extraDeductions: [
       {
@@ -580,33 +640,39 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
       },
       {
         label: "Job supplies & materials",
-        desc: "Cleaning supplies, hardware, and consumables used on jobs — track materials you don't bill back to the client.",
+        desc: "Track business inventory and production costs. Use the applicable inventory/cost-of-goods-sold method; do not automatically deduct every unsold purchase immediately.",
       },
       {
         label: "TaskRabbit service fees",
-        desc: "The fees TaskRabbit deducts from your pay are a deductible business expense.",
+        desc: "Reconcile fees actually charged to your business and included in the income being reported; do not deduct customer-only charges or subtract the same fee twice.",
       },
     ],
     faqs: [
       {
-        q: "Does TaskRabbit take out taxes for me?",
-        a: "No. TaskRabbit pays Taskers as independent contractors and withholds nothing. You're responsible for setting aside and paying your own income tax and the 15.3% self-employment tax.",
+        q: "Where do I find TaskRabbit tax documents?",
+        a: "Taskrabbit identifies Form 1099-K issued through Stripe for eligible Taskers. Its 2025-cycle guide explains Stripe Express delivery. Reconcile the form with Transaction History: the reported amount includes task payouts, expenses, tips and incentives.",
       },
       {
-        q: "How much should I set aside for TaskRabbit taxes?",
-        a: SET_ASIDE_ANSWER,
+        q: "Is the amount on a 1099 my taxable profit?",
+        a: "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
       },
       {
-        q: "Do I get a 1099 from TaskRabbit?",
-        a: "TaskRabbit typically issues a 1099-K (it processes client payments as a third-party platform) when you meet the IRS threshold for the year. Thresholds have changed recently, so you may not always get one — but you must report all income regardless.",
+        q: "Which expenses can I claim?",
+        a: "Only eligible ordinary and necessary business expenses supported by records. Separate personal use, refunds and reimbursements. Inventory or equipment may require cost-of-goods-sold or depreciation treatment rather than an immediate deduction.",
       },
       {
-        q: "What can Taskers deduct?",
-        a: "Tools, equipment, and job supplies are major deductions, along with TaskRabbit's service fees and the business-use share of your phone. If you drive to jobs or haul materials, business mileage at the IRS standard mileage rate is deductible too.",
+        q: "How much should I set aside?",
+        a: "A reserve should reflect household income, withholding, credits and deductible business costs, plus applicable state and local taxes. A fixed 25–30% is a planning assumption that may be too high or too low, not a calculated tax bill.",
       },
       {
-        q: "When are TaskRabbit taxes due?",
-        a: "Self-employed earners generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Paying quarterly avoids an IRS underpayment penalty.",
+        q: "Do I still report income without a 1099?",
+        a: "Yes, report taxable income even if no information return arrives. For third-party network payments, the general federal 1099-K threshold is more than $20,000 AND more than 200 transactions. The general 1099-NEC threshold is $2,000 for 2026 compensation, compared with $600 for 2025; state rules, withholding and other exceptions can result in a form below these amounts.",
+      },
+    ],
+    resources: [
+      {
+        label: "TaskRabbit: official document guidance",
+        href: "https://support.taskrabbit.com/hc/en-us/articles/46260426119579-What-Is-a-1099-K-Form",
       },
     ],
   },
@@ -618,14 +684,15 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     eyebrow: "Gig Tax Guide",
     title: "Rover Taxes: A Pet Sitter's Guide to 1099-K & Deductions",
     metaDescription:
-      "How Rover taxes work for sitters and walkers: the 1099-K, self-employment tax, pet-care and mileage deductions, and quarterly payments. Not tax advice.",
+      "Rover tax guide: tax documents, income reconciliation, business deductions and 2026 federal rules. Reviewed November 7, 2026.",
     h1: "Rover Taxes: What Every Sitter and Walker Needs to Know",
     intro:
-      "Rover treats sitters and walkers as independent contractors, so no taxes are withheld from your earnings. You owe your own federal, state, and self-employment taxes on your net income — and pet supplies, mileage to clients, and even part of your home (if you board) can be deductible. Here's how Rover taxes work.",
-    formsHeading: "Do Rover sitters get a 1099?",
+      "This guide covers U.S. independent-contractor work through Rover. Reconcile earnings and expenses for the correct tax year; employee wages and non-U.S. accounts follow different rules.",
+    formsHeading: "Tax documents and income records for Rover",
     formsBody: [
-      "Rover processes payments as a third-party platform, so it generally reports earnings on a Form 1099-K when you meet the IRS reporting threshold for that year. The 1099-K reflects gross earnings before Rover's service fee.",
-      "Reporting thresholds for the 1099-K have changed in recent years, so you may not always receive a form. Either way, you must report all of your Rover income — and you deduct Rover's service fee as a business expense.",
+      "Rover's Sitter Tax Hub identifies Form 1099-K and a companion tax summary. Gross reported payments can include Rover fees, sales tax and canceled bookings, so reconcile the summary and booking records before calculating business profit.",
+      "Record income from pet-care work even if no form is issued. Only claim business expenses you actually incurred and can support; fees, refunds and cancellations must not be counted twice.",
+      "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
     ],
     extraDeductions: [
       {
@@ -634,7 +701,7 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
       },
       {
         label: "Rover service fees",
-        desc: "The percentage Rover takes from each booking is a deductible business expense.",
+        desc: "Reconcile fees actually charged to your business and included in the income being reported; do not deduct customer-only charges or subtract the same fee twice.",
       },
       {
         label: "Home use for boarding",
@@ -643,24 +710,30 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     ],
     faqs: [
       {
-        q: "Does Rover take out taxes for me?",
-        a: "No. Rover pays sitters and walkers as independent contractors and withholds nothing. You're responsible for setting aside and paying your own income tax and the 15.3% self-employment tax.",
+        q: "Where do I find Rover tax documents?",
+        a: "Rover's Sitter Tax Hub identifies Form 1099-K and a companion tax summary. Gross reported payments can include Rover fees, sales tax and canceled bookings, so reconcile the summary and booking records before calculating business profit.",
       },
       {
-        q: "How much should I set aside for Rover taxes?",
-        a: SET_ASIDE_ANSWER,
+        q: "Is the amount on a 1099 my taxable profit?",
+        a: "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
       },
       {
-        q: "Do I get a 1099 from Rover?",
-        a: "Rover typically issues a 1099-K (it processes payments as a third-party platform) when you meet the IRS threshold for the year. Thresholds have changed recently, so you may not always get one — but you must report all income regardless.",
+        q: "Which expenses can I claim?",
+        a: "Only eligible ordinary and necessary business expenses supported by records. Separate personal use, refunds and reimbursements. Inventory or equipment may require cost-of-goods-sold or depreciation treatment rather than an immediate deduction.",
       },
       {
-        q: "What can Rover sitters and walkers deduct?",
-        a: "Pet-care supplies, Rover's service fees, and the business-use share of your phone are common deductions. Mileage driven to walks and client homes is deductible at the IRS standard mileage rate, and if you board pets in your home, part of your home expenses may qualify (the rules are strict — get advice).",
+        q: "How much should I set aside?",
+        a: "A reserve should reflect household income, withholding, credits and deductible business costs, plus applicable state and local taxes. A fixed 25–30% is a planning assumption that may be too high or too low, not a calculated tax bill.",
       },
       {
-        q: "When are Rover taxes due?",
-        a: "Self-employed earners generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Paying quarterly avoids an IRS underpayment penalty.",
+        q: "Do I still report income without a 1099?",
+        a: "Yes, report taxable income even if no information return arrives. For third-party network payments, the general federal 1099-K threshold is more than $20,000 AND more than 200 transactions. The general 1099-NEC threshold is $2,000 for 2026 compensation, compared with $600 for 2025; state rules, withholding and other exceptions can result in a form below these amounts.",
+      },
+    ],
+    resources: [
+      {
+        label: "Rover: official document guidance",
+        href: "https://get.rover.com/sitter/taxes",
       },
     ],
   },
@@ -672,20 +745,21 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     eyebrow: "Gig Tax Guide",
     title: "Upwork Taxes: A Freelancer's Guide to 1099-K & Deductions",
     metaDescription:
-      "How Upwork taxes work for freelancers: the 1099-K, self-employment tax, home-office and software deductions, and quarterly payments. Not tax advice.",
+      "Upwork tax guide: tax documents, income reconciliation, business deductions and 2026 federal rules. Reviewed November 7, 2026.",
     h1: "Upwork Taxes: What Every Freelancer Needs to Know",
     intro:
-      "Upwork treats freelancers as independent contractors, so no taxes are withheld from your earnings. You owe your own federal, state, and self-employment taxes on your net income — and because most Upwork work is done from a desk, your biggest deductions are the home office, software, and equipment you use, plus Upwork's own fees. Here's how Upwork taxes work.",
-    formsHeading: "Do you get a 1099 from Upwork?",
+      "This guide covers U.S. independent-contractor work through Upwork. Reconcile earnings and expenses for the correct tax year; employee wages and non-U.S. accounts follow different rules.",
+    formsHeading: "Tax documents and income records for Upwork",
     formsBody: [
-      "Upwork processes client payments as a third-party platform, so it issues US freelancers a Form 1099-K when they meet the IRS reporting threshold for the year. The 1099-K reports your gross earnings before Upwork's service fees are taken out.",
-      "Reporting thresholds for the 1099-K have changed in recent years, so you may not always receive a form. Either way, you must report all of your Upwork income — and you deduct Upwork's service fees as a business expense.",
+      "Upwork generally uses Form 1099-K for U.S. marketplace freelancers who meet the applicable reporting rules. Its help page identifies limited 1099-NEC exceptions for work for Upwork or managed services, and W-2 treatment for Upwork Payroll employees.",
+      "Use Tax information and Tax forms in your account and reconcile gross earnings with fees and refunds. The reviewed help page describes tax year 2025; federal 2026 rules below should not be confused with a guarantee of a particular account's document delivery.",
+      "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
     ],
     vehicleBased: false,
     deductionsOverride: [
       {
         label: "Home office",
-        desc: "The portion of rent/mortgage, utilities, and insurance for the part of your home used regularly and exclusively for work — often a freelancer's biggest deduction.",
+        desc: "A qualifying space generally must be used regularly and exclusively for the business. Occasional work at a personal-use desk is not enough.",
       },
       {
         label: "Computer, software & subscriptions",
@@ -697,7 +771,7 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
       },
       {
         label: "Upwork service fees",
-        desc: "The freelancer service fee Upwork deducts from your earnings is a fully deductible business expense.",
+        desc: "Reconcile fees actually charged to your business and included in the income being reported; do not deduct customer-only charges or subtract the same fee twice.",
       },
       {
         label: "Professional development",
@@ -710,24 +784,30 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     ],
     faqs: [
       {
-        q: "Does Upwork take out taxes for me?",
-        a: "No. Upwork pays freelancers as independent contractors and withholds nothing. You're responsible for setting aside and paying your own income tax and the 15.3% self-employment tax.",
+        q: "Where do I find Upwork tax documents?",
+        a: "Upwork generally uses Form 1099-K for U.S. marketplace freelancers who meet the applicable reporting rules. Its help page identifies limited 1099-NEC exceptions for work for Upwork or managed services, and W-2 treatment for Upwork Payroll employees.",
       },
       {
-        q: "How much should I set aside for Upwork taxes?",
-        a: SET_ASIDE_ANSWER,
+        q: "Is the amount on a 1099 my taxable profit?",
+        a: "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
       },
       {
-        q: "Do I get a 1099 from Upwork?",
-        a: "Upwork issues US freelancers a 1099-K (it processes client payments as a third-party platform) when they meet the IRS threshold for the year. Thresholds have changed recently, so you may not always get one — but you must report all income regardless.",
+        q: "Which expenses can I claim?",
+        a: "Only eligible ordinary and necessary business expenses supported by records. Separate personal use, refunds and reimbursements. Inventory or equipment may require cost-of-goods-sold or depreciation treatment rather than an immediate deduction.",
       },
       {
-        q: "What can Upwork freelancers deduct?",
-        a: "Because the work is desk-based, the biggest deductions are usually the home office, your computer and software, internet and phone, and Upwork's service fees. Professional development and equipment count too. Mileage generally doesn't apply unless you travel for client work.",
+        q: "How much should I set aside?",
+        a: "A reserve should reflect household income, withholding, credits and deductible business costs, plus applicable state and local taxes. A fixed 25–30% is a planning assumption that may be too high or too low, not a calculated tax bill.",
       },
       {
-        q: "When are Upwork taxes due?",
-        a: "Self-employed earners generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Paying quarterly avoids an IRS underpayment penalty.",
+        q: "Do I still report income without a 1099?",
+        a: "Yes, report taxable income even if no information return arrives. For third-party network payments, the general federal 1099-K threshold is more than $20,000 AND more than 200 transactions. The general 1099-NEC threshold is $2,000 for 2026 compensation, compared with $600 for 2025; state rules, withholding and other exceptions can result in a form below these amounts.",
+      },
+    ],
+    resources: [
+      {
+        label: "Upwork: official document guidance",
+        href: "https://support.upwork.com/hc/en-us/articles/211063958-Report-income-as-a-U-S-freelancer-on-Upwork",
       },
     ],
   },
@@ -739,20 +819,21 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     eyebrow: "Gig Tax Guide",
     title: "Fiverr Taxes: A Seller's Guide to 1099-K & Deductions",
     metaDescription:
-      "How Fiverr taxes work for sellers: the 1099-K, self-employment tax, home-office and software deductions, and quarterly payments. Not tax advice.",
+      "Fiverr tax guide: tax documents, income reconciliation, business deductions and 2026 federal rules. Reviewed November 7, 2026.",
     h1: "Fiverr Taxes: What Every Seller Needs to Know",
     intro:
-      "Fiverr treats sellers as independent contractors, so no taxes are withheld from your earnings. You owe your own federal, state, and self-employment taxes on your net income — and since you deliver gigs from a desk, your biggest deductions are your home office, software, and equipment, plus the commission Fiverr keeps. Here's how Fiverr taxes work.",
-    formsHeading: "Do you get a 1099 from Fiverr?",
+      "This guide covers U.S. independent-contractor work through Fiverr. Reconcile earnings and expenses for the correct tax year; employee wages and non-U.S. accounts follow different rules.",
+    formsHeading: "Tax documents and income records for Fiverr",
     formsBody: [
-      "Fiverr processes buyer payments as a third-party platform, so it issues US sellers a Form 1099-K when they meet the IRS reporting threshold for the year. The 1099-K reports your gross earnings before Fiverr's commission is deducted.",
-      "Reporting thresholds for the 1099-K have changed in recent years, so you may not always receive a form. Either way, you must report all of your Fiverr income — and you deduct Fiverr's commission as a business expense.",
+      "Fiverr's U.S. freelancer guidance describes W-9 collection and Form 1099-K where reporting is required. Its Earnings page provides tax-form downloads. A form and an earnings statement are reconciliation records, not a calculation of your taxable profit.",
+      "This guide covers U.S. freelancers. VAT/GST or sales taxes charged to customers do not replace your income-tax obligations, and non-U.S. withholding rules should not be applied to a U.S. account.",
+      "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
     ],
     vehicleBased: false,
     deductionsOverride: [
       {
         label: "Home office",
-        desc: "The portion of rent/mortgage, utilities, and insurance for the part of your home used regularly and exclusively for your gigs — often a seller's biggest deduction.",
+        desc: "A qualifying space generally must be used regularly and exclusively for the business. Occasional work at a personal-use desk is not enough.",
       },
       {
         label: "Software & tools",
@@ -764,7 +845,7 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
       },
       {
         label: "Fiverr commission & fees",
-        desc: "The commission Fiverr keeps from each order is a fully deductible business expense.",
+        desc: "Reconcile fees actually charged to your business and included in the income being reported; do not deduct customer-only charges or subtract the same fee twice.",
       },
       {
         label: "Professional development",
@@ -777,24 +858,30 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     ],
     faqs: [
       {
-        q: "Does Fiverr take out taxes for me?",
-        a: "No. Fiverr pays sellers as independent contractors and withholds nothing. You're responsible for setting aside and paying your own income tax and the 15.3% self-employment tax.",
+        q: "Where do I find Fiverr tax documents?",
+        a: "Fiverr's U.S. freelancer guidance describes W-9 collection and Form 1099-K where reporting is required. Its Earnings page provides tax-form downloads. A form and an earnings statement are reconciliation records, not a calculation of your taxable profit.",
       },
       {
-        q: "How much should I set aside for Fiverr taxes?",
-        a: SET_ASIDE_ANSWER,
+        q: "Is the amount on a 1099 my taxable profit?",
+        a: "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
       },
       {
-        q: "Do I get a 1099 from Fiverr?",
-        a: "Fiverr issues US sellers a 1099-K (it processes buyer payments as a third-party platform) when they meet the IRS threshold for the year. Thresholds have changed recently, so you may not always get one — but you must report all income regardless.",
+        q: "Which expenses can I claim?",
+        a: "Only eligible ordinary and necessary business expenses supported by records. Separate personal use, refunds and reimbursements. Inventory or equipment may require cost-of-goods-sold or depreciation treatment rather than an immediate deduction.",
       },
       {
-        q: "What can Fiverr sellers deduct?",
-        a: "Because gigs are delivered from a desk, the biggest deductions are usually the home office, software and tools, internet and phone, and Fiverr's commission. Professional development and equipment count too. Mileage generally doesn't apply unless you travel for the work.",
+        q: "How much should I set aside?",
+        a: "A reserve should reflect household income, withholding, credits and deductible business costs, plus applicable state and local taxes. A fixed 25–30% is a planning assumption that may be too high or too low, not a calculated tax bill.",
       },
       {
-        q: "When are Fiverr taxes due?",
-        a: "Self-employed earners generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Paying quarterly avoids an IRS underpayment penalty.",
+        q: "Do I still report income without a 1099?",
+        a: "Yes, report taxable income even if no information return arrives. For third-party network payments, the general federal 1099-K threshold is more than $20,000 AND more than 200 transactions. The general 1099-NEC threshold is $2,000 for 2026 compensation, compared with $600 for 2025; state rules, withholding and other exceptions can result in a form below these amounts.",
+      },
+    ],
+    resources: [
+      {
+        label: "Fiverr: official document guidance",
+        href: "https://help.fiverr.com/hc/en-us/articles/9234443621137-Your-earnings-page",
       },
     ],
   },
@@ -806,14 +893,15 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     eyebrow: "Gig Tax Guide",
     title: "Favor Taxes: A Runner's Guide to 1099 Filing & Deductions",
     metaDescription:
-      "How Favor taxes work for Runners: the 1099-NEC, self-employment tax, what to set aside, mileage deductions, and quarterly payments. Not tax advice.",
+      "Favor tax guide: tax documents, income reconciliation, business deductions and 2026 federal rules. Reviewed November 7, 2026.",
     h1: "Favor Taxes: What Every Runner Needs to Know",
     intro:
-      "Favor pays its Runners as independent contractors, so no taxes are withheld from your deliveries. You owe your own federal, state, and self-employment taxes — and because you drive your own vehicle across Texas, mileage is usually your single largest deduction. Here's how Favor taxes work.",
-    formsHeading: "Do you get a 1099 from Favor?",
+      "This guide covers U.S. independent-contractor work through Favor. Reconcile earnings and expenses for the correct tax year; employee wages and non-U.S. accounts follow different rules.",
+    formsHeading: "Tax documents and income records for Favor",
     formsBody: [
-      "If you earned $600 or more running for Favor in a year, you'll receive a 1099-NEC reporting your nonemployee compensation, delivered through Favor's payment processor.",
-      "If you earned less you may not get a form, but you still have to report the income. The IRS expects you to report all earnings whether or not a 1099 was issued.",
+      "Favor's Runner tax page specifies Form 1099-K through Stripe and says it does not issue Runner Forms 1099-NEC or 1099-MISC. The page covers 2025. Use the IRS test below for the federal threshold; the platform page's boundary wording is not a replacement for IRS rules.",
+      "Favor bases its earnings subtotal on deposit dates rather than order-completion dates. Reconcile the Runner app's annual earnings with deposits and any tax document, especially across year-end.",
+      "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
     ],
     extraDeductions: [
       {
@@ -823,24 +911,30 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     ],
     faqs: [
       {
-        q: "Does Favor take out taxes for me?",
-        a: "No. Favor pays Runners as independent contractors and withholds nothing. You're responsible for setting aside and paying your own income tax and the 15.3% self-employment tax.",
+        q: "Where do I find Favor tax documents?",
+        a: "Favor's Runner tax page specifies Form 1099-K through Stripe and says it does not issue Runner Forms 1099-NEC or 1099-MISC. The page covers 2025. Use the IRS test below for the federal threshold; the platform page's boundary wording is not a replacement for IRS rules.",
       },
       {
-        q: "How much should I set aside for Favor taxes?",
-        a: SET_ASIDE_ANSWER,
+        q: "Is the amount on a 1099 my taxable profit?",
+        a: "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
       },
       {
-        q: "Do I get a 1099 from Favor?",
-        a: "If you earned $600 or more, Favor issues a 1099-NEC through its payment processor. Below that you may not receive a form, but you must still report the income.",
+        q: "Which expenses can I claim?",
+        a: "Only eligible ordinary and necessary business expenses supported by records. Separate personal use, refunds and reimbursements. Inventory or equipment may require cost-of-goods-sold or depreciation treatment rather than an immediate deduction.",
       },
       {
-        q: "What can Favor Runners deduct?",
-        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while delivering. You can also deduct the business-use share of your phone, insulated bags, tolls, and parking.",
+        q: "How much should I set aside?",
+        a: "A reserve should reflect household income, withholding, credits and deductible business costs, plus applicable state and local taxes. A fixed 25–30% is a planning assumption that may be too high or too low, not a calculated tax bill.",
       },
       {
-        q: "When are Favor taxes due?",
-        a: "Self-employed earners generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Paying quarterly avoids an IRS underpayment penalty.",
+        q: "Do I still report income without a 1099?",
+        a: "Yes, report taxable income even if no information return arrives. For third-party network payments, the general federal 1099-K threshold is more than $20,000 AND more than 200 transactions. The general 1099-NEC threshold is $2,000 for 2026 compensation, compared with $600 for 2025; state rules, withholding and other exceptions can result in a form below these amounts.",
+      },
+    ],
+    resources: [
+      {
+        label: "Favor: official document guidance",
+        href: "https://favor-runners.zendesk.com/hc/en-us/articles/8704378062866-Taxes",
       },
     ],
   },
@@ -852,14 +946,15 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     eyebrow: "Gig Tax Guide",
     title: "Veho Taxes: A Driver's Guide to 1099 Filing & Deductions",
     metaDescription:
-      "How Veho taxes work for drivers: the 1099-NEC, self-employment tax, what to set aside, mileage deductions, and quarterly payments. Not tax advice.",
+      "Veho tax guide: tax documents, income reconciliation, business deductions and 2026 federal rules. Reviewed November 7, 2026.",
     h1: "Veho Taxes: What Every Driver Needs to Know",
     intro:
-      "Veho pays its drivers as independent contractors, so no taxes are withheld from your routes. You owe your own federal, state, and self-employment taxes — and the miles you drive while delivering packages are deductible if you track them. Here's how Veho taxes work.",
-    formsHeading: "Do you get a 1099 from Veho?",
+      "This guide covers U.S. independent-contractor work through Veho. Reconcile earnings and expenses for the correct tax year; employee wages and non-U.S. accounts follow different rules.",
+    formsHeading: "Tax documents and income records for Veho",
     formsBody: [
-      "If you earned $600 or more driving for Veho in a year, you'll receive a 1099-NEC reporting your nonemployee compensation, delivered through Veho's payment processor.",
-      "If you earned less you may not get a form, but you still have to report the income. The IRS expects you to report all earnings whether or not a 1099 was issued.",
+      "Veho's payment provider Routable describes automated 1099 filing for Veho. The reviewed public material does not specify a current 2026 driver form subtype or delivery deadline. Request the applicable-year document through Veho's official driver support instead of assuming all delivery platforms use the same form.",
+      "Retain route payments, adjustments and payout statements. A missing 1099 does not remove the obligation to report business income; ask the issuer to correct discrepancies rather than changing your records to match an incorrect form.",
+      "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
     ],
     extraDeductions: [
       {
@@ -869,43 +964,52 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     ],
     faqs: [
       {
-        q: "Does Veho take out taxes for me?",
-        a: "No. Veho pays drivers as independent contractors and withholds nothing. You're responsible for setting aside and paying your own income tax and the 15.3% self-employment tax.",
+        q: "Where do I find Veho tax documents?",
+        a: "Veho's payment provider Routable describes automated 1099 filing for Veho. The reviewed public material does not specify a current 2026 driver form subtype or delivery deadline. Request the applicable-year document through Veho's official driver support instead of assuming all delivery platforms use the same form.",
       },
       {
-        q: "How much should I set aside for Veho taxes?",
-        a: SET_ASIDE_ANSWER,
+        q: "Is the amount on a 1099 my taxable profit?",
+        a: "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
       },
       {
-        q: "Do I get a 1099 from Veho?",
-        a: "If you earned $600 or more, Veho issues a 1099-NEC through its payment processor. Below that you may not receive a form, but you must still report the income.",
+        q: "Which expenses can I claim?",
+        a: "Only eligible ordinary and necessary business expenses supported by records. Separate personal use, refunds and reimbursements. Inventory or equipment may require cost-of-goods-sold or depreciation treatment rather than an immediate deduction.",
       },
       {
-        q: "What can Veho drivers deduct?",
-        a: "The biggest deduction is business mileage at the IRS standard mileage rate for every mile driven while delivering packages, including between stops. You can also deduct the business-use share of your phone, tolls, parking, and supplies.",
+        q: "How much should I set aside?",
+        a: "A reserve should reflect household income, withholding, credits and deductible business costs, plus applicable state and local taxes. A fixed 25–30% is a planning assumption that may be too high or too low, not a calculated tax bill.",
       },
       {
-        q: "When are Veho taxes due?",
-        a: "Self-employed earners generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Paying quarterly avoids an IRS underpayment penalty.",
+        q: "Do I still report income without a 1099?",
+        a: "Yes, report taxable income even if no information return arrives. For third-party network payments, the general federal 1099-K threshold is more than $20,000 AND more than 200 transactions. The general 1099-NEC threshold is $2,000 for 2026 compensation, compared with $600 for 2025; state rules, withholding and other exceptions can result in a form below these amounts.",
+      },
+    ],
+    resources: [
+      {
+        label:
+          "Veho: official document guidance (review limitations explained above)",
+        href: "https://www.routable.com/customers/veho-api/",
       },
     ],
   },
   {
     slug: "dolly-taxes",
-    platform: "Dolly",
+    platform: "Dolly / Taskrabbit Delivery",
     workerNoun: "Helpers",
     workType: "moving and hauling",
     eyebrow: "Gig Tax Guide",
-    title: "Dolly Taxes: A Helper's Guide to 1099 Filing & Deductions",
+    title: "Dolly / Taskrabbit Delivery Taxes: Forms & Business Expenses",
     metaDescription:
-      "How Dolly taxes work for Helpers: the 1099, self-employment tax, what to set aside, equipment and mileage deductions, and quarterly payments. Not tax advice.",
-    h1: "Dolly Taxes: What Every Helper Needs to Know",
+      "Dolly / Taskrabbit Delivery tax guide: tax documents, income reconciliation, business deductions and 2026 federal rules. Reviewed November 7, 2026.",
+    h1: "Dolly / Taskrabbit Delivery Taxes",
     intro:
-      "Dolly pays its Helpers as independent contractors, so no taxes are withheld from your jobs. You owe your own federal, state, and self-employment taxes — and because you use your own vehicle and moving gear, your mileage and equipment are usually your biggest deductions. Here's how Dolly taxes work.",
-    formsHeading: "Do you get a 1099 from Dolly?",
+      "This guide covers U.S. independent-contractor work through Dolly / Taskrabbit Delivery. Reconcile earnings and expenses for the correct tax year; employee wages and non-U.S. accounts follow different rules.",
+    formsHeading:
+      "Tax documents and income records for Dolly / Taskrabbit Delivery",
     formsBody: [
-      "If you earned enough to meet the reporting threshold, Dolly issues a 1099 through its payment processor reporting your earnings. Dolly emails instructions for retrieving your tax documents.",
-      "If you earned below the threshold you may not get a form — but you still have to report the income. The IRS expects you to report all earnings whether or not a 1099 was issued.",
+      "Dolly has been rebranded as Taskrabbit Delivery. Taskrabbit's 2026 transition guidance says Helpers and Hands continue through the Helper app under new platform terms. The public transition FAQ does not confirm the 2026 tax-form subtype or issuer arrangement.",
+      "Keep pre- and post-transition payout records and obtain the forms for each applicable issuer. Do not assume Taskrabbit marketplace Taskers' 1099-K instructions automatically describe Taskrabbit Delivery Helpers' documents.",
+      "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
     ],
     extraDeductions: [
       {
@@ -919,24 +1023,31 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     ],
     faqs: [
       {
-        q: "Does Dolly take out taxes for me?",
-        a: "No. Dolly pays Helpers as independent contractors and withholds nothing. You're responsible for setting aside and paying your own income tax and the 15.3% self-employment tax.",
+        q: "Where do I find Dolly / Taskrabbit Delivery tax documents?",
+        a: "Dolly has been rebranded as Taskrabbit Delivery. Taskrabbit's 2026 transition guidance says Helpers and Hands continue through the Helper app under new platform terms. The public transition FAQ does not confirm the 2026 tax-form subtype or issuer arrangement.",
       },
       {
-        q: "How much should I set aside for Dolly taxes?",
-        a: SET_ASIDE_ANSWER,
+        q: "Is the amount on a 1099 my taxable profit?",
+        a: "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
       },
       {
-        q: "Do I get a 1099 from Dolly?",
-        a: "If you meet the reporting threshold, Dolly issues a 1099 through its payment processor. Below that you may not receive a form, but you must still report the income to the IRS.",
+        q: "Which expenses can I claim?",
+        a: "Only eligible ordinary and necessary business expenses supported by records. Separate personal use, refunds and reimbursements. Inventory or equipment may require cost-of-goods-sold or depreciation treatment rather than an immediate deduction.",
       },
       {
-        q: "What can Dolly Helpers deduct?",
-        a: "Moving equipment — hand trucks, dollies, blankets, and straps — and the business-use share of your phone are common deductions. Because you drive your own vehicle to jobs, business mileage at the IRS standard mileage rate (or actual vehicle expenses) is usually the largest deduction, along with tolls and parking.",
+        q: "How much should I set aside?",
+        a: "A reserve should reflect household income, withholding, credits and deductible business costs, plus applicable state and local taxes. A fixed 25–30% is a planning assumption that may be too high or too low, not a calculated tax bill.",
       },
       {
-        q: "When are Dolly taxes due?",
-        a: "Self-employed earners generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Paying quarterly avoids an IRS underpayment penalty.",
+        q: "Do I still report income without a 1099?",
+        a: "Yes, report taxable income even if no information return arrives. For third-party network payments, the general federal 1099-K threshold is more than $20,000 AND more than 200 transactions. The general 1099-NEC threshold is $2,000 for 2026 compensation, compared with $600 for 2025; state rules, withholding and other exceptions can result in a form below these amounts.",
+      },
+    ],
+    resources: [
+      {
+        label:
+          "Dolly / Taskrabbit Delivery: official document guidance (review limitations explained above)",
+        href: "https://support.taskrabbit.com/hc/en-us/articles/50010835150107-FAQ-Dolly-is-becoming-Taskrabbit-Delivery",
       },
     ],
   },
@@ -948,14 +1059,15 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     eyebrow: "Gig Tax Guide",
     title: "GoShare Taxes: A Driver's Guide to 1099 Filing & Deductions",
     metaDescription:
-      "How GoShare taxes work for drivers: the 1099-NEC, self-employment tax, equipment and mileage deductions, and quarterly payments. Not tax advice.",
+      "GoShare tax guide: tax documents, income reconciliation, business deductions and 2026 federal rules. Reviewed November 7, 2026.",
     h1: "GoShare Taxes: What Every Driver Needs to Know",
     intro:
-      "GoShare pays its drivers as independent contractors, so no taxes are withheld from your jobs. You owe your own federal, state, and self-employment taxes — and because you supply your own truck or van and moving gear, your mileage and equipment are usually your biggest deductions. Here's how GoShare taxes work.",
-    formsHeading: "Do you get a 1099 from GoShare?",
+      "This guide covers U.S. independent-contractor work through GoShare. Reconcile earnings and expenses for the correct tax year; employee wages and non-U.S. accounts follow different rules.",
+    formsHeading: "Tax documents and income records for GoShare",
     formsBody: [
-      "If you earned $600 or more driving for GoShare in a year, you'll receive a 1099-NEC reporting your nonemployee compensation, delivered through GoShare's payment processor.",
-      "If you earned less you may not get a form, but you still have to report the income. The IRS expects you to report all earnings whether or not a 1099 was issued.",
+      "GoShare's current delivery-professional FAQ identifies Form 1099-K, not 1099-NEC. It also mentions issuance above $600. Treat that as platform guidance requiring confirmation, not the general federal TPSO threshold; platforms can issue forms below the federal minimum.",
+      "Confirm the current tax-year form with GoShare and reconcile project payments, tips, fees and any reimbursements. The payment-transfer service used for deposits does not by itself determine the form type.",
+      "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
     ],
     extraDeductions: [
       {
@@ -969,24 +1081,30 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     ],
     faqs: [
       {
-        q: "Does GoShare take out taxes for me?",
-        a: "No. GoShare pays drivers as independent contractors and withholds nothing. You're responsible for setting aside and paying your own income tax and the 15.3% self-employment tax.",
+        q: "Where do I find GoShare tax documents?",
+        a: "GoShare's current delivery-professional FAQ identifies Form 1099-K, not 1099-NEC. It also mentions issuance above $600. Treat that as platform guidance requiring confirmation, not the general federal TPSO threshold; platforms can issue forms below the federal minimum.",
       },
       {
-        q: "How much should I set aside for GoShare taxes?",
-        a: SET_ASIDE_ANSWER,
+        q: "Is the amount on a 1099 my taxable profit?",
+        a: "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
       },
       {
-        q: "Do I get a 1099 from GoShare?",
-        a: "If you earned $600 or more, GoShare issues a 1099-NEC through its payment processor. Below that you may not receive a form, but you must still report the income.",
+        q: "Which expenses can I claim?",
+        a: "Only eligible ordinary and necessary business expenses supported by records. Separate personal use, refunds and reimbursements. Inventory or equipment may require cost-of-goods-sold or depreciation treatment rather than an immediate deduction.",
       },
       {
-        q: "What can GoShare drivers deduct?",
-        a: "Business mileage at the IRS standard mileage rate (or actual truck/van expenses) for every mile driven to and during jobs is usually the largest deduction. You can also deduct moving equipment like hand trucks and blankets, the business-use share of your phone, tolls, and parking.",
+        q: "How much should I set aside?",
+        a: "A reserve should reflect household income, withholding, credits and deductible business costs, plus applicable state and local taxes. A fixed 25–30% is a planning assumption that may be too high or too low, not a calculated tax bill.",
       },
       {
-        q: "When are GoShare taxes due?",
-        a: "Self-employed earners generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Paying quarterly avoids an IRS underpayment penalty.",
+        q: "Do I still report income without a 1099?",
+        a: "Yes, report taxable income even if no information return arrives. For third-party network payments, the general federal 1099-K threshold is more than $20,000 AND more than 200 transactions. The general 1099-NEC threshold is $2,000 for 2026 compensation, compared with $600 for 2025; state rules, withholding and other exceptions can result in a form below these amounts.",
+      },
+    ],
+    resources: [
+      {
+        label: "GoShare: official document guidance",
+        href: "https://goshare.co/drivers/faq/",
       },
     ],
   },
@@ -998,14 +1116,15 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     eyebrow: "Gig Tax Guide",
     title: "Wag Taxes: A Dog Walker's Guide to 1099-K & Deductions",
     metaDescription:
-      "How Wag taxes work for walkers and sitters: the 1099-K, self-employment tax, pet-care and mileage deductions, and quarterly payments. Not tax advice.",
+      "Wag tax guide: tax documents, income reconciliation, business deductions and 2026 federal rules. Reviewed November 7, 2026.",
     h1: "Wag Taxes: What Every Walker and Sitter Needs to Know",
     intro:
-      "Wag treats walkers and sitters as independent contractors, so no taxes are withheld from your earnings. You owe your own federal, state, and self-employment taxes on your net income — and pet supplies, mileage to clients, and even part of your home (if you board) can be deductible. Here's how Wag taxes work.",
-    formsHeading: "Do Wag walkers and sitters get a 1099?",
+      "This guide covers U.S. independent-contractor work through Wag. Reconcile earnings and expenses for the correct tax year; employee wages and non-U.S. accounts follow different rules.",
+    formsHeading: "Tax documents and income records for Wag",
     formsBody: [
-      "Wag processes payments as a third-party platform, so it generally reports earnings on a Form 1099-K when you meet the IRS reporting threshold for that year. The 1099-K reflects gross earnings before Wag's service fee.",
-      "Reporting thresholds for the 1099-K have changed in recent years, so you may not always receive a form. Either way, you must report all of your Wag income — and you deduct Wag's service fee as a business expense.",
+      "Wag! provides a tax-document support article for eligible pet caregivers and directs them to verify the information in their Stripe account. The readable guidance reviewed concerns the 2025 cycle; a current 2026 form subtype and delivery schedule were not independently confirmed.",
+      "Use Wag! support and the tax document actually issued to identify the reporting form. Reconcile completed services, tips, fees and adjustments; do not infer the form type solely from another pet-care platform.",
+      "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
     ],
     extraDeductions: [
       {
@@ -1014,7 +1133,7 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
       },
       {
         label: "Wag service fees",
-        desc: "The percentage Wag takes from each booking is a deductible business expense.",
+        desc: "Reconcile fees actually charged to your business and included in the income being reported; do not deduct customer-only charges or subtract the same fee twice.",
       },
       {
         label: "Home use for boarding",
@@ -1023,24 +1142,31 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     ],
     faqs: [
       {
-        q: "Does Wag take out taxes for me?",
-        a: "No. Wag pays walkers and sitters as independent contractors and withholds nothing. You're responsible for setting aside and paying your own income tax and the 15.3% self-employment tax.",
+        q: "Where do I find Wag tax documents?",
+        a: "Wag! provides a tax-document support article for eligible pet caregivers and directs them to verify the information in their Stripe account. The readable guidance reviewed concerns the 2025 cycle; a current 2026 form subtype and delivery schedule were not independently confirmed.",
       },
       {
-        q: "How much should I set aside for Wag taxes?",
-        a: SET_ASIDE_ANSWER,
+        q: "Is the amount on a 1099 my taxable profit?",
+        a: "A 1099 reporting threshold is not a tax-free allowance. Reconcile income using transaction records and tax forms, deduct only eligible documented business expenses, and avoid adding bank deposits to income already reported from the same work.",
       },
       {
-        q: "Do I get a 1099 from Wag?",
-        a: "Wag typically issues a 1099-K (it processes payments as a third-party platform) when you meet the IRS threshold for the year. Thresholds have changed recently, so you may not always get one — but you must report all income regardless.",
+        q: "Which expenses can I claim?",
+        a: "Only eligible ordinary and necessary business expenses supported by records. Separate personal use, refunds and reimbursements. Inventory or equipment may require cost-of-goods-sold or depreciation treatment rather than an immediate deduction.",
       },
       {
-        q: "What can Wag walkers and sitters deduct?",
-        a: "Pet-care supplies, Wag's service fees, and the business-use share of your phone are common deductions. Mileage driven to walks and client homes is deductible at the IRS standard mileage rate, and if you board pets in your home, part of your home expenses may qualify (the rules are strict — get advice).",
+        q: "How much should I set aside?",
+        a: "A reserve should reflect household income, withholding, credits and deductible business costs, plus applicable state and local taxes. A fixed 25–30% is a planning assumption that may be too high or too low, not a calculated tax bill.",
       },
       {
-        q: "When are Wag taxes due?",
-        a: "Self-employed earners generally pay estimated taxes four times a year — around April 15, June 15, September 15, and January 15 — and file an annual return by April 15. Paying quarterly avoids an IRS underpayment penalty.",
+        q: "Do I still report income without a 1099?",
+        a: "Yes, report taxable income even if no information return arrives. For third-party network payments, the general federal 1099-K threshold is more than $20,000 AND more than 200 transactions. The general 1099-NEC threshold is $2,000 for 2026 compensation, compared with $600 for 2025; state rules, withholding and other exceptions can result in a form below these amounts.",
+      },
+    ],
+    resources: [
+      {
+        label:
+          "Wag: official document guidance (review limitations explained above)",
+        href: "https://support.wagwalking.com/en_us/when-and-how-will-i-receive-my-1099-tax-documentation-pcg-r1EIb8IN5",
       },
     ],
   },
@@ -1052,25 +1178,25 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     eyebrow: "Seller Tax Guide",
     title: "Etsy Taxes: A Seller's Guide to the 1099-K, COGS & Deductions",
     metaDescription:
-      "How Etsy seller taxes work: the 1099-K, hobby vs business, deducting materials and fees as a self-employed maker, and quarterly taxes. Not tax advice.",
+      "Etsy tax guide: tax documents, income reconciliation, business deductions and 2026 federal rules. Reviewed November 7, 2026.",
     h1: "Etsy Taxes: What Every Seller Needs to Know",
     intro:
-      "Selling on Etsy can be a hobby, a side hustle, or a full business — and which one you are decides how you're taxed. Etsy doesn't withhold taxes, and the 1099-K it may send reports gross sales, not profit. Here's how Etsy taxes work once you're selling as a business.",
-    formsHeading: "Do you get a 1099-K — and is your Etsy income taxable?",
+      "This guide covers U.S. Etsy sellers. Separate business sales from personal-item sales before calculating taxable income. Keep cost, sales, fee and refund records for the year involved.",
+    formsHeading: "Tax documents and income records for Etsy",
     formsBody: [
-      "Etsy processes buyer payments, so it issues a Form 1099-K when your sales reach the IRS reporting threshold for the year. That threshold has changed in recent years, so you might get a 1099-K for fairly modest sales — or not get one and still owe tax. A 1099-K reports gross sales before fees and refunds, so it's a starting point, not your taxable profit.",
-      "Whether you owe tax depends on what you're doing. Casually selling your own used items for less than you paid is generally not taxable (and that loss isn't deductible). But making goods to sell — as most Etsy sellers do — is a business: you report it on Schedule C, deduct your cost of materials and expenses, and owe income tax plus the 15.3% self-employment tax on the net profit. Confirm your situation with the IRS.",
+      "Etsy issues Form 1099-K for reportable Etsy Payments activity. The help page explains the 2025 cycle, state thresholds and tax-information matching across shops. Use your payment-account records to reconcile the gross form amount to fees, refunds and business receipts.",
+      "Selling a personal item for less than its cost generally creates no taxable gain, and the personal loss is not deductible. A personal item sold at a gain is generally a taxable capital gain. A selling business generally reports profit and eligible expenses on Schedule C and evaluates self-employment tax. Hobby activity has different expense rules; receiving a 1099-K does not determine which category applies.",
     ],
     vehicleBased: false,
     sellerFraming: true,
     deductionsOverride: [
       {
         label: "Cost of goods sold (materials)",
-        desc: "The materials and supplies that go into the items you make are deducted against your sales as COGS — keep records of what each piece costs you.",
+        desc: "Track business inventory and production costs. Use the applicable inventory/cost-of-goods-sold method; do not automatically deduct every unsold purchase immediately.",
       },
       {
         label: "Etsy fees",
-        desc: "Etsy's listing, transaction, payment-processing, and optional Offsite Ads fees are deductible business expenses.",
+        desc: "Reconcile fees actually charged to your business and included in the income being reported; do not deduct customer-only charges or subtract the same fee twice.",
       },
       {
         label: "Shipping & postage",
@@ -1091,24 +1217,34 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     ],
     faqs: [
       {
-        q: "Does Etsy take out taxes for me?",
-        a: "No. Etsy doesn't withhold taxes. If you sell as a business, you're responsible for income tax plus the 15.3% self-employment tax on your net profit (sales minus your cost of materials and expenses).",
+        q: "Where do I find Etsy tax documents?",
+        a: "Etsy issues Form 1099-K for reportable Etsy Payments activity. The help page explains the 2025 cycle, state thresholds and tax-information matching across shops. Use your payment-account records to reconcile the gross form amount to fees, refunds and business receipts.",
       },
       {
-        q: "Do I get a 1099-K from Etsy?",
-        a: "Etsy issues a 1099-K when your sales reach the IRS reporting threshold for the year (the threshold has changed recently, so you may get one for modest sales). It reports gross sales before fees — report all of your business income whether or not a form arrives.",
+        q: "Is the amount on a 1099 my taxable profit?",
+        a: "Selling a personal item for less than its cost generally creates no taxable gain, and the personal loss is not deductible. A personal item sold at a gain is generally a taxable capital gain. A selling business generally reports profit and eligible expenses on Schedule C and evaluates self-employment tax. Hobby activity has different expense rules; receiving a 1099-K does not determine which category applies.",
       },
       {
-        q: "Is selling on Etsy taxable income?",
-        a: "If you're running a business — making items to sell for profit — yes, the net profit is taxable and reported on Schedule C. Casually selling your own used possessions for less than you paid generally isn't taxable, and that loss isn't deductible. Confirm your situation with the IRS.",
+        q: "Which expenses can I claim?",
+        a: "Only eligible ordinary and necessary business expenses supported by records. Separate personal use, refunds and reimbursements. Inventory or equipment may require cost-of-goods-sold or depreciation treatment rather than an immediate deduction.",
       },
       {
-        q: "What can Etsy sellers deduct?",
-        a: "Your cost of materials (COGS), Etsy's fees, shipping and postage, packaging, a qualifying home studio, and tools and equipment. Good records of what each item costs you to make are what make these deductions stick.",
+        q: "How much should I set aside?",
+        a: "A reserve should reflect household income, withholding, credits and deductible business costs, plus applicable state and local taxes. A fixed 25–30% is a planning assumption that may be too high or too low, not a calculated tax bill.",
       },
       {
-        q: "How much should Etsy sellers set aside for taxes?",
-        a: "A common rule of thumb is 25–30% of your net profit (sales minus cost of goods and expenses) for income tax plus the 15.3% self-employment tax — your exact rate depends on your total income and state. Use the Tax Set-Aside calculator for a tailored number.",
+        q: "Do I still report income without a 1099?",
+        a: "Yes, report taxable income even if no information return arrives. For third-party network payments, the general federal 1099-K threshold is more than $20,000 AND more than 200 transactions. The general 1099-NEC threshold is $2,000 for 2026 compensation, compared with $600 for 2025; state rules, withholding and other exceptions can result in a form below these amounts.",
+      },
+    ],
+    resources: [
+      {
+        label: "Etsy: official document guidance",
+        href: "https://help.etsy.com/hc/en-us/articles/360000336447-What-Do-I-Need-to-Know-About-My-1099-K-Tax-Form?segment=selling",
+      },
+      {
+        label: "IRS: reporting business and personal-item sales",
+        href: "https://www.irs.gov/businesses/what-to-do-with-form-1099-k",
       },
     ],
   },
@@ -1120,25 +1256,25 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     eyebrow: "Seller Tax Guide",
     title: "eBay Taxes: A Reseller's Guide to the 1099-K & Deductions",
     metaDescription:
-      "How eBay taxes work for resellers: the 1099-K, hobby vs business, cost of goods, deductible fees and shipping, and quarterly taxes. Not tax advice.",
+      "eBay tax guide: tax documents, income reconciliation, business deductions and 2026 federal rules. Reviewed November 7, 2026.",
     h1: "eBay Taxes: What Every Seller Needs to Know",
     intro:
-      "How you're taxed on eBay depends on whether you're cleaning out your closet or running a resale business. eBay doesn't withhold taxes, and the 1099-K it may send reports gross sales, not profit. Here's how eBay taxes work once you're selling as a business.",
-    formsHeading: "Do you get a 1099-K — and is your eBay income taxable?",
+      "This guide covers U.S. eBay sellers. Separate business sales from personal-item sales before calculating taxable income. Keep cost, sales, fee and refund records for the year involved.",
+    formsHeading: "Tax documents and income records for eBay",
     formsBody: [
-      "eBay processes buyer payments, so it issues a Form 1099-K when your sales reach the IRS reporting threshold for the year. That threshold has changed in recent years, so you might receive a 1099-K for modest sales — or not get one and still owe tax. The 1099-K shows gross sales before fees, shipping, and refunds, so it isn't your taxable profit.",
-      "Whether you owe tax depends on what you're doing. Selling your own used personal items for less than you paid is generally not taxable (and the loss isn't deductible). But buying items to resell for profit is a business: you report it on Schedule C, deduct your cost of goods and expenses, and owe income tax plus the 15.3% self-employment tax on the net profit. Confirm your situation with the IRS.",
+      "eBay provides Form 1099-K and a detailed report through Seller Hub or My eBay when applicable. Its current guidance says gross payments are before adjustments such as fees and refunds, but exclude sales tax and canceled transactions. Reconcile the detailed report rather than assuming gross sales equal bank deposits.",
+      "Selling a personal item for less than its cost generally creates no taxable gain, and the personal loss is not deductible. A personal item sold at a gain is generally a taxable capital gain. A selling business generally reports profit and eligible expenses on Schedule C and evaluates self-employment tax. Hobby activity has different expense rules; receiving a 1099-K does not determine which category applies.",
     ],
     vehicleBased: false,
     sellerFraming: true,
     deductionsOverride: [
       {
         label: "Cost of goods sold (COGS)",
-        desc: "What you paid for the items you resold is subtracted from your sales as COGS — keep receipts and records of each item's cost.",
+        desc: "Track business inventory and production costs. Use the applicable inventory/cost-of-goods-sold method; do not automatically deduct every unsold purchase immediately.",
       },
       {
         label: "eBay & payment fees",
-        desc: "eBay's final-value fees, listing fees, and payment-processing fees are deductible business expenses.",
+        desc: "Reconcile fees actually charged to your business and included in the income being reported; do not deduct customer-only charges or subtract the same fee twice.",
       },
       {
         label: "Shipping & postage",
@@ -1150,33 +1286,43 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
       },
       {
         label: "Home office & storage",
-        desc: "The part of your home used regularly and exclusively to store inventory or run the business may qualify.",
+        desc: "A qualifying space generally must be used regularly and exclusively for the business. Occasional work at a personal-use desk is not enough.",
       },
       {
         label: "Sourcing & drop-off mileage",
-        desc: "Miles driven to source inventory or drop off shipments are deductible at the IRS standard mileage rate.",
+        desc: "Document eligible business travel. Exclude personal trips and ordinary commuting; app activity alone does not establish a deduction.",
       },
     ],
     faqs: [
       {
-        q: "Does eBay take out taxes for me?",
-        a: "No. eBay doesn't withhold taxes. If you sell as a business, you owe income tax plus the 15.3% self-employment tax on your net profit (sales minus cost of goods and expenses).",
+        q: "Where do I find eBay tax documents?",
+        a: "eBay provides Form 1099-K and a detailed report through Seller Hub or My eBay when applicable. Its current guidance says gross payments are before adjustments such as fees and refunds, but exclude sales tax and canceled transactions. Reconcile the detailed report rather than assuming gross sales equal bank deposits.",
       },
       {
-        q: "Do I get a 1099-K from eBay?",
-        a: "eBay issues a 1099-K when your sales reach the IRS reporting threshold for the year (the threshold has changed recently). It reports gross sales before fees and shipping — report all of your business income whether or not a form arrives.",
+        q: "Is the amount on a 1099 my taxable profit?",
+        a: "Selling a personal item for less than its cost generally creates no taxable gain, and the personal loss is not deductible. A personal item sold at a gain is generally a taxable capital gain. A selling business generally reports profit and eligible expenses on Schedule C and evaluates self-employment tax. Hobby activity has different expense rules; receiving a 1099-K does not determine which category applies.",
       },
       {
-        q: "Is selling on eBay taxable income?",
-        a: "Reselling for profit is a taxable business reported on Schedule C. Selling your own used belongings for less than you paid generally isn't taxable, and that loss isn't deductible. A 1099-K alone doesn't make income taxable — but you must report and reconcile it. Confirm with the IRS.",
+        q: "Which expenses can I claim?",
+        a: "Only eligible ordinary and necessary business expenses supported by records. Separate personal use, refunds and reimbursements. Inventory or equipment may require cost-of-goods-sold or depreciation treatment rather than an immediate deduction.",
       },
       {
-        q: "What can eBay sellers deduct?",
-        a: "Your cost of goods sold (what you paid for the items), eBay and payment fees, shipping and packaging, a qualifying home office or storage space, and sourcing mileage. Records of each item's cost are essential.",
+        q: "How much should I set aside?",
+        a: "A reserve should reflect household income, withholding, credits and deductible business costs, plus applicable state and local taxes. A fixed 25–30% is a planning assumption that may be too high or too low, not a calculated tax bill.",
       },
       {
-        q: "How much should eBay sellers set aside for taxes?",
-        a: "A common rule of thumb is 25–30% of your net profit (sales minus cost of goods and expenses) for income tax plus the 15.3% self-employment tax — your exact rate depends on your total income and state. Use the Tax Set-Aside calculator for a tailored number.",
+        q: "Do I still report income without a 1099?",
+        a: "Yes, report taxable income even if no information return arrives. For third-party network payments, the general federal 1099-K threshold is more than $20,000 AND more than 200 transactions. The general 1099-NEC threshold is $2,000 for 2026 compensation, compared with $600 for 2025; state rules, withholding and other exceptions can result in a form below these amounts.",
+      },
+    ],
+    resources: [
+      {
+        label: "eBay: official document guidance",
+        href: "https://www.ebay.com/help/selling/fees-credits-invoices/1099k-faqs?id=4794",
+      },
+      {
+        label: "IRS: reporting business and personal-item sales",
+        href: "https://www.irs.gov/businesses/what-to-do-with-form-1099-k",
       },
     ],
   },
@@ -1188,25 +1334,25 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     eyebrow: "Seller Tax Guide",
     title: "Poshmark Taxes: A Seller's Guide to the 1099-K & Deductions",
     metaDescription:
-      "How Poshmark taxes work: the 1099-K, hobby vs business, cost of goods, deductible commission and shipping, and quarterly taxes. Not tax advice.",
+      "Poshmark tax guide: tax documents, income reconciliation, business deductions and 2026 federal rules. Reviewed November 7, 2026.",
     h1: "Poshmark Taxes: What Every Seller Needs to Know",
     intro:
-      "Whether Poshmark is taxable comes down to whether you're reselling your own closet or running a resale business. Poshmark doesn't withhold taxes, and the 1099-K it may send reports gross sales, not profit. Here's how Poshmark taxes work once you're selling as a business.",
-    formsHeading: "Do you get a 1099-K — and is your Poshmark income taxable?",
+      "This guide covers U.S. Poshmark sellers. Separate business sales from personal-item sales before calculating taxable income. Keep cost, sales, fee and refund records for the year involved.",
+    formsHeading: "Tax documents and income records for Poshmark",
     formsBody: [
-      "Poshmark processes buyer payments, so it issues a Form 1099-K when your sales reach the IRS reporting threshold for the year. That threshold has changed in recent years, so you might get a 1099-K for modest sales — or not get one and still owe tax. It reports gross sales before Poshmark's commission and shipping, so it isn't your taxable profit.",
-      "Whether you owe tax depends on what you're doing. Reselling your own used clothing for less than you paid is generally not taxable (and the loss isn't deductible). But buying to resell for profit is a business: you report it on Schedule C, deduct your cost of goods and expenses, and owe income tax plus the 15.3% self-employment tax on the net profit. Confirm your situation with the IRS.",
+      "Poshmark provides available Form 1099-K downloads under its tax-information settings. The current support page covers 2025 forms; follow account instructions for the applicable year and reconcile the form with sales and fee records.",
+      "Selling a personal item for less than its cost generally creates no taxable gain, and the personal loss is not deductible. A personal item sold at a gain is generally a taxable capital gain. A selling business generally reports profit and eligible expenses on Schedule C and evaluates self-employment tax. Hobby activity has different expense rules; receiving a 1099-K does not determine which category applies.",
     ],
     vehicleBased: false,
     sellerFraming: true,
     deductionsOverride: [
       {
         label: "Cost of goods sold (COGS)",
-        desc: "What you paid for the clothing you resold is subtracted from your sales as COGS — keep records of each item's cost.",
+        desc: "Track business inventory and production costs. Use the applicable inventory/cost-of-goods-sold method; do not automatically deduct every unsold purchase immediately.",
       },
       {
         label: "Poshmark commission",
-        desc: "The commission Poshmark takes from each sale is a deductible business expense.",
+        desc: "Reconcile fees actually charged to your business and included in the income being reported; do not deduct customer-only charges or subtract the same fee twice.",
       },
       {
         label: "Shipping (if you cover it)",
@@ -1218,33 +1364,43 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
       },
       {
         label: "Home office & storage",
-        desc: "The part of your home used regularly and exclusively to store inventory or run the business may qualify.",
+        desc: "A qualifying space generally must be used regularly and exclusively for the business. Occasional work at a personal-use desk is not enough.",
       },
       {
         label: "Sourcing mileage",
-        desc: "Miles driven to source inventory (thrift runs, estate sales) are deductible at the IRS standard mileage rate.",
+        desc: "Document eligible business travel. Exclude personal trips and ordinary commuting; app activity alone does not establish a deduction.",
       },
     ],
     faqs: [
       {
-        q: "Does Poshmark take out taxes for me?",
-        a: "No. Poshmark doesn't withhold income tax. If you sell as a business, you owe income tax plus the 15.3% self-employment tax on your net profit (sales minus cost of goods and expenses).",
+        q: "Where do I find Poshmark tax documents?",
+        a: "Poshmark provides available Form 1099-K downloads under its tax-information settings. The current support page covers 2025 forms; follow account instructions for the applicable year and reconcile the form with sales and fee records.",
       },
       {
-        q: "Do I get a 1099-K from Poshmark?",
-        a: "Poshmark issues a 1099-K when your sales reach the IRS reporting threshold for the year (the threshold has changed recently). It reports gross sales before commission and shipping — report all of your business income whether or not a form arrives.",
+        q: "Is the amount on a 1099 my taxable profit?",
+        a: "Selling a personal item for less than its cost generally creates no taxable gain, and the personal loss is not deductible. A personal item sold at a gain is generally a taxable capital gain. A selling business generally reports profit and eligible expenses on Schedule C and evaluates self-employment tax. Hobby activity has different expense rules; receiving a 1099-K does not determine which category applies.",
       },
       {
-        q: "Is selling on Poshmark taxable income?",
-        a: "Reselling for profit is a taxable business on Schedule C. Selling your own used clothing for less than you paid generally isn't taxable, and that loss isn't deductible. A 1099-K alone doesn't make income taxable — but you must report and reconcile it. Confirm with the IRS.",
+        q: "Which expenses can I claim?",
+        a: "Only eligible ordinary and necessary business expenses supported by records. Separate personal use, refunds and reimbursements. Inventory or equipment may require cost-of-goods-sold or depreciation treatment rather than an immediate deduction.",
       },
       {
-        q: "What can Poshmark sellers deduct?",
-        a: "Your cost of goods (what you paid for items), Poshmark's commission, any shipping you cover, packaging, a qualifying home office or storage, and sourcing mileage. Records of each item's cost are essential.",
+        q: "How much should I set aside?",
+        a: "A reserve should reflect household income, withholding, credits and deductible business costs, plus applicable state and local taxes. A fixed 25–30% is a planning assumption that may be too high or too low, not a calculated tax bill.",
       },
       {
-        q: "How much should Poshmark sellers set aside for taxes?",
-        a: "A common rule of thumb is 25–30% of your net profit (sales minus cost of goods and expenses) for income tax plus the 15.3% self-employment tax — your exact rate depends on your total income and state. Use the Tax Set-Aside calculator for a tailored number.",
+        q: "Do I still report income without a 1099?",
+        a: "Yes, report taxable income even if no information return arrives. For third-party network payments, the general federal 1099-K threshold is more than $20,000 AND more than 200 transactions. The general 1099-NEC threshold is $2,000 for 2026 compensation, compared with $600 for 2025; state rules, withholding and other exceptions can result in a form below these amounts.",
+      },
+    ],
+    resources: [
+      {
+        label: "Poshmark: official document guidance",
+        href: "https://support.poshmark.com/s/article/How-to-access-1099k?language=en_US",
+      },
+      {
+        label: "IRS: reporting business and personal-item sales",
+        href: "https://www.irs.gov/businesses/what-to-do-with-form-1099-k",
       },
     ],
   },
@@ -1256,25 +1412,26 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     eyebrow: "Seller Tax Guide",
     title: "Mercari Taxes: A Seller's Guide to the 1099-K & Deductions",
     metaDescription:
-      "How Mercari taxes work for sellers: the 1099-K, hobby vs business, cost of goods, deductible fees, and quarterly taxes. Not tax advice.",
+      "Mercari tax guide: tax documents, income reconciliation, business deductions and 2026 federal rules. Reviewed November 7, 2026.",
     h1: "Mercari Taxes: What Every Seller Needs to Know",
     intro:
-      "Whether Mercari is taxable depends on whether you're selling off your own things or running a resale business. Mercari doesn't withhold taxes, and the 1099-K it may send reports gross sales, not profit. Here's how Mercari taxes work once you're selling as a business.",
-    formsHeading: "Do you get a 1099-K — and is your Mercari income taxable?",
+      "This guide covers U.S. Mercari sellers. Separate business sales from personal-item sales before calculating taxable income. Keep cost, sales, fee and refund records for the year involved.",
+    formsHeading: "Tax documents and income records for Mercari",
     formsBody: [
-      "Mercari processes buyer payments, so it issues a Form 1099-K when your sales reach the IRS reporting threshold for the year. That threshold has changed in recent years, so you might receive a 1099-K for modest sales — or not get one and still owe tax. It reports gross sales before fees and shipping, so it isn't your taxable profit.",
-      "Whether you owe tax depends on what you're doing. Selling your own used items for less than you paid is generally not taxable (and the loss isn't deductible). But buying to resell for profit is a business: you report it on Schedule C, deduct your cost of goods and expenses, and owe income tax plus the 15.3% self-employment tax on the net profit. Confirm your situation with the IRS.",
+      "Mercari's 1099-K guidance reflects the restored federal threshold and notes that state rules may produce reporting below it. Download the Gross Sales Report to reconcile item prices, shipping, fees, sales taxes and adjustments with your form.",
+      "Use Mercari's report for the correct tax year: fee structures and what appears in reporting can change. Marketplace sales-tax collection does not establish your income-tax profit or cover every off-platform sale.",
+      "Selling a personal item for less than its cost generally creates no taxable gain, and the personal loss is not deductible. A personal item sold at a gain is generally a taxable capital gain. A selling business generally reports profit and eligible expenses on Schedule C and evaluates self-employment tax. Hobby activity has different expense rules; receiving a 1099-K does not determine which category applies.",
     ],
     vehicleBased: false,
     sellerFraming: true,
     deductionsOverride: [
       {
         label: "Cost of goods sold (COGS)",
-        desc: "What you paid for the items you resold is subtracted from your sales as COGS — keep records of each item's cost.",
+        desc: "Track business inventory and production costs. Use the applicable inventory/cost-of-goods-sold method; do not automatically deduct every unsold purchase immediately.",
       },
       {
         label: "Mercari selling & processing fees",
-        desc: "Mercari's selling fee and payment-processing fee are deductible business expenses.",
+        desc: "Reconcile fees actually charged to your business and included in the income being reported; do not deduct customer-only charges or subtract the same fee twice.",
       },
       {
         label: "Shipping (if you cover it)",
@@ -1286,33 +1443,43 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
       },
       {
         label: "Home office & storage",
-        desc: "The part of your home used regularly and exclusively to store inventory or run the business may qualify.",
+        desc: "A qualifying space generally must be used regularly and exclusively for the business. Occasional work at a personal-use desk is not enough.",
       },
       {
         label: "Sourcing mileage",
-        desc: "Miles driven to source inventory are deductible at the IRS standard mileage rate.",
+        desc: "Document eligible business travel. Exclude personal trips and ordinary commuting; app activity alone does not establish a deduction.",
       },
     ],
     faqs: [
       {
-        q: "Does Mercari take out taxes for me?",
-        a: "No. Mercari doesn't withhold taxes. If you sell as a business, you owe income tax plus the 15.3% self-employment tax on your net profit (sales minus cost of goods and expenses).",
+        q: "Where do I find Mercari tax documents?",
+        a: "Mercari's 1099-K guidance reflects the restored federal threshold and notes that state rules may produce reporting below it. Download the Gross Sales Report to reconcile item prices, shipping, fees, sales taxes and adjustments with your form.",
       },
       {
-        q: "Do I get a 1099-K from Mercari?",
-        a: "Mercari issues a 1099-K when your sales reach the IRS reporting threshold for the year (the threshold has changed recently). It reports gross sales before fees — report all of your business income whether or not a form arrives.",
+        q: "Is the amount on a 1099 my taxable profit?",
+        a: "Selling a personal item for less than its cost generally creates no taxable gain, and the personal loss is not deductible. A personal item sold at a gain is generally a taxable capital gain. A selling business generally reports profit and eligible expenses on Schedule C and evaluates self-employment tax. Hobby activity has different expense rules; receiving a 1099-K does not determine which category applies.",
       },
       {
-        q: "Is selling on Mercari taxable income?",
-        a: "Reselling for profit is a taxable business on Schedule C. Selling your own used belongings for less than you paid generally isn't taxable, and that loss isn't deductible. A 1099-K alone doesn't make income taxable — but you must report and reconcile it. Confirm with the IRS.",
+        q: "Which expenses can I claim?",
+        a: "Only eligible ordinary and necessary business expenses supported by records. Separate personal use, refunds and reimbursements. Inventory or equipment may require cost-of-goods-sold or depreciation treatment rather than an immediate deduction.",
       },
       {
-        q: "What can Mercari sellers deduct?",
-        a: "Your cost of goods (what you paid for items), Mercari's fees, any shipping you cover, packaging, a qualifying home office or storage, and sourcing mileage. Records of each item's cost are essential.",
+        q: "How much should I set aside?",
+        a: "A reserve should reflect household income, withholding, credits and deductible business costs, plus applicable state and local taxes. A fixed 25–30% is a planning assumption that may be too high or too low, not a calculated tax bill.",
       },
       {
-        q: "How much should Mercari sellers set aside for taxes?",
-        a: "A common rule of thumb is 25–30% of your net profit (sales minus cost of goods and expenses) for income tax plus the 15.3% self-employment tax — your exact rate depends on your total income and state. Use the Tax Set-Aside calculator for a tailored number.",
+        q: "Do I still report income without a 1099?",
+        a: "Yes, report taxable income even if no information return arrives. For third-party network payments, the general federal 1099-K threshold is more than $20,000 AND more than 200 transactions. The general 1099-NEC threshold is $2,000 for 2026 compensation, compared with $600 for 2025; state rules, withholding and other exceptions can result in a form below these amounts.",
+      },
+    ],
+    resources: [
+      {
+        label: "Mercari: official document guidance",
+        href: "https://www.mercari.com/us/help_center/article/163/",
+      },
+      {
+        label: "IRS: reporting business and personal-item sales",
+        href: "https://www.irs.gov/businesses/what-to-do-with-form-1099-k",
       },
     ],
   },
@@ -1324,25 +1491,25 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
     eyebrow: "Seller Tax Guide",
     title: "Depop Taxes: A Seller's Guide to the 1099-K & Deductions",
     metaDescription:
-      "How Depop taxes work for sellers: the 1099-K, hobby vs business, cost of goods, deductible fees and shipping, and quarterly taxes. Not tax advice.",
+      "Depop tax guide: tax documents, income reconciliation, business deductions and 2026 federal rules. Reviewed November 7, 2026.",
     h1: "Depop Taxes: What Every Seller Needs to Know",
     intro:
-      "Whether Depop is taxable depends on whether you're clearing out your wardrobe or running a resale business. Depop doesn't withhold taxes, and the 1099-K it may send reports gross sales, not profit. Here's how Depop taxes work once you're selling as a business.",
-    formsHeading: "Do you get a 1099-K — and is your Depop income taxable?",
+      "This guide covers U.S. Depop sellers. Separate business sales from personal-item sales before calculating taxable income. Keep cost, sales, fee and refund records for the year involved.",
+    formsHeading: "Tax documents and income records for Depop",
     formsBody: [
-      "Depop processes buyer payments, so it issues a Form 1099-K when your sales reach the IRS reporting threshold for the year. That threshold has changed in recent years, so you might get a 1099-K for modest sales — or not get one and still owe tax. It reports gross sales before fees and shipping, so it isn't your taxable profit.",
-      "Whether you owe tax depends on what you're doing. Reselling your own used clothing for less than you paid is generally not taxable (and the loss isn't deductible). But buying or sourcing to resell for profit is a business: you report it on Schedule C, deduct your cost of goods and expenses, and owe income tax plus the 15.3% self-employment tax on the net profit. Confirm your situation with the IRS.",
+      "Depop's U.S. tax-document guide describes Form 1099-K delivery through Stripe Express. Confirm the document year and delivery preference in the official account workflow, then reconcile the form with completed sales, fees, shipping and refunds.",
+      "Selling a personal item for less than its cost generally creates no taxable gain, and the personal loss is not deductible. A personal item sold at a gain is generally a taxable capital gain. A selling business generally reports profit and eligible expenses on Schedule C and evaluates self-employment tax. Hobby activity has different expense rules; receiving a 1099-K does not determine which category applies.",
     ],
     vehicleBased: false,
     sellerFraming: true,
     deductionsOverride: [
       {
         label: "Cost of goods sold (COGS)",
-        desc: "What you paid for the items you resold is subtracted from your sales as COGS — keep records of each item's cost.",
+        desc: "Track business inventory and production costs. Use the applicable inventory/cost-of-goods-sold method; do not automatically deduct every unsold purchase immediately.",
       },
       {
         label: "Depop & payment fees",
-        desc: "Depop's selling fee and payment-processing fee are deductible business expenses.",
+        desc: "Reconcile fees actually charged to your business and included in the income being reported; do not deduct customer-only charges or subtract the same fee twice.",
       },
       {
         label: "Shipping (if you cover it)",
@@ -1354,33 +1521,43 @@ export const PLATFORM_TAX_GUIDES: PlatformTaxGuide[] = [
       },
       {
         label: "Home office & storage",
-        desc: "The part of your home used regularly and exclusively to store inventory or run the business may qualify.",
+        desc: "A qualifying space generally must be used regularly and exclusively for the business. Occasional work at a personal-use desk is not enough.",
       },
       {
         label: "Sourcing mileage",
-        desc: "Miles driven to source inventory (thrift runs, markets) are deductible at the IRS standard mileage rate.",
+        desc: "Document eligible business travel. Exclude personal trips and ordinary commuting; app activity alone does not establish a deduction.",
       },
     ],
     faqs: [
       {
-        q: "Does Depop take out taxes for me?",
-        a: "No. Depop doesn't withhold taxes. If you sell as a business, you owe income tax plus the 15.3% self-employment tax on your net profit (sales minus cost of goods and expenses).",
+        q: "Where do I find Depop tax documents?",
+        a: "Depop's U.S. tax-document guide describes Form 1099-K delivery through Stripe Express. Confirm the document year and delivery preference in the official account workflow, then reconcile the form with completed sales, fees, shipping and refunds.",
       },
       {
-        q: "Do I get a 1099-K from Depop?",
-        a: "Depop issues a 1099-K when your sales reach the IRS reporting threshold for the year (the threshold has changed recently). It reports gross sales before fees — report all of your business income whether or not a form arrives.",
+        q: "Is the amount on a 1099 my taxable profit?",
+        a: "Selling a personal item for less than its cost generally creates no taxable gain, and the personal loss is not deductible. A personal item sold at a gain is generally a taxable capital gain. A selling business generally reports profit and eligible expenses on Schedule C and evaluates self-employment tax. Hobby activity has different expense rules; receiving a 1099-K does not determine which category applies.",
       },
       {
-        q: "Is selling on Depop taxable income?",
-        a: "Reselling for profit is a taxable business on Schedule C. Selling your own used clothing for less than you paid generally isn't taxable, and that loss isn't deductible. A 1099-K alone doesn't make income taxable — but you must report and reconcile it. Confirm with the IRS.",
+        q: "Which expenses can I claim?",
+        a: "Only eligible ordinary and necessary business expenses supported by records. Separate personal use, refunds and reimbursements. Inventory or equipment may require cost-of-goods-sold or depreciation treatment rather than an immediate deduction.",
       },
       {
-        q: "What can Depop sellers deduct?",
-        a: "Your cost of goods (what you paid for items), Depop's fees, any shipping you cover, packaging, a qualifying home office or storage, and sourcing mileage. Records of each item's cost are essential.",
+        q: "How much should I set aside?",
+        a: "A reserve should reflect household income, withholding, credits and deductible business costs, plus applicable state and local taxes. A fixed 25–30% is a planning assumption that may be too high or too low, not a calculated tax bill.",
       },
       {
-        q: "How much should Depop sellers set aside for taxes?",
-        a: "A common rule of thumb is 25–30% of your net profit (sales minus cost of goods and expenses) for income tax plus the 15.3% self-employment tax — your exact rate depends on your total income and state. Use the Tax Set-Aside calculator for a tailored number.",
+        q: "Do I still report income without a 1099?",
+        a: "Yes, report taxable income even if no information return arrives. For third-party network payments, the general federal 1099-K threshold is more than $20,000 AND more than 200 transactions. The general 1099-NEC threshold is $2,000 for 2026 compensation, compared with $600 for 2025; state rules, withholding and other exceptions can result in a form below these amounts.",
+      },
+    ],
+    resources: [
+      {
+        label: "Depop: official document guidance",
+        href: "https://depophelp.zendesk.com/hc/en-gb/articles/10607447026193-Receiving-your-1099-K-from-Stripe",
+      },
+      {
+        label: "IRS: reporting business and personal-item sales",
+        href: "https://www.irs.gov/businesses/what-to-do-with-form-1099-k",
       },
     ],
   },

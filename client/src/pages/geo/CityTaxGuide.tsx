@@ -1,3 +1,5 @@
+import ResourceReview from "@/components/ResourceReview";
+import { TAX_REVIEW } from "@/content/resourceReview";
 import ReadingLayout from "@/components/ReadingLayout";
 import { Link } from "wouter";
 import PageHead, { buildWebPageJsonLd } from "@/components/PageHead";
@@ -26,7 +28,7 @@ const RELATED_TOOLS = [
   {
     label: "Self-Employment Tax Calculator",
     href: "/tools/se-tax-calculator",
-    desc: "Estimate the 15.3% SE tax on net earnings",
+    desc: "Estimate federal self-employment tax",
   },
   {
     label: "IRS Mileage Deduction Calculator",
@@ -133,6 +135,8 @@ export default function CityTaxGuide({ slug }: { slug: string }) {
           </Link>
         </header>
 
+        <ResourceReview slug={guide.slug} tax />
+
         <section className="rounded-xl border bg-card p-6 mb-10 space-y-4">
           <h2 className="text-xl font-semibold">
             How gig taxes work for {guide.cityAdjective} workers
@@ -160,9 +164,9 @@ export default function CityTaxGuide({ slug }: { slug: string }) {
             ))}
           </div>
           <p className="text-sm text-muted-foreground mt-4">
-            This {guide.localTaxName} is a local tax on top of federal and{" "}
-            {guide.state} state tax — the 15.3% federal self-employment tax is
-            the same everywhere, and your state tax is a separate layer.
+            Local taxes have their own bases, exemptions and filing
+            requirements. Check each obligation separately from state and
+            federal tax.
           </p>
           <p className="mt-4 text-sm">
             <Link
@@ -187,9 +191,9 @@ export default function CityTaxGuide({ slug }: { slug: string }) {
             ))}
           </div>
           <p className="text-xs text-muted-foreground mt-4">
-            The same deductions that lower your federal and state tax also lower
-            the net profit your local tax is figured on. Keep a contemporaneous
-            mileage log and save receipts either way.
+            Federal deductions do not automatically reduce every state or local
+            tax. Gross-receipts taxes can apply before expenses. Keep a
+            contemporaneous business mileage log and receipts.
           </p>
         </section>
 
@@ -198,20 +202,13 @@ export default function CityTaxGuide({ slug }: { slug: string }) {
             Quarterly estimated taxes
           </h2>
           <div className="space-y-4 text-muted-foreground leading-relaxed">
+            <p>{TAX_REVIEW.estimates}</p>
+            <p>{TAX_REVIEW.dates}</p>
             <p>
-              Because no tax is withheld from your payouts, the IRS expects you
-              to pay as you go through quarterly estimated payments rather than
-              one lump sum in April. If you expect to owe $1,000 or more in
-              federal tax for the year, paying quarterly avoids an underpayment
-              penalty.
-            </p>
-            <p>
-              Federal estimated payments are generally due around April 15, June
-              15, September 15, and January 15 of the following year.{" "}
-              {guide.state} expects its own state estimates on a comparable
-              schedule, and {guide.city}'s local tax may have its own filing and
-              payment requirements — see the city and state resources below for
-              the exact forms and due dates.
+              State and local payment thresholds, schedules and exceptions
+              differ. Use the specific guidance and official sources above;
+              federal installments do not satisfy a separate jurisdiction's
+              obligation.
             </p>
           </div>
         </section>
@@ -293,9 +290,9 @@ export default function CityTaxGuide({ slug }: { slug: string }) {
             Stop guessing what you owe
           </h2>
           <p className="text-muted-foreground text-sm mb-4">
-            UnifyOne tracks your gig earnings, mileage, and tax set-aside
-            automatically — so quarterly taxes in {guide.city} are never a
-            surprise.
+            Keep earnings, expenses, mileage and reserve assumptions together in
+            UnifyOne. Use official worksheets or a qualified preparer to
+            determine the payments actually due.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link

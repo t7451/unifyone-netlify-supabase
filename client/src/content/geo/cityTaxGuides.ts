@@ -1,16 +1,3 @@
-/**
- * cityTaxGuides.ts — content for the city/local gig-worker tax guide cluster
- * (/new-york-city-gig-worker-taxes, /philadelphia-gig-worker-taxes, …).
- *
- * These extend the state cluster downward to the handful of U.S. cities that
- * levy a LOCAL tax actually reaching a self-employed gig worker's net earnings
- * — not just an employee wage tax. Local rates and thresholds change yearly and
- * the resident-vs-works-in-city rules are nuanced, so copy here states evergreen
- * structure (this tax exists, it's on top of federal + state, who it applies to,
- * where to pay) and links the city/state agency for current numbers. Always
- * qualified, never tax advice.
- */
-
 export interface CityFaq {
   q: string;
   a: string;
@@ -56,49 +43,6 @@ export interface CityTaxGuide {
   faqs: CityFaq[];
 }
 
-// ---- Reusable city / state revenue-agency links -------------------------
-
-const NYC_DOF = {
-  label: "NYC Department of Finance",
-  href: "https://www.nyc.gov/site/finance/index.page",
-};
-const NYS_TAX = {
-  label: "New York State Department of Taxation and Finance",
-  href: "https://www.tax.ny.gov/",
-};
-const PHILLY_REV = {
-  label: "Philadelphia Department of Revenue",
-  href: "https://www.phila.gov/departments/department-of-revenue/",
-};
-const PA_REV = {
-  label: "Pennsylvania Department of Revenue",
-  href: "https://www.revenue.pa.gov/",
-};
-const PORTLAND_REV = {
-  label: "City of Portland Revenue Division (Metro SHS & Multnomah PFA)",
-  href: "https://www.portland.gov/revenue/personal-tax",
-};
-const OR_DOR = {
-  label: "Oregon Department of Revenue",
-  href: "https://www.oregon.gov/dor/",
-};
-const DETROIT_TAX = {
-  label: "Michigan Treasury: Detroit city income tax",
-  href: "https://www.michigan.gov/taxes/city-taxes/detroit",
-};
-const MI_TREASURY = {
-  label: "Michigan Department of Treasury",
-  href: "https://www.michigan.gov/taxes",
-};
-const KCMO_ETAX = {
-  label: "Kansas City, MO: Earnings Tax (E-Tax)",
-  href: "https://www.kcmo.gov/city-hall/departments/finance/earnings-tax",
-};
-const MO_DOR = {
-  label: "Missouri Department of Revenue",
-  href: "https://dor.mo.gov/",
-};
-
 export const CITY_TAX_GUIDES: CityTaxGuide[] = [
   {
     slug: "new-york-city-gig-worker-taxes",
@@ -108,40 +52,49 @@ export const CITY_TAX_GUIDES: CityTaxGuide[] = [
     eyebrow: "City Gig Tax Guide",
     title: "New York City Gig Worker Taxes: NYC Income Tax, UBT & Estimates",
     metaDescription:
-      "New York City gig worker taxes: the NYC resident income tax (and possible UBT) on top of New York State and the 15.3% federal SE tax. Not tax advice.",
+      "New York City gig worker taxes: local filing rules, business-tax exceptions and payment guidance. Reviewed November 7, 2026.",
     h1: "New York City Gig Worker Taxes",
     intro:
-      "Gig work in New York City can carry three layers of income tax — federal, New York State, and New York City itself. On top of the 15.3% federal self-employment tax that every gig worker owes, NYC residents pay a city income tax, and higher earners may even meet a separate business tax. Here's who owes what, and how to keep it straight.",
+      "Independent work in New York City can involve local personal or business taxes as well as state and federal taxes. Residence, business location and the type of income determine which rules apply. This guide separates those obligations for sole proprietors.",
     localTaxName: "NYC personal income tax",
     localHeading: "Does New York City have a local tax for gig workers?",
     localBody: [
-      "Yes — if you live in New York City. NYC levies its own personal income tax on city residents, on top of New York State income tax and the federal 15.3% self-employment tax. Your net gig profit is added to your other income and taxed at your NYC resident rate, and you pay it through your New York State return, which calculates the city tax for residents.",
-      "If you live outside the five boroughs but drive or deliver in the city, you generally do not owe NYC's personal income tax — New York City does not tax nonresidents' income (the old commuter tax was repealed). You would still owe New York State tax as a nonresident on income earned in the state.",
-      "Higher-earning self-employed New Yorkers should also watch for the NYC Unincorporated Business Tax (UBT), which can apply to a sole proprietor's net business income carried on in the city above a threshold (a credit offsets it for many filers). Whether it reaches app-based drivers and where the thresholds fall are nuanced — confirm your situation with the NYC Department of Finance or a tax professional.",
+      "NYC personal income tax applies to city residents and is reported through the New York State return. Working in the city does not by itself make a nonresident subject to NYC resident income tax. New York State sourcing rules still apply.",
+      "NYC Unincorporated Business Tax (UBT) is separate: it can apply to a business carried on in the city by a resident or nonresident. The rate is 4% of allocated taxable business income, subject to exemptions and credits. A filing obligation can exist even when a credit eliminates the tax; check the NYC-202 instructions rather than assuming it concerns only high earners.",
+      "For 2026, self-employed individuals may also owe MCTMT if net earnings allocated to either district zone exceed $150,000. That threshold is determined separately for each individual and zone, even on a joint return. It is not the NYC resident income tax or UBT.",
     ],
     stateGuideSlug: "new-york-gig-worker-taxes",
     stateGuideLabel: "New York gig worker taxes",
-    localResources: [NYC_DOF, NYS_TAX],
+    localResources: [
+      {
+        label: "NY State: NYC, Yonkers and 2026 MCTMT",
+        href: "https://www.tax.ny.gov/pit/file/nyc_yonkers_residents.htm",
+      },
+      {
+        label: "NYC: Unincorporated Business Tax",
+        href: "https://www.nyc.gov/site/finance/business/business-unincorporated-business-tax-ubt.page",
+      },
+    ],
     faqs: [
       {
-        q: "Do New York City gig workers pay a city income tax?",
-        a: "If you're a NYC resident, yes — the city's personal income tax applies to your net gig earnings on top of New York State and federal tax, and you pay it through your New York State return. Nonresidents who only work in the city generally do not owe NYC's personal income tax.",
+        q: "What local taxes can apply in New York City?",
+        a: "NYC personal income tax applies to city residents and is reported through the New York State return. Working in the city does not by itself make a nonresident subject to NYC resident income tax. New York State sourcing rules still apply.",
       },
       {
-        q: "Does NYC tax gig workers who don't live in the city?",
-        a: "Generally no. New York City does not tax nonresidents' income — the old commuter tax was repealed — so if you live outside the five boroughs you typically owe no NYC personal income tax, though you would still owe New York State tax as a nonresident on income earned in the state.",
+        q: "What separate business filing should I check?",
+        a: "NYC Unincorporated Business Tax (UBT) is separate: it can apply to a business carried on in the city by a resident or nonresident. The rate is 4% of allocated taxable business income, subject to exemptions and credits. A filing obligation can exist even when a credit eliminates the tax; check the NYC-202 instructions rather than assuming it concerns only high earners.",
       },
       {
-        q: "What is the NYC Unincorporated Business Tax (UBT)?",
-        a: "The UBT is a New York City tax on unincorporated businesses (including sole proprietors) carrying on business in the city, applying to net business income above a threshold, with a credit that offsets it for many filers. Whether it applies to your gig work is nuanced — confirm with the NYC Department of Finance.",
+        q: "What other local rules matter?",
+        a: "For 2026, self-employed individuals may also owe MCTMT if net earnings allocated to either district zone exceed $150,000. That threshold is determined separately for each individual and zone, even on a joint return. It is not the NYC resident income tax or UBT.",
       },
       {
-        q: "How do NYC residents pay the city income tax?",
-        a: "For most residents the New York City personal income tax is calculated and paid as part of your New York State income tax return — there's no separate city return for it. The Unincorporated Business Tax, if it applies to you, is filed separately with the city.",
+        q: "How much should I reserve for taxes?",
+        a: "A reserve should reflect household income, withholding, credits and deductible business costs, plus applicable state and local taxes. A fixed 25–30% is a planning assumption that may be too high or too low, not a calculated tax bill.",
       },
       {
-        q: "How much should I set aside for taxes in New York City?",
-        a: "Beyond the common 25–30% set-aside for federal income tax and the 15.3% self-employment tax, NYC residents owe additional New York State and New York City income tax, so many set aside somewhat more. Your exact rate depends on your bracket — use the Tax Set-Aside calculator and confirm with the city and state.",
+        q: "Do federal deductions reduce every local tax?",
+        a: "No. Local tax bases, allowed deductions, exemptions and apportionment can differ. Gross-receipts taxes are especially different from taxes on net income; use each jurisdiction's instructions.",
       },
     ],
   },
@@ -153,40 +106,53 @@ export const CITY_TAX_GUIDES: CityTaxGuide[] = [
     eyebrow: "City Gig Tax Guide",
     title: "Philadelphia Gig Worker Taxes: Net Profits Tax, BIRT & Estimates",
     metaDescription:
-      "Philadelphia gig worker taxes: the Net Profits Tax on self-employed profit (plus BIRT), on top of PA state and the 15.3% federal SE tax. Not tax advice.",
+      "Philadelphia gig worker taxes: local filing rules, business-tax exceptions and payment guidance. Reviewed November 7, 2026.",
     h1: "Philadelphia Gig Worker Taxes",
     intro:
-      "Philadelphia is one of the few U.S. cities that taxes self-employed people directly — so as a gig worker here you face a city tax most independent contractors never deal with, on top of Pennsylvania state tax and the federal 15.3% self-employment tax. Here's how the city's Net Profits Tax and Business Income & Receipts Tax work for gig workers.",
+      "Independent work in Philadelphia can involve local personal or business taxes as well as state and federal taxes. Residence, business location and the type of income determine which rules apply. This guide separates those obligations for sole proprietors.",
     localTaxName: "Net Profits Tax",
     localHeading: "Does Philadelphia have a local tax for gig workers?",
     localBody: [
-      "Yes. Philadelphia is unusual in taxing self-employed people directly through the Net Profits Tax (NPT). The city's better-known Wage Tax is withheld from employees' paychecks — but as a gig worker you're not an employee, so instead you owe NPT on your net business profit. Residents owe NPT on all their net profit; nonresidents owe it on the profit from work done in Philadelphia.",
-      "Many self-employed Philadelphians also have to file the Business Income & Receipts Tax (BIRT), the city's tax on doing business in Philadelphia, though there's a filing exclusion for businesses under a gross-receipts threshold. These city taxes are on top of Pennsylvania's flat state income tax and the federal 15.3% self-employment tax.",
-      "Rates, the BIRT exclusion amount, and filing rules change, so confirm the current figures and whether BIRT applies to you with the Philadelphia Department of Revenue or a tax professional. You file and pay these with the city, separately from your state and federal returns.",
+      "Philadelphia Net Profits Tax (NPT) applies to net profits of unincorporated businesses. Residents generally report net profits wherever earned, while nonresidents report Philadelphia business activity under the city's allocation rules. Employee wages follow Wage/Earnings Tax rules instead.",
+      "Businesses operating in Philadelphia must also evaluate Business Income & Receipts Tax (BIRT). The former $100,000 exemption ended beginning with tax year 2025; being below $100,000 no longer supplies that filing exemption. BIRT has gross-receipts and net-income components, so a federal expense deduction does not reduce both bases.",
+      "NPT and BIRT have separate filings, credits and payment rules. The city allows an NPT credit based on 60% of the BIRT net-income tax, subject to its instructions. Special 2026 estimated-BIRT relief is available to qualifying first-time filers who had no BIRT filing requirement in 2022, 2023 and 2024; it does not erase the annual tax.",
     ],
     stateGuideSlug: "pennsylvania-gig-worker-taxes",
     stateGuideLabel: "Pennsylvania gig worker taxes",
-    localResources: [PHILLY_REV, PA_REV],
+    localResources: [
+      {
+        label: "Philadelphia: NPT filing and payment",
+        href: "https://www.phila.gov/services/payments-assistance-taxes/taxes/business-taxes/business-taxes-by-type/net-profits-tax/",
+      },
+      {
+        label: "Philadelphia: BIRT and exemption repeal",
+        href: "https://www.phila.gov/services/business-self-employment/business-taxes/business-income-receipts-tax-birt/",
+      },
+      {
+        label: "Philadelphia: transition and NPT credit",
+        href: "https://www.phila.gov/2025-07-22-key-philadelphia-tax-policy-changes-you-need-to-know-now/",
+      },
+    ],
     faqs: [
       {
-        q: "Do Philadelphia gig workers pay the Wage Tax?",
-        a: "No — the Philadelphia Wage Tax is withheld from employees' paychecks. As a self-employed gig worker you instead owe the Net Profits Tax (NPT) on your net business profit, and possibly the Business Income & Receipts Tax (BIRT).",
+        q: "What local taxes can apply in Philadelphia?",
+        a: "Philadelphia Net Profits Tax (NPT) applies to net profits of unincorporated businesses. Residents generally report net profits wherever earned, while nonresidents report Philadelphia business activity under the city's allocation rules. Employee wages follow Wage/Earnings Tax rules instead.",
       },
       {
-        q: "What is the Philadelphia Net Profits Tax?",
-        a: "The NPT is a Philadelphia tax on the net profits of self-employed individuals and unincorporated businesses. Residents owe it on all their net profit; nonresidents owe it on profit from work performed in Philadelphia. It's separate from, and on top of, Pennsylvania state income tax.",
+        q: "What separate business filing should I check?",
+        a: "Businesses operating in Philadelphia must also evaluate Business Income & Receipts Tax (BIRT). The former $100,000 exemption ended beginning with tax year 2025; being below $100,000 no longer supplies that filing exemption. BIRT has gross-receipts and net-income components, so a federal expense deduction does not reduce both bases.",
       },
       {
-        q: "Do I have to file BIRT as a gig worker in Philadelphia?",
-        a: "Often yes if you're doing business in the city, but Philadelphia provides a filing exclusion for businesses with gross receipts under a set threshold. The threshold and rules change, so confirm whether BIRT applies to you with the Philadelphia Department of Revenue.",
+        q: "What other local rules matter?",
+        a: "NPT and BIRT have separate filings, credits and payment rules. The city allows an NPT credit based on 60% of the BIRT net-income tax, subject to its instructions. Special 2026 estimated-BIRT relief is available to qualifying first-time filers who had no BIRT filing requirement in 2022, 2023 and 2024; it does not erase the annual tax.",
       },
       {
-        q: "Are Philadelphia city taxes on top of Pennsylvania state tax?",
-        a: "Yes. The Net Profits Tax and BIRT are city taxes that apply in addition to Pennsylvania's flat state income tax and the federal income and 15.3% self-employment taxes. Gig workers in Philadelphia can face all of these layers.",
+        q: "How much should I reserve for taxes?",
+        a: "A reserve should reflect household income, withholding, credits and deductible business costs, plus applicable state and local taxes. A fixed 25–30% is a planning assumption that may be too high or too low, not a calculated tax bill.",
       },
       {
-        q: "How much should I set aside for taxes in Philadelphia?",
-        a: "Beyond the common 25–30% for federal income tax and the 15.3% self-employment tax, factor in Pennsylvania's flat state tax and the city's Net Profits Tax (and BIRT if it applies), so many set aside more. Use the Tax Set-Aside calculator and confirm current city rates with the Department of Revenue.",
+        q: "Do federal deductions reduce every local tax?",
+        a: "No. Local tax bases, allowed deductions, exemptions and apportionment can differ. Gross-receipts taxes are especially different from taxes on net income; use each jurisdiction's instructions.",
       },
     ],
   },
@@ -196,42 +162,55 @@ export const CITY_TAX_GUIDES: CityTaxGuide[] = [
     state: "Oregon",
     cityAdjective: "Portland",
     eyebrow: "City Gig Tax Guide",
-    title: "Portland, OR Gig Worker Taxes: Metro & Multnomah Local Taxes",
+    title: "Portland Gig Worker Taxes: Business, Metro & Multnomah Taxes",
     metaDescription:
-      "Portland, OR gig worker taxes: the Metro SHS and Multnomah Preschool for All income taxes above thresholds, on top of Oregon and federal tax. Not advice.",
+      "Portland gig worker taxes: local filing rules, business-tax exceptions and payment guidance. Reviewed November 7, 2026.",
     h1: "Portland, Oregon Gig Worker Taxes",
     intro:
-      "Gig workers in the Portland area can face two local personal income taxes that most of the country has never heard of — the Metro Supportive Housing Services tax and Multnomah County's Preschool for All tax — on top of Oregon's state income tax and the federal 15.3% self-employment tax. The good news: both only kick in above income thresholds. Here's how they work.",
+      "Independent work in Portland can involve local personal or business taxes as well as state and federal taxes. Residence, business location and the type of income determine which rules apply. This guide separates those obligations for sole proprietors.",
     localTaxName: "Metro SHS & Multnomah PFA taxes",
     localHeading: "Does Portland have local taxes for gig workers?",
     localBody: [
-      "Yes — the Portland area has two local personal income taxes beyond Oregon's state income tax. The Metro Supportive Housing Services (SHS) tax funds homeless services across the Portland metro area, and Multnomah County's Preschool for All (PFA) tax funds preschool. Both apply to your income, including net gig earnings, if you live in the jurisdiction (or earn income sourced there).",
-      "Crucially, both taxes only apply to income above set thresholds — they're aimed at higher earners, so a gig worker with income below the threshold generally owes neither, and above it the tax applies only to the portion over the threshold. The thresholds and rates change, so check whether your income reaches them.",
-      "These local taxes stack on top of Oregon's state income tax (one of the higher state rates) and the federal 15.3% self-employment tax. They're administered by the City of Portland's Revenue Division, which collects both the Metro and Multnomah County taxes — confirm current thresholds, rates, and filing with them or a tax professional.",
+      "Portland-area tax boundaries are different for the city, Multnomah County and Metro. For 2026, the Metro SHS personal tax is 1% above $128,000 of taxable income for single filers or $205,000 for joint-category filers. Multnomah PFA remains 1.5% above $125,000/$200,000, plus another 1.5% above $250,000/$400,000. Use the city's filing-status definitions and sourcing rules.",
+      "Lower personal income does not automatically exempt a gig business from local filings. Portland Business License Tax and Multnomah County Business Income Tax require separate review. Their 2026 gross-receipts exemptions generally cover receipts below $75,000 for the city and below $100,000 for the county, counting business receipts everywhere. Exempt businesses generally still register and file to claim the exemption.",
+      "Sole proprietors are not subject to the Metro SHS business tax; the personal-tax rules apply instead. Oregon's TriMet self-employment tax and Portland Arts Tax may also matter. For SHS/PFA, the estimated-payment liability threshold rises to $5,000 in 2026; check both current- and prior-year tests and any withholding.",
     ],
     stateGuideSlug: "oregon-gig-worker-taxes",
     stateGuideLabel: "Oregon gig worker taxes",
-    localResources: [PORTLAND_REV, OR_DOR],
+    localResources: [
+      {
+        label: "Portland: SHS/PFA rates, thresholds and estimates",
+        href: "https://www.portland.gov/revenue/personal-tax",
+      },
+      {
+        label: "Portland: business taxes and 2026 exemptions",
+        href: "https://www.portland.gov/revenue/business-tax",
+      },
+      {
+        label: "Oregon: transit self-employment taxes",
+        href: "https://www.oregon.gov/dor/programs/businesses/pages/self-employment.aspx",
+      },
+    ],
     faqs: [
       {
-        q: "What local income taxes does Portland have?",
-        a: "Two: the Metro Supportive Housing Services (SHS) tax across the Portland metro area, and Multnomah County's Preschool for All (PFA) tax. Both are personal income taxes that apply to net gig earnings above set thresholds, on top of Oregon state income tax and federal tax.",
+        q: "What local taxes can apply in Portland?",
+        a: "Portland-area tax boundaries are different for the city, Multnomah County and Metro. For 2026, the Metro SHS personal tax is 1% above $128,000 of taxable income for single filers or $205,000 for joint-category filers. Multnomah PFA remains 1.5% above $125,000/$200,000, plus another 1.5% above $250,000/$400,000. Use the city's filing-status definitions and sourcing rules.",
       },
       {
-        q: "Do all Portland gig workers owe these local taxes?",
-        a: "No. Both the Metro SHS and Multnomah PFA taxes only apply to income above set thresholds aimed at higher earners, so a gig worker with income below the threshold generally owes neither. Above the threshold, only the portion over it is taxed. Confirm the current thresholds with the Portland Revenue Division.",
+        q: "What separate business filing should I check?",
+        a: "Lower personal income does not automatically exempt a gig business from local filings. Portland Business License Tax and Multnomah County Business Income Tax require separate review. Their 2026 gross-receipts exemptions generally cover receipts below $75,000 for the city and below $100,000 for the county, counting business receipts everywhere. Exempt businesses generally still register and file to claim the exemption.",
       },
       {
-        q: "Who administers the Metro and Preschool for All taxes?",
-        a: "The City of Portland's Revenue Division administers and collects both the Metro Supportive Housing Services tax and the Multnomah County Preschool for All tax, separately from your Oregon state return. They're the place to confirm thresholds, rates, and filing requirements.",
+        q: "What other local rules matter?",
+        a: "Sole proprietors are not subject to the Metro SHS business tax; the personal-tax rules apply instead. Oregon's TriMet self-employment tax and Portland Arts Tax may also matter. For SHS/PFA, the estimated-payment liability threshold rises to $5,000 in 2026; check both current- and prior-year tests and any withholding.",
       },
       {
-        q: "Are these on top of Oregon state income tax?",
-        a: "Yes. The Metro SHS and Multnomah PFA taxes are local taxes that apply in addition to Oregon's state income tax (one of the higher state rates) and the federal income and 15.3% self-employment taxes.",
+        q: "How much should I reserve for taxes?",
+        a: "A reserve should reflect household income, withholding, credits and deductible business costs, plus applicable state and local taxes. A fixed 25–30% is a planning assumption that may be too high or too low, not a calculated tax bill.",
       },
       {
-        q: "How much should I set aside for taxes in Portland?",
-        a: "Beyond the common 25–30% for federal income tax and the 15.3% self-employment tax, Oregon's state income tax is relatively high, and high earners may owe the Metro and Multnomah local taxes too. Use the Tax Set-Aside calculator and confirm current rates and thresholds with the state and the Portland Revenue Division.",
+        q: "Do federal deductions reduce every local tax?",
+        a: "No. Local tax bases, allowed deductions, exemptions and apportionment can differ. Gross-receipts taxes are especially different from taxes on net income; use each jurisdiction's instructions.",
       },
     ],
   },
@@ -243,40 +222,49 @@ export const CITY_TAX_GUIDES: CityTaxGuide[] = [
     eyebrow: "City Gig Tax Guide",
     title: "Detroit Gig Worker Taxes: City Income Tax & Quarterly Estimates",
     metaDescription:
-      "Detroit gig worker taxes: the Detroit city income tax for residents and on work done in the city, on top of Michigan and the 15.3% SE tax. Not tax advice.",
+      "Detroit gig worker taxes: local filing rules, business-tax exceptions and payment guidance. Reviewed November 7, 2026.",
     h1: "Detroit Gig Worker Taxes",
     intro:
-      "Detroit is one of the Michigan cities that levies its own income tax, and it reaches gig earnings. On top of Michigan's flat state income tax and the federal 15.3% self-employment tax, gig workers who live in or work in Detroit owe a city income tax too. Here's who owes it and how it's paid.",
+      "Independent work in Detroit can involve local personal or business taxes as well as state and federal taxes. Residence, business location and the type of income determine which rules apply. This guide separates those obligations for sole proprietors.",
     localTaxName: "Detroit city income tax",
     localHeading: "Does Detroit have a city income tax for gig workers?",
     localBody: [
-      "Yes. Detroit levies a city income tax that applies to gig earnings. If you live in Detroit, it applies to all of your net self-employment profit; if you live elsewhere but do gig work in the city, it applies to the income you earn from work performed in Detroit. Residents and nonresidents are taxed at different rates.",
-      "This city tax is on top of Michigan's flat state income tax and the federal 15.3% self-employment tax. The Detroit city income tax is administered through the Michigan Department of Treasury, and self-employed workers file a Detroit return reporting their net profit.",
-      "Rates and rules change, and apportioning income for work done partly inside and partly outside the city can be involved, so confirm the current rates and filing requirements with the Michigan Department of Treasury or a tax professional.",
+      "Detroit taxes resident taxable income at 2.4% and nonresident Detroit-source taxable income at 1.2%. Business income is included under the city's rules, with exemptions and allocation; do not simply apply the resident rate to every nonresident payout.",
+      "Michigan Treasury administers Detroit individual returns. Form 5118 is for full-year residents, 5119 for nonresidents, and 5120 for part-year residents. A mailing address alone is not sufficient to determine whether you live or work within Detroit's boundaries.",
+      "Keep records of work inside and outside the city and review the Detroit estimated-tax instructions separately from Michigan and federal requirements. A federal deduction is not automatically an allowable Detroit deduction.",
     ],
     stateGuideSlug: "michigan-gig-worker-taxes",
     stateGuideLabel: "Michigan gig worker taxes",
-    localResources: [DETROIT_TAX, MI_TREASURY],
+    localResources: [
+      {
+        label: "Michigan Treasury: Detroit filing requirements",
+        href: "https://www.michigan.gov/taxes/citytax/detroit/individual/filing",
+      },
+      {
+        label: "Detroit: 2026 rate guide",
+        href: "https://www.michigan.gov/taxes/-/media/Project/Websites/taxes/Forms/City-Withholding/TY2026/5469_ty2026.pdf",
+      },
+    ],
     faqs: [
       {
-        q: "Do Detroit gig workers pay a city income tax?",
-        a: "Yes. Detroit residents owe the city income tax on all of their net self-employment profit, and nonresidents owe it on income earned from work performed in Detroit. Residents and nonresidents are taxed at different rates, on top of Michigan state and federal tax.",
+        q: "What local taxes can apply in Detroit?",
+        a: "Detroit taxes resident taxable income at 2.4% and nonresident Detroit-source taxable income at 1.2%. Business income is included under the city's rules, with exemptions and allocation; do not simply apply the resident rate to every nonresident payout.",
       },
       {
-        q: "How do I pay Detroit city income tax as a gig worker?",
-        a: "You file a Detroit city income tax return reporting your net self-employment profit. The tax is administered through the Michigan Department of Treasury, and because nothing is withheld from gig payouts you may also need to make estimated payments. Confirm the current forms and schedule with Treasury.",
+        q: "What separate business filing should I check?",
+        a: "Michigan Treasury administers Detroit individual returns. Form 5118 is for full-year residents, 5119 for nonresidents, and 5120 for part-year residents. A mailing address alone is not sufficient to determine whether you live or work within Detroit's boundaries.",
       },
       {
-        q: "What if I live outside Detroit but deliver in the city?",
-        a: "Detroit's nonresident city income tax applies to income you earn from work performed within the city, generally at a lower rate than the resident tax. Apportioning income between work done inside and outside Detroit can be involved — confirm the rules with the Michigan Department of Treasury.",
+        q: "What other local rules matter?",
+        a: "Keep records of work inside and outside the city and review the Detroit estimated-tax instructions separately from Michigan and federal requirements. A federal deduction is not automatically an allowable Detroit deduction.",
       },
       {
-        q: "Is the Detroit tax on top of Michigan state tax?",
-        a: "Yes. The Detroit city income tax applies in addition to Michigan's flat state income tax and the federal income and 15.3% self-employment taxes. Gig workers tied to Detroit can face all three layers.",
+        q: "How much should I reserve for taxes?",
+        a: "A reserve should reflect household income, withholding, credits and deductible business costs, plus applicable state and local taxes. A fixed 25–30% is a planning assumption that may be too high or too low, not a calculated tax bill.",
       },
       {
-        q: "How much should I set aside for taxes in Detroit?",
-        a: "Beyond the common 25–30% for federal income tax and the 15.3% self-employment tax, add Michigan's flat state income tax and the Detroit city income tax, so many set aside a bit more. Use the Tax Set-Aside calculator and confirm current city rates with the Michigan Department of Treasury.",
+        q: "Do federal deductions reduce every local tax?",
+        a: "No. Local tax bases, allowed deductions, exemptions and apportionment can differ. Gross-receipts taxes are especially different from taxes on net income; use each jurisdiction's instructions.",
       },
     ],
   },
@@ -288,40 +276,49 @@ export const CITY_TAX_GUIDES: CityTaxGuide[] = [
     eyebrow: "City Gig Tax Guide",
     title: "Kansas City Gig Worker Taxes: The 1% Earnings Tax Explained",
     metaDescription:
-      "Kansas City, MO gig worker taxes: the 1% earnings tax (E-Tax) on net business earnings, on top of Missouri and the 15.3% federal SE tax. Not tax advice.",
+      "Kansas City gig worker taxes: local filing rules, business-tax exceptions and payment guidance. Reviewed November 7, 2026.",
     h1: "Kansas City Gig Worker Taxes",
     intro:
-      "Kansas City, Missouri charges a 1% earnings tax — the 'E-Tax' — that catches gig workers in a way many don't expect, since it applies to self-employment earnings, not just employee wages. It sits on top of Missouri state income tax and the federal 15.3% self-employment tax. Here's who owes it and how to handle it.",
+      "Independent work in Kansas City can involve local personal or business taxes as well as state and federal taxes. Residence, business location and the type of income determine which rules apply. This guide separates those obligations for sole proprietors.",
     localTaxName: "earnings tax (E-Tax)",
     localHeading: "Does Kansas City have a local tax for gig workers?",
     localBody: [
-      "Yes. Kansas City, Missouri levies a 1% earnings tax — often called the 'E-Tax' — that applies to gig earnings. For residents it applies to all earnings, including the net profit of a self-employed gig worker; for nonresidents it applies to earnings from work performed within the city. Self-employed workers report it on the city's profits return.",
-      "The earnings tax is on top of Missouri's state income tax and the federal 15.3% self-employment tax. It's administered by the Kansas City Revenue Division, separately from your state and federal filings, and because nothing is withheld from gig payouts you're responsible for paying it yourself.",
-      "The 1% rate is long-standing, but filing details and the exact definition of taxable earnings can change, so confirm current requirements with the Kansas City Revenue Division or a tax professional. (St. Louis, Missouri has a similar 1% earnings tax if you work there instead.)",
+      "Kansas City, Missouri levies a 1% earnings tax. Residents and nonresidents doing business in the city must evaluate the earnings tax on business net profits. For nonresidents, allocation determines the city-taxable share; keep records of work performed inside and outside city limits.",
+      "Kansas City uses Form RD-108/108B for business net profits, including sole proprietors. Its rideshare guide requires the annual return even when there is a loss. Use the allocation instructions for work outside the city. Kansas City, Kansas is a different jurisdiction.",
+      "The city tax is separate from state income tax and federal taxes. Crossing the Missouri–Kansas border can also create state sourcing or credit questions; a Kansas address does not automatically remove Kansas City, Missouri obligations.",
     ],
     stateGuideSlug: "missouri-gig-worker-taxes",
     stateGuideLabel: "Missouri gig worker taxes",
-    localResources: [KCMO_ETAX, MO_DOR],
+    localResources: [
+      {
+        label: "Kansas City: rideshare driver tax guide",
+        href: "https://www.kcmo.gov/city-hall/departments/finance/tax-home/tax-guide-for-ride-sharing-drivers",
+      },
+      {
+        label: "Kansas City: nonresident business tax guide",
+        href: "https://www.kcmo.gov/city-hall/departments/finance/tax-home/tax-guides/tax-guide-for-non-resident-businesses",
+      },
+    ],
     faqs: [
       {
-        q: "What is the Kansas City earnings tax?",
-        a: "It's a 1% local tax (the 'E-Tax') on earnings in Kansas City, Missouri. Residents pay it on all earnings — including a self-employed gig worker's net profit — and nonresidents pay it on earnings from work performed in the city. It's on top of Missouri state income tax and federal tax.",
+        q: "What local taxes can apply in Kansas City?",
+        a: "Kansas City, Missouri levies a 1% earnings tax. Residents and nonresidents doing business in the city must evaluate the earnings tax on business net profits. For nonresidents, allocation determines the city-taxable share; keep records of work performed inside and outside city limits.",
       },
       {
-        q: "Do self-employed gig workers pay the KC earnings tax?",
-        a: "Yes. The earnings tax reaches self-employment income: residents owe 1% on their net business profit, and nonresidents owe 1% on profit from work performed in Kansas City. Self-employed workers report it on the city's profits return rather than having it withheld.",
+        q: "What separate business filing should I check?",
+        a: "Kansas City uses Form RD-108/108B for business net profits, including sole proprietors. Its rideshare guide requires the annual return even when there is a loss. Use the allocation instructions for work outside the city. Kansas City, Kansas is a different jurisdiction.",
       },
       {
-        q: "What if I work in Kansas City but live elsewhere?",
-        a: "Nonresidents owe the 1% earnings tax on earnings from work performed within Kansas City. If you split your gig work between the city and elsewhere, only the city-sourced portion is subject — confirm how to apportion it with the Kansas City Revenue Division.",
+        q: "What other local rules matter?",
+        a: "The city tax is separate from state income tax and federal taxes. Crossing the Missouri–Kansas border can also create state sourcing or credit questions; a Kansas address does not automatically remove Kansas City, Missouri obligations.",
       },
       {
-        q: "Is the earnings tax on top of Missouri state tax?",
-        a: "Yes. The 1% earnings tax is a city tax that applies in addition to Missouri's state income tax and the federal income and 15.3% self-employment taxes. Gig workers in Kansas City can face all three.",
+        q: "How much should I reserve for taxes?",
+        a: "A reserve should reflect household income, withholding, credits and deductible business costs, plus applicable state and local taxes. A fixed 25–30% is a planning assumption that may be too high or too low, not a calculated tax bill.",
       },
       {
-        q: "How much should I set aside for taxes in Kansas City?",
-        a: "Beyond the common 25–30% for federal income tax and the 15.3% self-employment tax, add Missouri's state income tax and the 1% Kansas City earnings tax. Use the Tax Set-Aside calculator for a tailored figure and confirm the current city requirements with the Revenue Division.",
+        q: "Do federal deductions reduce every local tax?",
+        a: "No. Local tax bases, allowed deductions, exemptions and apportionment can differ. Gross-receipts taxes are especially different from taxes on net income; use each jurisdiction's instructions.",
       },
     ],
   },

@@ -30,7 +30,7 @@ const RELATED_TOOLS = [
   {
     label: "Self-Employment Tax Calculator",
     href: "/tools/se-tax-calculator",
-    desc: "Estimate the 15.3% SE tax on net earnings",
+    desc: "Estimate federal self-employment tax",
   },
 ];
 
@@ -41,8 +41,8 @@ const RELATED_TOOLS = [
 const buildHowItWorks = (vehicleBased?: boolean, sellerFraming?: boolean) => [
   sellerFraming
     ? {
-        title: "You're a self-employed seller",
-        body: "The marketplace doesn't withhold taxes. If you sell as a business (regularly and for profit), you owe income tax plus self-employment tax on your net profit — what's left after the cost of the goods and your selling expenses.",
+        title: "Separate business and personal sales",
+        body: "Business selling generally involves income tax and self-employment tax on profit. Personal items sold at a loss generally create no taxable gain and no deductible loss; personal gains and hobby income have different rules. Backup withholding can also apply.",
       }
     : {
         title: "You're an independent contractor",
@@ -56,8 +56,8 @@ const buildHowItWorks = (vehicleBased?: boolean, sellerFraming?: boolean) => [
     title: "Deductions lower your taxable income",
     body:
       vehicleBased === false
-        ? "Business expenses — equipment, software, supplies, and phone — reduce the net earnings you're taxed on. Tracked properly, they often save more than any other single move."
-        : "Business expenses — equipment, software, supplies, phone, and mileage — reduce the net earnings you're taxed on. Tracked properly, they often save more than any other single move.",
+        ? "Business expenses — equipment, software, supplies, and phone — reduce the net earnings you're taxed on. Claim only eligible business costs and retain supporting records."
+        : "Business expenses — equipment, software, supplies, phone, and mileage — reduce the net earnings you're taxed on. Claim only eligible business costs and retain supporting records.",
   },
   {
     title: "You pay as you go, quarterly",
@@ -170,6 +170,17 @@ export default function PlatformTaxGuide({ slug }: { slug: string }) {
             {guide.formsBody.map((p, i) => (
               <p key={i}>{p}</p>
             ))}
+            {guide.resources && (
+              <ul className="space-y-2 text-sm">
+                {guide.resources.map(({ label, href }) => (
+                  <li key={href}>
+                    <a href={href} className="text-primary underline">
+                      {label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </section>
 
