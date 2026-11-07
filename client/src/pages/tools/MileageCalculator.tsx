@@ -178,7 +178,7 @@ export default function MileageCalculator() {
           </Link>
           <header className="my-8 max-w-2xl">
             <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-primary">
-              Keep the miles. Know the deduction.
+              Reviewed November 7, 2026 · Date-specific IRS rates
             </p>
             <h1
               style={{ fontFamily: '"Inter", Arial, Helvetica, sans-serif' }}
@@ -373,7 +373,10 @@ export default function MileageCalculator() {
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                 Keep dates, destinations, business purpose and miles. Personal
                 use and commuting generally do not qualify. Eligibility depends
-                on your circumstances and the deduction method you use.
+                on your circumstances and the deduction method you use. Do not
+                also deduct fuel, depreciation, insurance or repairs covered by
+                standard mileage. Eligible business tolls and parking may be
+                separate.
               </p>
               <Link
                 href="/money-manager?tab=mileage"

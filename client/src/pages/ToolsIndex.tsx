@@ -48,7 +48,7 @@ const TOOLS_REGISTRY: ToolMeta[] = [
     tagline:
       "Add up your true hourly rate across Uber, DoorDash, Etsy, eBay, and more",
     description:
-      "Enter gross earnings from each gig platform, plus time spent and estimated expenses, and see your real take-home hourly rate after all deductions.",
+      "Compare operating profit before taxes from entered earnings, total work hours and actual estimated costs. Count shared costs and overlapping hours once.",
     audience: "Gig workers with multiple income streams",
     keywords: [
       "gig earnings calculator",
@@ -63,7 +63,7 @@ const TOOLS_REGISTRY: ToolMeta[] = [
     title: "Quarterly Estimated Tax Estimator — 1099 Self-Employed",
     tagline: "Explore an estimate for your quarterly federal tax planning.",
     description:
-      "Based on your net self-employment income, calculate your Q1–Q4 estimated tax payments using the IRS safe-harbor method.",
+      "Use 2026 federal rules, household income, withholding and optional eligible prior-year tax to compare planning targets and baseline installments.",
     audience: "Freelancers, contractors, gig workers, side-hustle earners",
     keywords: [
       "quarterly estimated tax",
@@ -79,7 +79,7 @@ const TOOLS_REGISTRY: ToolMeta[] = [
     tagline:
       "Find your minimum sale price on eBay, Etsy, Amazon FBA, or any marketplace",
     description:
-      "Enter item cost, marketplace fees, shipping, and returns rate to calculate your break-even price and target margin.",
+      "Enter your percentage and fixed fees, shipping and expected return losses. Compare break-even revenue, item-cost ROI and profit margin.",
     audience: "eBay, Etsy, and Amazon resellers; e-commerce sellers",
     keywords: [
       "reseller break-even calculator",
@@ -92,9 +92,9 @@ const TOOLS_REGISTRY: ToolMeta[] = [
   {
     slug: "cashflow-tracker",
     title: "Payout Timing & Cash-Flow Tracker",
-    tagline: "Model when your gig platform payouts actually hit your bank",
+    tagline: "Model deposits using your own expected bank arrival days",
     description:
-      "Each app pays on different schedules. Enter your platforms and estimated weekly earnings to see a 30-day cash-flow forecast.",
+      "Enter daily deposits after payout fees to model a repeating week, average month and longest gap. No universal platform schedule is assumed.",
     audience: "Full-time gig workers managing cash flow",
     keywords: [
       "gig payout schedule",
@@ -109,7 +109,7 @@ const TOOLS_REGISTRY: ToolMeta[] = [
     title: "Self-Employment Tax Calculator — 1099 Gig Workers",
     tagline: "Estimate self-employment tax and see how the calculation works.",
     description:
-      "Enter your net self-employment income to calculate Social Security + Medicare tax (15.3%), the deductible half that lowers your AGI, and how much to pay each quarter.",
+      "Use the 2026 Social Security cap, your W-2 wages and net profit to estimate regular SE tax and separate Additional Medicare Tax.",
     audience: "1099 contractors, freelancers, gig workers",
     keywords: [
       "self-employment tax calculator",
@@ -140,7 +140,7 @@ const TOOLS_REGISTRY: ToolMeta[] = [
     title: "1099 Tax Set-Aside Calculator",
     tagline: "Explore a starting point for your tax set-aside.",
     description:
-      "Enter your net income, filing status, and state rate to get a personalized set-aside percentage combining SE tax, federal income tax, and state tax — plus the dollar amount to save per payment.",
+      "Plan a 2026 household reserve after withholding and payments, with your separately entered state/local amount. Percentage uses net profit, not gross payouts.",
     audience:
       "1099 gig workers and freelancers who want to avoid a tax-time surprise",
     keywords: [

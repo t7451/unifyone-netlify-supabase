@@ -29,7 +29,7 @@ const PLATFORM_OPTIONS = [
 const FAQS: Array<{ q: string; a: string }> = [
   {
     q: "What is a 'true hourly rate' for gig workers?",
-    a: "True hourly rate is your net earnings after all platform-related expenses (fuel, tolls, supplies) divided by hours worked. Gross pay from apps is always higher than take-home because vehicle expenses consume 20–40% of gig income for driving-based workers.",
+    a: "True hourly rate is your net earnings after all platform-related expenses (fuel, tolls, supplies) divided by hours worked. This is operating profit before taxes, not take-home pay. Include all work time, including waiting, and allocate overlapping hours and shared costs only once.",
   },
   {
     q: "Why is gross pay from gig apps misleading?",
@@ -41,7 +41,7 @@ const FAQS: Array<{ q: string; a: string }> = [
   },
   {
     q: "How do I estimate expenses per platform?",
-    a: "For driving gigs, multiply miles driven by your per-mile fuel cost (typically $0.10–$0.20) and add supplies. The easiest approach: use the IRS standard mileage rate ($0.70/mile for 2025) as an all-in vehicle cost estimate — it covers fuel, depreciation, oil, and tires.",
+    a: "Use your actual or estimated operating costs: vehicle costs, platform fees and supplies. The IRS mileage rate is a tax deduction rate, not your actual vehicle cost. Do not subtract platform fees again if your earnings input already excludes them.",
   },
   {
     q: "What gig expenses are tax-deductible?",
@@ -98,7 +98,7 @@ const jsonLd = [
       {
         "@type": "HowToStep",
         name: "Enter gross earnings, hours, and expenses",
-        text: "Fill in the gross earnings, hours worked, and expenses for that platform. A quick way to estimate expenses is the IRS rate of $0.70 per mile multiplied by miles driven.",
+        text: "Enter earnings, total working hours and actual estimated costs for the same period. Allocate overlapping time and shared expenses once. Results are before taxes.",
       },
       {
         "@type": "HowToStep",
@@ -174,16 +174,19 @@ export default function EarningsConsolidator() {
     field: keyof Omit<PlatformRow, "id">,
     value: string
   ) {
+    setHasResult(false);
     setPlatforms(rows =>
       rows.map(r => (r.id === id ? { ...r, [field]: value } : r))
     );
   }
 
   function addRow() {
+    setHasResult(false);
     if (platforms.length < 6) setPlatforms(rows => [...rows, mkRow()]);
   }
 
   function removeRow(id: string) {
+    setHasResult(false);
     if (platforms.length > 1)
       setPlatforms(rows => rows.filter(r => r.id !== id));
   }
@@ -399,8 +402,9 @@ export default function EarningsConsolidator() {
               </button>
             )}
             <p className="text-xs text-muted-foreground">
-              Tip: use IRS rate ($0.70/mi) × miles as an all-in vehicle expense
-              estimate
+              Use actual estimated operating costs, not the IRS mileage
+              deduction. Results are before taxes; count overlapping hours and
+              costs once.
             </p>
           </div>
 
@@ -508,12 +512,11 @@ export default function EarningsConsolidator() {
             {/* Signup CTA */}
             <div className="rounded-lg bg-primary/5 border border-primary/20 p-4">
               <p className="font-medium text-sm mb-1">
-                Track this automatically →
+                Keep your records together →
               </p>
               <p className="text-xs text-muted-foreground mb-3">
-                Connect your gig platforms to UnifyOne and see real earnings,
-                expenses, and true hourly rate updated automatically after every
-                shift.
+                Record your earnings in UnifyOne and compare income, expenses,
+                and hourly rate together as you record each shift.
               </p>
               <Link
                 href="/register"
@@ -539,12 +542,10 @@ export default function EarningsConsolidator() {
             Why gross pay from apps is misleading
           </h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            When DoorDash shows "$25.40 earned" for a 2-hour shift, that number
-            looks straightforward. But gig drivers spend $0.15–$0.25 per mile in
-            direct fuel costs — and a 2-hour delivery shift typically covers
-            20–40 miles. That's $4–$10 in fuel before oil changes, tires, or
-            depreciation. The IRS standard mileage rate ($0.70/mile in 2025)
-            exists because vehicle costs are real and substantial.
+            Revenue minus actual estimated operating costs gives operating
+            profit, which can be negative. Count platform fees once and include
+            waiting, travel, listing and administrative time. Tax deductions and
+            tax reserves are separate from this calculation.
           </p>
           <h2 className="text-xl font-semibold">
             Comparing platforms by true hourly rate
@@ -552,10 +553,9 @@ export default function EarningsConsolidator() {
           <p className="text-sm text-muted-foreground leading-relaxed">
             Different platforms have different cost profiles. Rideshare (Uber,
             Lyft) tends to log more miles per hour than food delivery in dense
-            areas. Marketplace selling (Etsy, eBay) has near-zero mileage
-            expense but higher platform fee and supply costs. The only
-            meaningful comparison is net earnings per hour — gross comparisons
-            are noise.
+            areas. Marketplace selling can involve sourcing trips, shipping,
+            inventory, platform fees and supplies. The only meaningful
+            comparison is net earnings per hour — gross comparisons are noise.
           </p>
         </section>
 
@@ -579,12 +579,11 @@ export default function EarningsConsolidator() {
         {/* Final CTA */}
         <section className="rounded-xl border bg-muted/30 p-6 text-center">
           <h2 className="text-lg font-semibold mb-2">
-            Never calculate this manually again
+            Keep comparing as your work changes
           </h2>
           <p className="text-sm text-muted-foreground mb-4">
-            UnifyOne connects directly to your gig platforms and shows your real
-            take-home across all income streams — automatically, after every
-            shift.
+            Keep earnings, expenses and work hours together in UnifyOne. Review
+            imported records and costs before comparing income sources.
           </p>
           <Link
             href="/register"

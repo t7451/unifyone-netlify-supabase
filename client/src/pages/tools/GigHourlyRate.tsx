@@ -82,7 +82,7 @@ const assumptionFields = [
     key: "costPerMile",
     label: "Actual vehicle cost per mile ($)",
     max: 1000,
-    hint: "$0.35 is a starting assumption to edit, not an IRS deduction rate. Include fuel, maintenance, insurance and depreciation. Use zero for work without driving.",
+    hint: "Reviewed November 7, 2026: $0.35 is a starting assumption to edit, not an IRS deduction rate. Include fuel, maintenance, insurance and depreciation. Use zero for work without driving.",
   },
   {
     key: "taxReservePercent",
