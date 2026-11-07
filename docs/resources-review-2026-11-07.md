@@ -68,3 +68,21 @@ payments, messages or tax filings were changed during this review.
 Recheck year-specific tax values before the next tax year and whenever IRS or
 platform guidance changes. Review all ten articles before advancing the library's
 review date. The date does not extend to linked guides outside this inventory.
+
+## Validation
+
+- Netlify deploy preview built successfully for `a10b900`.
+- Chrome: all ten guide destinations render the review date at 390px width,
+  without document-level horizontal overflow. The library filter, empty-search
+  result and clear action work. Desktop library and emergency article checked
+  at 1440px; the 1099 comparison also fits a 320px viewport.
+- Chime preview text equals production text exactly; one sponsored block, zero
+  links, original section heading. Raw preview HTML contains one disclosure and
+  one original source line, so non-JavaScript output also retains the placement.
+- Library plus ten guide URLs returned HTTP 200 with route-specific titles.
+- Changed-file ESLint, formatting, robots/sitemap source sync and JSON-LD source
+  gates passed. Targeted tests: 42 passed, including the sponsored-placement
+  regression and existing mileage/profit calculations.
+- GitHub's required `test` job did not execute: its annotation says the account
+  is locked due to a billing issue. This is not a passing CI result; do not
+  bypass the required check or treat preview deployment as production publication.
