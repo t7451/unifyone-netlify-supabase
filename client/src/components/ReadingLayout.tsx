@@ -4,12 +4,6 @@ import PublicLayout from "./PublicLayout";
 import GigResourceLinks from "./GigResourceLinks";
 import "./reading.css";
 
-const TAX_BASIS_2025_TOOLS = new Set([
-  "quarterly-tax-estimator",
-  "se-tax-calculator",
-  "tax-set-aside",
-]);
-
 export default function ReadingLayout({
   children,
   kind = "article",
@@ -22,7 +16,6 @@ export default function ReadingLayout({
   const [location] = useLocation();
   const content = useRef<HTMLDivElement>(null);
   const [outline, setOutline] = useState<{ id: string; text: string }[]>([]);
-  const tool = location.split("/").pop() ?? "";
 
   useEffect(() => {
     if (kind === "calculator") {
@@ -122,24 +115,6 @@ export default function ReadingLayout({
               </ol>
             </nav>
           </details>
-        )}
-        {kind === "calculator" && TAX_BASIS_2025_TOOLS.has(tool) && (
-          <aside className="reading-year-note">
-            <strong>2025 calculation basis</strong>
-            <p>
-              Uses 2025 tax-year figures. This is not a 2026 estimate or a
-              filing/payment instruction. Assumes no W-2 wages. Other income,
-              credits, QBI, age-related deductions, and Additional Medicare Tax
-              can change your result.{" "}
-              <a
-                href="https://www.irs.gov/publications/p501"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Check IRS guidance ↗
-              </a>
-            </p>
-          </aside>
         )}
         <div ref={content} className="reading-body">
           {children}

@@ -9,7 +9,7 @@ const PICKS = [
   {
     href: "/tools/tax-set-aside",
     title: "Explore a tax set-aside",
-    text: "Work through a 2025 planning estimate.",
+    text: "Work through a 2026 planning estimate.",
   },
   {
     href: "/gig-worker-budgeting",

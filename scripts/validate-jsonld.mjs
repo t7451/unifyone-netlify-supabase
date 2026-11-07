@@ -54,14 +54,36 @@ for (const filename of REQUIRED_TOOLS) {
     continue;
   }
 
-  const src = readFileSync(filepath, "utf-8");
+  let src = readFileSync(filepath, "utf-8");
+  // Thin route wrappers share the actual rendering component and FAQ content.
+  if (
+    /import TaxPlanningCalculator from "@\/components\/TaxPlanningCalculator"/.test(
+      src
+    ) &&
+    /<TaxPlanningCalculator tool="(?:tax-set-aside|quarterly-tax-estimator|se-tax-calculator)"/.test(
+      src
+    )
+  ) {
+    src += readFileSync(
+      resolve(TOOLS_DIR, "../../components/TaxPlanningCalculator.tsx"),
+      "utf-8"
+    );
+    src += readFileSync(
+      resolve(TOOLS_DIR, "../../content/taxTools.ts"),
+      "utf-8"
+    );
+  }
   console.log(`Checking ${filename}…`);
 
   let ok = true;
 
   ok =
-    check(src, "const jsonLd defined", /const jsonLd\s*=\s*\[/, "add `const jsonLd = [...]` before the component") &&
-    ok;
+    check(
+      src,
+      "const jsonLd defined",
+      /const jsonLd\s*=\s*\[/,
+      "add `const jsonLd = [...]` before the component"
+    ) && ok;
   ok =
     check(
       src,
@@ -92,10 +114,12 @@ for (const filename of REQUIRED_TOOLS) {
     ) && ok;
   // mainEntity can be driven by a shared FAQS array (preferred) or inline.
   // Either pattern is valid; we just ensure there's actual content.
-  const hasMainEntityFaqs = /mainEntity:\s*FAQS\.map/.test(src);
+  const hasMainEntityFaqs = /mainEntity:\s*(?:TAX_TOOL_)?FAQS\.map/.test(src);
   const hasMainEntityInline = /mainEntity:\s*\[[\s\S]{30,}/.test(src);
   if (!hasMainEntityFaqs && !hasMainEntityInline) {
-    console.error("  FAIL: FAQPage.mainEntity must be non-empty (via FAQS array or inline)");
+    console.error(
+      "  FAIL: FAQPage.mainEntity must be non-empty (via FAQS array or inline)"
+    );
     ok = false;
   }
 
@@ -105,7 +129,7 @@ for (const filename of REQUIRED_TOOLS) {
       check(
         src,
         "FAQS array non-empty",
-        /const FAQS(?:\s*:\s*Array[^=]*)?\s*=\s*\[[\s\S]{30,}/,
+        /const (?:TAX_TOOL_)?FAQS(?:\s*:\s*Array[^=]*)?\s*=\s*\[[\s\S]{30,}/,
         "FAQS constant array must contain at least one entry"
       ) && ok;
   }
@@ -119,6 +143,8 @@ for (const filename of REQUIRED_TOOLS) {
 }
 
 const passed = REQUIRED_TOOLS.length - failures;
-console.log(`JSON-LD source validation: ${passed}/${REQUIRED_TOOLS.length} passed`);
+console.log(
+  `JSON-LD source validation: ${passed}/${REQUIRED_TOOLS.length} passed`
+);
 
 if (failures > 0) process.exit(1);
