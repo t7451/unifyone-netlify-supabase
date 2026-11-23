@@ -168,6 +168,55 @@ export default function CashflowTracker() {
           Uber: bank processing and missing deposits
         </a>
       </section>
+      <section
+        aria-labelledby="dave-paid-endorsement"
+        className="my-8 space-y-4 rounded-xl border bg-muted/40 p-5"
+      >
+        <h2 id="dave-paid-endorsement" className="text-lg font-semibold">
+          Paid endorsement. Supported by AI.
+        </h2>
+        <p>
+          Even with diversified payout days, a Tuesday car repair can land
+          before the next payout. Dave is built for that specific squeeze.
+          Eligible members could qualify for up to $500 in 5 minutes or less
+          with ExtraCash®.
+          <sup>
+            <a
+              aria-label="Footnote 1: ExtraCash eligibility, fees and terms"
+              className="text-primary underline"
+              href="#dave-extracash-terms"
+            >
+              1
+            </a>
+          </sup>{" "}
+          There’s no credit check. Dave could help get the cash you need and
+          settle up later.
+        </p>
+        <p>Check your eligibility in the Dave app.</p>
+        <p>
+          For gig workers juggling gas, insurance, and rent against staggered
+          payouts, having a backup for the week the math does not work may help
+          cover a short-term cash gap.
+        </p>
+        <p>
+          Dave is not a bank. Banking services provided by Coastal Community
+          Bank, Member FDIC. The Dave Debit Card is issued under a license from
+          Mastercard®.
+        </p>
+        <p id="dave-extracash-terms" className="text-sm">
+          <sup>1</sup> ExtraCash amounts range from $25-$500, typically
+          authorized within 5 minutes, with an overdraft fee equal to the
+          greater of $5 or 5%. Multiple overdrafts may be required.{" "}
+          <strong>
+            Not all members qualify for ExtraCash and few qualify for $500.
+          </strong>{" "}
+          ExtraCash is repayable on demand. Must open an ExtraCash overdraft
+          deposit account and Dave Checking account. Up to $5 monthly membership
+          fee for ExtraCash, Income Opportunity Services, and Financial
+          Management Services. Optional 1.5% fee for external debit card
+          transfers. See dave.com.
+        </p>
+      </section>
       <section className="my-8 space-y-4">
         <h2 className="text-xl font-semibold">Common questions</h2>
         {FAQS.map(({ q, a }) => (
