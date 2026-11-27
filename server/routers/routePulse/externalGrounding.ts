@@ -191,7 +191,7 @@ export async function fetchTomTomTrafficIncidents(
   if (!key) return [];
 
   const fields = encodeURIComponent(
-    "{incidents{type,geometry{type,coordinates},properties{id,iconCategory,magnitudeOfDelay,from,to,length,delay,roadNumbers,events{description,code},startTime,endTime,tmc{countryCode,tableNumber,direction,points}}}}"
+    "{incidents{type,geometry{type,coordinates},properties{id,iconCategory,magnitudeOfDelay,from,to,length,delay,roadNumbers,events{description,code},startTime,endTime}}}"
   );
   const url =
     `https://api.tomtom.com/traffic/services/5/incidentDetails?key=${key}` +
